@@ -44,7 +44,8 @@ app/src/main/java/com/shoecycle/
 │   │   └── SettingsScreen.kt    # Fully implemented with VSI
 │   ├── settings/                # VSI implementations
 │   │   ├── SettingsUnitsInteractions.kt
-│   │   └── SettingsFirstDayInteractions.kt
+│   │   ├── SettingsFirstDayInteractions.kt
+│   │   └── SettingsFavoriteDistancesInteractions.kt
 │   └── theme/                   # Material 3 theming
 │       ├── Color.kt
 │       ├── Theme.kt
@@ -61,8 +62,8 @@ app/src/main/java/com/shoecycle/
 ### ✅ Completed Features:
 - **Settings Screen**: Fully implemented with VSI pattern
   - Units selection (Miles/KM) with enhanced FilterChip styling
-  - First Day of Week selection (Sunday/Monday)
-  - Favorite Distances input fields (4 favorites)
+  - First Day of Week selection (Sunday/Monday)  
+  - Favorite Distances input fields (4 favorites) with unified action handling
   - About dialog with version info
 - **Navigation**: Bottom tab navigation with 4 screens
 - **Theme**: Material 3 with custom colors and typography
@@ -98,6 +99,7 @@ app/src/main/java/com/shoecycle/
 - Uses `entries` instead of deprecated `values()` for enums
 - Proper separation of concerns with repository pattern
 - Coroutines for asynchronous data operations
+- VSI pattern is the assumed standard throughout the app (no need to document in comments)
 
 ## Next Steps for Development
 1. Implement remaining screen functionality (Add Distance, Active Shoes, Hall of Fame)

@@ -47,6 +47,8 @@ import com.shoecycle.ui.settings.SettingsUnitsState
 import com.shoecycle.ui.settings.SettingsUnitsInteractor
 import com.shoecycle.ui.settings.SettingsFirstDayState
 import com.shoecycle.ui.settings.SettingsFirstDayInteractor
+import com.shoecycle.ui.settings.SettingsFavoriteDistancesState
+import com.shoecycle.ui.settings.SettingsFavoriteDistancesInteractor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,42 +68,19 @@ fun SettingsScreen() {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Distance Units Section (using VSI pattern)
+        // Distance Units Section
         SettingsUnitsSection(
             repository = repository
         )
         
-        // First Day of Week Section (using VSI pattern)
+        // First Day of Week Section
         SettingsFirstDaySection(
             repository = repository
         )
         
         // Favorite Distances Section
         SettingsFavoriteDistancesSection(
-            favorite1 = userSettings.favorite1,
-            favorite2 = userSettings.favorite2,
-            favorite3 = userSettings.favorite3,
-            favorite4 = userSettings.favorite4,
-            onFavorite1Changed = { distance ->
-                coroutineScope.launch {
-                    repository.updateFavorite1(distance)
-                }
-            },
-            onFavorite2Changed = { distance ->
-                coroutineScope.launch {
-                    repository.updateFavorite2(distance)
-                }
-            },
-            onFavorite3Changed = { distance ->
-                coroutineScope.launch {
-                    repository.updateFavorite3(distance)
-                }
-            },
-            onFavorite4Changed = { distance ->
-                coroutineScope.launch {
-                    repository.updateFavorite4(distance)
-                }
-            }
+            repository = repository
         )
         
         // About Section
@@ -233,15 +212,16 @@ fun SettingsFirstDaySection(
 
 @Composable
 fun SettingsFavoriteDistancesSection(
-    favorite1: Double,
-    favorite2: Double,
-    favorite3: Double,
-    favorite4: Double,
-    onFavorite1Changed: (Double) -> Unit,
-    onFavorite2Changed: (Double) -> Unit,
-    onFavorite3Changed: (Double) -> Unit,
-    onFavorite4Changed: (Double) -> Unit
+    repository: UserSettingsRepository
 ) {
+    val state = remember { mutableStateOf(SettingsFavoriteDistancesState()) }
+    val interactor = remember { SettingsFavoriteDistancesInteractor(repository) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Initialize state when view appears
+    LaunchedEffect(Unit) {
+        interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.ViewAppeared)
+    }
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -259,15 +239,23 @@ fun SettingsFavoriteDistancesSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FavoriteDistanceTextField(
-                    value = favorite1,
-                    onValueChange = onFavorite1Changed,
+                    value = state.value.favorite1,
+                    onValueChange = { distance ->
+                        coroutineScope.launch {
+                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(1, distance))
+                        }
+                    },
                     label = "Favorite 1",
                     modifier = Modifier.weight(1f)
                 )
                 
                 FavoriteDistanceTextField(
-                    value = favorite2,
-                    onValueChange = onFavorite2Changed,
+                    value = state.value.favorite2,
+                    onValueChange = { distance ->
+                        coroutineScope.launch {
+                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(2, distance))
+                        }
+                    },
                     label = "Favorite 2",
                     modifier = Modifier.weight(1f)
                 )
@@ -280,15 +268,23 @@ fun SettingsFavoriteDistancesSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FavoriteDistanceTextField(
-                    value = favorite3,
-                    onValueChange = onFavorite3Changed,
+                    value = state.value.favorite3,
+                    onValueChange = { distance ->
+                        coroutineScope.launch {
+                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(3, distance))
+                        }
+                    },
                     label = "Favorite 3",
                     modifier = Modifier.weight(1f)
                 )
                 
                 FavoriteDistanceTextField(
-                    value = favorite4,
-                    onValueChange = onFavorite4Changed,
+                    value = state.value.favorite4,
+                    onValueChange = { distance ->
+                        coroutineScope.launch {
+                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(4, distance))
+                        }
+                    },
                     label = "Favorite 4",
                     modifier = Modifier.weight(1f)
                 )
