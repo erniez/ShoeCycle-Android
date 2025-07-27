@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ShoeCycle</string>
+    <string name="add_distance">Add Distance</string>
+    <string name="active_shoes">Active Shoes</string>
+    <string name="hall_of_fame">Hall of Fame</string>
+    <string name="settings">Settings</string>
+</resources>
