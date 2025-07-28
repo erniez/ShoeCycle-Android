@@ -24,5 +24,7 @@ data class UserSettingsData(
     val favorite1: Double = 0.0,
     val favorite2: Double = 0.0,
     val favorite3: Double = 0.0,
-    val favorite4: Double = 0.0
+    val favorite4: Double = 0.0,
+    val healthConnectEnabled: Boolean = false,
+    val stravaEnabled: Boolean = false
 )

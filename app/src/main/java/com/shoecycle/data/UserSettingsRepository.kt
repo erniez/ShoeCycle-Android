@@ -1,6 +1,7 @@
 package com.shoecycle.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -20,6 +21,8 @@ class UserSettingsRepository(private val context: Context) {
         val FAVORITE_2 = doublePreferencesKey("favorite_2")
         val FAVORITE_3 = doublePreferencesKey("favorite_3")
         val FAVORITE_4 = doublePreferencesKey("favorite_4")
+        val HEALTH_CONNECT_ENABLED = booleanPreferencesKey("health_connect_enabled")
+        val STRAVA_ENABLED = booleanPreferencesKey("strava_enabled")
     }
     
     val userSettingsFlow: Flow<UserSettingsData> = context.dataStore.data
@@ -41,7 +44,9 @@ class UserSettingsRepository(private val context: Context) {
                 favorite1 = preferences[PreferenceKeys.FAVORITE_1] ?: 0.0,
                 favorite2 = preferences[PreferenceKeys.FAVORITE_2] ?: 0.0,
                 favorite3 = preferences[PreferenceKeys.FAVORITE_3] ?: 0.0,
-                favorite4 = preferences[PreferenceKeys.FAVORITE_4] ?: 0.0
+                favorite4 = preferences[PreferenceKeys.FAVORITE_4] ?: 0.0,
+                healthConnectEnabled = preferences[PreferenceKeys.HEALTH_CONNECT_ENABLED] ?: false,
+                stravaEnabled = preferences[PreferenceKeys.STRAVA_ENABLED] ?: false
             )
         }
     
@@ -102,6 +107,26 @@ class UserSettingsRepository(private val context: Context) {
             }
         } catch (exception: IOException) {
             Log.e("UserSettingsRepository", "Error updating favorite 4", exception)
+        }
+    }
+    
+    suspend fun updateHealthConnectEnabled(enabled: Boolean) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[PreferenceKeys.HEALTH_CONNECT_ENABLED] = enabled
+            }
+        } catch (exception: IOException) {
+            Log.e("UserSettingsRepository", "Error updating health connect enabled", exception)
+        }
+    }
+    
+    suspend fun updateStravaEnabled(enabled: Boolean) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[PreferenceKeys.STRAVA_ENABLED] = enabled
+            }
+        } catch (exception: IOException) {
+            Log.e("UserSettingsRepository", "Error updating strava enabled", exception)
         }
     }
 }

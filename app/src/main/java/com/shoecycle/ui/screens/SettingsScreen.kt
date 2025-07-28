@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,6 +49,10 @@ import com.shoecycle.ui.settings.SettingsFirstDayState
 import com.shoecycle.ui.settings.SettingsFirstDayInteractor
 import com.shoecycle.ui.settings.SettingsFavoriteDistancesState
 import com.shoecycle.ui.settings.SettingsFavoriteDistancesInteractor
+import com.shoecycle.ui.settings.SettingsHealthConnectState
+import com.shoecycle.ui.settings.SettingsHealthConnectInteractor
+import com.shoecycle.ui.settings.SettingsStravaState
+import com.shoecycle.ui.settings.SettingsStravaInteractor
 
 @Composable
 fun SettingsScreen() {
@@ -77,6 +82,16 @@ fun SettingsScreen() {
         
         // Favorite Distances Section
         SettingsFavoriteDistancesSection(
+            repository = repository
+        )
+        
+        // Health Connect Section
+        SettingsHealthConnectSection(
+            repository = repository
+        )
+        
+        // Strava Section
+        SettingsStravaSection(
             repository = repository
         )
         
@@ -271,6 +286,80 @@ fun SettingsFavoriteDistancesSection(
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SettingsHealthConnectSection(
+    repository: UserSettingsRepository
+) {
+    val state = remember { mutableStateOf(SettingsHealthConnectState()) }
+    val interactor = remember { SettingsHealthConnectInteractor(repository) }
+    
+    // Initialize state when view appears
+    LaunchedEffect(Unit) {
+        interactor.handle(state, SettingsHealthConnectInteractor.Action.ViewAppeared)
+    }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Health Connect",
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            Switch(
+                checked = state.value.enabled,
+                onCheckedChange = { enabled ->
+                    interactor.handle(state, SettingsHealthConnectInteractor.Action.ToggleChanged(enabled))
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingsStravaSection(
+    repository: UserSettingsRepository
+) {
+    val state = remember { mutableStateOf(SettingsStravaState()) }
+    val interactor = remember { SettingsStravaInteractor(repository) }
+    
+    // Initialize state when view appears
+    LaunchedEffect(Unit) {
+        interactor.handle(state, SettingsStravaInteractor.Action.ViewAppeared)
+    }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Strava",
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            Switch(
+                checked = state.value.enabled,
+                onCheckedChange = { enabled ->
+                    interactor.handle(state, SettingsStravaInteractor.Action.ToggleChanged(enabled))
+                }
+            )
         }
     }
 }
