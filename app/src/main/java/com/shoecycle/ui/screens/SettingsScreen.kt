@@ -28,7 +28,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -49,7 +48,6 @@ import com.shoecycle.ui.settings.SettingsFirstDayState
 import com.shoecycle.ui.settings.SettingsFirstDayInteractor
 import com.shoecycle.ui.settings.SettingsFavoriteDistancesState
 import com.shoecycle.ui.settings.SettingsFavoriteDistancesInteractor
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen() {
@@ -58,7 +56,6 @@ fun SettingsScreen() {
     val userSettings by repository.userSettingsFlow.collectAsState(
         initial = com.shoecycle.data.UserSettingsData()
     )
-    val coroutineScope = rememberCoroutineScope()
     
     
     Column(
@@ -94,7 +91,6 @@ fun SettingsUnitsSection(
 ) {
     val state = remember { mutableStateOf(SettingsUnitsState()) }
     val interactor = remember { SettingsUnitsInteractor(repository) }
-    val coroutineScope = rememberCoroutineScope()
     
     // Initialize state when view appears
     LaunchedEffect(Unit) {
@@ -121,9 +117,7 @@ fun SettingsUnitsSection(
                     val isSelected = state.value.selectedUnit == unit
                     FilterChip(
                         onClick = { 
-                            coroutineScope.launch {
-                                interactor.handle(state, SettingsUnitsInteractor.Action.UnitChanged(unit))
-                            }
+                            interactor.handle(state, SettingsUnitsInteractor.Action.UnitChanged(unit))
                         },
                         label = { Text(unit.displayString.replaceFirstChar { it.uppercase() }) },
                         selected = isSelected,
@@ -155,7 +149,6 @@ fun SettingsFirstDaySection(
 ) {
     val state = remember { mutableStateOf(SettingsFirstDayState()) }
     val interactor = remember { SettingsFirstDayInteractor(repository) }
-    val coroutineScope = rememberCoroutineScope()
     
     // Initialize state when view appears
     LaunchedEffect(Unit) {
@@ -182,9 +175,7 @@ fun SettingsFirstDaySection(
                     val isSelected = state.value.selectedDay == day
                     FilterChip(
                         onClick = { 
-                            coroutineScope.launch {
-                                interactor.handle(state, SettingsFirstDayInteractor.Action.DayChanged(day))
-                            }
+                            interactor.handle(state, SettingsFirstDayInteractor.Action.DayChanged(day))
                         },
                         label = { Text(day.displayString) },
                         selected = isSelected,
@@ -216,7 +207,6 @@ fun SettingsFavoriteDistancesSection(
 ) {
     val state = remember { mutableStateOf(SettingsFavoriteDistancesState()) }
     val interactor = remember { SettingsFavoriteDistancesInteractor(repository) }
-    val coroutineScope = rememberCoroutineScope()
     
     // Initialize state when view appears
     LaunchedEffect(Unit) {
@@ -241,9 +231,7 @@ fun SettingsFavoriteDistancesSection(
                 FavoriteDistanceTextField(
                     value = state.value.favorite1,
                     onValueChange = { distance ->
-                        coroutineScope.launch {
-                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(1, distance))
-                        }
+                        interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(1, distance))
                     },
                     label = "Favorite 1",
                     modifier = Modifier.weight(1f)
@@ -252,9 +240,7 @@ fun SettingsFavoriteDistancesSection(
                 FavoriteDistanceTextField(
                     value = state.value.favorite2,
                     onValueChange = { distance ->
-                        coroutineScope.launch {
-                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(2, distance))
-                        }
+                        interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(2, distance))
                     },
                     label = "Favorite 2",
                     modifier = Modifier.weight(1f)
@@ -270,9 +256,7 @@ fun SettingsFavoriteDistancesSection(
                 FavoriteDistanceTextField(
                     value = state.value.favorite3,
                     onValueChange = { distance ->
-                        coroutineScope.launch {
-                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(3, distance))
-                        }
+                        interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(3, distance))
                     },
                     label = "Favorite 3",
                     modifier = Modifier.weight(1f)
@@ -281,9 +265,7 @@ fun SettingsFavoriteDistancesSection(
                 FavoriteDistanceTextField(
                     value = state.value.favorite4,
                     onValueChange = { distance ->
-                        coroutineScope.launch {
-                            interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(4, distance))
-                        }
+                        interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(4, distance))
                     },
                     label = "Favorite 4",
                     modifier = Modifier.weight(1f)

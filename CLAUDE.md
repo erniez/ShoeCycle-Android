@@ -8,23 +8,45 @@
 - **Architecture Pattern**: VSI (View State Interactor) - custom pattern from iOS codebase
 - **Navigation**: Jetpack Navigation Compose with bottom tab bar
 - **Data Persistence**: DataStore Preferences (replaces iOS UserDefaults)
-- **State Management**: Compose state with unidirectional data flow
+- **State Management**: Strict VSI pattern - all state modifications via interactors only
 
 ## VSI Pattern Implementation
 The app uses a custom VSI (View State Interactor) pattern with three components:
 1. **State**: Data classes holding UI state (e.g., `SettingsUnitsState`)
-2. **Interactor**: Business logic handlers with sealed Action classes
+2. **Interactor**: Business logic handlers with internal CoroutineScope and sealed Action classes
 3. **Actions**: Sealed classes defining user interactions (`UnitChanged`, `ViewAppeared`)
+
+### Architecture Rules
+- **Rule 1**: Views can ONLY modify state via interactors - no direct state management allowed
+- **Rule 2**: Interactors handle their own coroutine scope and async operations
+- **Rule 3**: UI layer only dispatches actions and observes state changes
+- **Rule 4**: No direct repository calls from UI components
 
 Example structure:
 ```kotlin
 data class SettingsUnitsState(val selectedUnit: DistanceUnit = DistanceUnit.MILES)
-class SettingsUnitsInteractor(private val repository: UserSettingsRepository) {
+
+class SettingsUnitsInteractor(
+    private val repository: UserSettingsRepository,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+) {
     sealed class Action {
         data class UnitChanged(val unit: DistanceUnit) : Action()
         object ViewAppeared : Action()
     }
+    
+    fun handle(state: MutableState<SettingsUnitsState>, action: Action) {
+        when (action) {
+            is Action.UnitChanged -> {
+                state.value = state.value.copy(selectedUnit = action.unit) // Immediate UI update
+                scope.launch { repository.updateDistanceUnit(action.unit) } // Async persistence
+            }
+        }
+    }
 }
+
+// UI Layer - Clean action dispatching
+FilterChip(onClick = { interactor.handle(state, Action.UnitChanged(unit)) })
 ```
 
 ## Project Structure
