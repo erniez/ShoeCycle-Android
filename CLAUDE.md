@@ -124,8 +124,12 @@ app/src/main/java/com/shoecycle/
 - VSI pattern is the assumed standard throughout the app (no need to document in comments)
 
 ## Next Steps for Development
-1. Implement remaining screen functionality (Add Distance, Active Shoes, Hall of Fame)
-2. Add Room database for shoe tracking data
-3. Implement business logic for distance tracking
-4. Add data validation and input sanitization
-5. Create unit and integration tests
+See **[ProductPlan.MD](../ProductPlan.MD)** for comprehensive development roadmap and implementation phases.
+
+### Quick Reference - Current Priorities:
+1. **Phase 1**: Implement Room database with Shoe and History entities
+2. **Phase 1**: Create repository pattern for data management  
+3. **Phase 1**: Port core shoe tracking business logic from iOS
+4. **Phase 2**: Implement remaining screen functionality (Add Distance, Active Shoes, Hall of Fame)
+5. **Phase 3**: Add external integrations (Health Connect, Strava)
+6. **Phase 4**: Comprehensive testing and performance optimization
