@@ -50,4 +50,7 @@ interface ShoeDao {
     
     @Query("SELECT COUNT(*) FROM shoes WHERE hallOfFame = 1")
     suspend fun getRetiredShoesCount(): Int
+    
+    @Query("SELECT MAX(orderingValue) FROM shoes")
+    suspend fun getMaxOrderingValue(): Double?
 }

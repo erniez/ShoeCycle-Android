@@ -170,15 +170,8 @@ class ShoeRepository(
 
     override suspend fun getNextOrderingValue(): Double {
         return try {
-            val activeShoes = shoeDao.getActiveShoes()
-            // This is a Flow, so we need to collect the first emission
-            // For now, we'll use a simple approach and get the current max + 1
-            val maxOrdering = shoeDao.getAllShoes().let { flow ->
-                // We need to handle this differently since we can't collect in suspend
-                // Let's use a simpler approach for now
-                1000.0 + System.currentTimeMillis().toDouble() / 1000.0
-            }
-            maxOrdering
+            val maxOrdering = shoeDao.getMaxOrderingValue() ?: 0.0
+            maxOrdering + 1.0
         } catch (e: Exception) {
             Log.e(TAG, "Error getting next ordering value", e)
             1.0
