@@ -5,4 +5,8 @@
     <string name="active_shoes">Active Shoes</string>
     <string name="hall_of_fame">Hall of Fame</string>
     <string name="settings">Settings</string>
+    <string name="add_shoe">Add Shoe</string>
+    <string name="selected">Selected</string>
+    <string name="distance">Distance</string>
+    <string name="empty_shoes_hint">Please tap the "Add Shoe" button to add a shoe.</string>
 </resources>
