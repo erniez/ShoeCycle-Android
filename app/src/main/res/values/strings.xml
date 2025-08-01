@@ -9,4 +9,6 @@
     <string name="selected">Selected</string>
     <string name="distance">Distance</string>
     <string name="empty_shoes_hint">Please tap the "Add Shoe" button to add a shoe.</string>
+    <string name="generate_test_shoe">Generate Test Shoe</string>
+    <string name="generating">Generating…</string>
 </resources>

@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,8 +19,10 @@ import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.DistanceUtility
+import com.shoecycle.domain.MockShoeGenerator
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,17 +32,20 @@ import kotlinx.coroutines.launch
 data class ActiveShoesState(
     val shoes: List<Shoe> = emptyList(),
     val isLoading: Boolean = true,
+    val isGeneratingTestData: Boolean = false,
     val selectedShoeId: Long? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.MILES
 )
 
 class ActiveShoesInteractor(
     private val shoeRepository: IShoeRepository,
+    private val historyRepository: IHistoryRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
         object ViewAppeared : Action()
+        object GenerateTestData : Action()
     }
     
     fun handle(state: MutableState<ActiveShoesState>, action: Action) {
@@ -63,6 +69,19 @@ class ActiveShoesInteractor(
                     }
                 }
             }
+            is Action.GenerateTestData -> {
+                scope.launch {
+                    try {
+                        state.value = state.value.copy(isGeneratingTestData = true)
+                        val mockGenerator = MockShoeGenerator(shoeRepository, historyRepository)
+                        mockGenerator.generateNewShoeWithData()
+                        state.value = state.value.copy(isGeneratingTestData = false)
+                    } catch (e: Exception) {
+                        state.value = state.value.copy(isGeneratingTestData = false)
+                        // TODO: Handle error state
+                    }
+                }
+            }
         }
     }
 }
@@ -76,7 +95,10 @@ fun ActiveShoesScreen() {
         com.shoecycle.data.repository.ShoeRepository.create(context)
     }
     val userSettingsRepository = remember { UserSettingsRepository(context) }
-    val interactor = remember { ActiveShoesInteractor(shoeRepository, userSettingsRepository) }
+    val historyRepository = remember {
+        com.shoecycle.data.repository.HistoryRepository.create(context, shoeRepository)
+    }
+    val interactor = remember { ActiveShoesInteractor(shoeRepository, historyRepository, userSettingsRepository) }
     val state = remember { mutableStateOf(ActiveShoesState()) }
     
     LaunchedEffect(Unit) {
@@ -134,22 +156,55 @@ fun ActiveShoesScreen() {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Card(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .widthIn(max = 300.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = stringResource(R.string.empty_shoes_hint),
-                                modifier = Modifier.padding(24.dp),
-                                style = MaterialTheme.typography.bodyLarge,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Card(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .widthIn(max = 300.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.empty_shoes_hint),
+                                    modifier = Modifier.padding(24.dp),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            
+                            // Debug-only test data generation button for empty state
+                            if (true) { // Always show for now, can be changed to BuildConfig.DEBUG
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        interactor.handle(state, ActiveShoesInteractor.Action.GenerateTestData)
+                                    },
+                                    modifier = Modifier.widthIn(max = 280.dp),
+                                    enabled = !state.value.isGeneratingTestData
+                                ) {
+                                    if (state.value.isGeneratingTestData) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.generating))
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.generate_test_shoe))
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -165,6 +220,37 @@ fun ActiveShoesScreen() {
                                 distanceUnit = state.value.distanceUnit,
                                 isSelected = shoe.id == state.value.selectedShoeId
                             )
+                        }
+                        
+                        // Debug-only test data generation button
+                        if (true) { // Always show for now, can be changed to BuildConfig.DEBUG
+                            item {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        interactor.handle(state, ActiveShoesInteractor.Action.GenerateTestData)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !state.value.isGeneratingTestData
+                                ) {
+                                    if (state.value.isGeneratingTestData) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.generating))
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.generate_test_shoe))
+                                    }
+                                }
+                            }
                         }
                     }
                 }
