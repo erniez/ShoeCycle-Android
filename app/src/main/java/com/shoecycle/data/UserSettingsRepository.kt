@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -23,6 +24,7 @@ class UserSettingsRepository(private val context: Context) {
         val FAVORITE_4 = doublePreferencesKey("favorite_4")
         val HEALTH_CONNECT_ENABLED = booleanPreferencesKey("health_connect_enabled")
         val STRAVA_ENABLED = booleanPreferencesKey("strava_enabled")
+        val SELECTED_SHOE_ID = longPreferencesKey("selected_shoe_id")
     }
     
     val userSettingsFlow: Flow<UserSettingsData> = context.dataStore.data
@@ -46,7 +48,8 @@ class UserSettingsRepository(private val context: Context) {
                 favorite3 = preferences[PreferenceKeys.FAVORITE_3] ?: 0.0,
                 favorite4 = preferences[PreferenceKeys.FAVORITE_4] ?: 0.0,
                 healthConnectEnabled = preferences[PreferenceKeys.HEALTH_CONNECT_ENABLED] ?: false,
-                stravaEnabled = preferences[PreferenceKeys.STRAVA_ENABLED] ?: false
+                stravaEnabled = preferences[PreferenceKeys.STRAVA_ENABLED] ?: false,
+                selectedShoeId = preferences[PreferenceKeys.SELECTED_SHOE_ID]
             )
         }
     
@@ -127,6 +130,20 @@ class UserSettingsRepository(private val context: Context) {
             }
         } catch (exception: IOException) {
             Log.e("UserSettingsRepository", "Error updating strava enabled", exception)
+        }
+    }
+    
+    suspend fun updateSelectedShoeId(shoeId: Long?) {
+        try {
+            context.dataStore.edit { preferences ->
+                if (shoeId != null) {
+                    preferences[PreferenceKeys.SELECTED_SHOE_ID] = shoeId
+                } else {
+                    preferences.remove(PreferenceKeys.SELECTED_SHOE_ID)
+                }
+            }
+        } catch (exception: IOException) {
+            Log.e("UserSettingsRepository", "Error updating selected shoe ID", exception)
         }
     }
 }

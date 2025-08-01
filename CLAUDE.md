@@ -123,6 +123,32 @@ app/src/main/java/com/shoecycle/
 - Coroutines for asynchronous data operations
 - VSI pattern is the assumed standard throughout the app (no need to document in comments)
 
+## Testing Guidelines & Lessons Learned
+
+### Testing Framework Consistency
+- **Always check existing test patterns first** - Review existing test files to understand project conventions
+- **Use Mockito** - This project uses Mockito throughout; maintain consistency over personal preference
+- **Example**: When creating new tests, look at existing files like `HistoryCalculationsTest.kt` for mockito-kotlin usage patterns
+
+### Android Framework Dependencies
+- **Use Robolectric for Android framework testing** - Required for testing classes that use `android.util.Log` and other Android APIs
+- **Keep Android Log calls in business logic** - Log.d() and Log.e() provide valuable production debugging information
+- **Don't remove logging to fix tests** - Instead, use Robolectric to handle Android framework mocking
+- **Test annotation**: Always use `@RunWith(RobolectricTestRunner::class)` for classes with Android dependencies
+
+### Testing Dependencies (build.gradle.kts)
+```kotlin
+testImplementation("org.mockito:mockito-core:5.8.0")
+testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+testImplementation("org.robolectric:robolectric:4.11.1")
+```
+
+### Key Testing Principles
+1. **Framework Consistency**: Always match existing project testing patterns, not personal preferences
+2. **Android Mocking**: Use Robolectric for Android framework dependencies rather than removing functionality
+3. **Logging Preservation**: Keep Log calls for production debugging; tests should accommodate them, not remove them
+4. **Dependency Minimization**: Remove unused testing libraries (like MockK) to keep dependencies clean
+
 ## Next Steps for Development
 See **[ProductPlan.MD](../ProductPlan.MD)** for comprehensive development roadmap and implementation phases.
 
