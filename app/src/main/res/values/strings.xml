@@ -11,4 +11,6 @@
     <string name="empty_shoes_hint">Please tap the "Add Shoe" button to add a shoe.</string>
     <string name="generate_test_shoe">Generate Test Shoe</string>
     <string name="generating">Generating…</string>
+    <string name="shoe_detail">Shoe Detail</string>
+    <string name="view_details">View Details</string>
 </resources>

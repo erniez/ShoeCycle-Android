@@ -14,11 +14,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -110,7 +112,9 @@ class ActiveShoesInteractor(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActiveShoesScreen() {
+fun ActiveShoesScreen(
+    onNavigateToShoeDetail: (Long) -> Unit = {}
+) {
     val context = LocalContext.current
     val shoeRepository = remember { 
         // TODO: Use dependency injection
@@ -243,7 +247,8 @@ fun ActiveShoesScreen() {
                                 isSelected = shoe.id == state.value.selectedShoeId,
                                 onShoeSelected = { shoeId ->
                                     interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(shoeId))
-                                }
+                                },
+                                onNavigateToDetail = onNavigateToShoeDetail
                             )
                         }
                         
@@ -289,7 +294,8 @@ fun ActiveShoesRowView(
     shoe: Shoe,
     distanceUnit: DistanceUnit,
     isSelected: Boolean = false,
-    onShoeSelected: (Long) -> Unit = {}
+    onShoeSelected: (Long) -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {}
 ) {
     // Animate the distance text position to make room for "Selected" text
     val distanceTextOffset by animateFloatAsState(
@@ -333,17 +339,18 @@ fun ActiveShoesRowView(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Brand name row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Main content column with padding on the right for the button area
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 48.dp) // Make room for the full-height button
             ) {
+                // Brand name
                 Text(
                     text = shoe.displayName,
                     style = MaterialTheme.typography.titleLarge,
@@ -354,42 +361,62 @@ fun ActiveShoesRowView(
                         MaterialTheme.colorScheme.onSurface
                     }
                 )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Distance and selected indicator row with fixed positioning
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(20.dp) // Fixed height to prevent layout changes
+                ) {
+                    // Selected text - always present but with alpha and offset animation
+                    Text(
+                        text = stringResource(R.string.selected),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .graphicsLayer {
+                                alpha = selectedTextAlpha
+                                translationX = selectedTextTranslationX
+                            }
+                    )
+                    
+                    // Distance text with smooth translation
+                    Text(
+                        text = "${stringResource(R.string.distance)}: ${shoe.totalDistance} ${distanceUnit.displayString}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .offset(x = distanceTextOffset.dp)
+                    )
+                }
             }
             
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            // Distance and selected indicator row with fixed positioning
+            // Clickable info button area that matches column height
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(20.dp) // Fixed height to prevent layout changes
+                    .align(Alignment.CenterEnd)
+                    .width(48.dp)
+                    .fillMaxHeight()
+                    .clickable { onNavigateToDetail(shoe.id) },
+                contentAlignment = Alignment.Center
             ) {
-                // Selected text - always present but with alpha and offset animation
-                Text(
-                    text = stringResource(R.string.selected),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .graphicsLayer {
-                            alpha = selectedTextAlpha
-                            translationX = selectedTextTranslationX
-                        }
-                )
-                
-                // Distance text with smooth translation
-                Text(
-                    text = "${stringResource(R.string.distance)}: ${shoe.totalDistance} ${distanceUnit.displayString}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "View details",
+                    tint = if (isSelected) {
                         MaterialTheme.colorScheme.onPrimaryContainer
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .offset(x = distanceTextOffset.dp)
+                    }
                 )
             }
         }
