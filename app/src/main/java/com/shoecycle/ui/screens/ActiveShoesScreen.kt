@@ -1,5 +1,13 @@
 package com.shoecycle.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +35,7 @@ import com.shoecycle.domain.MockShoeGenerator
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -46,6 +56,7 @@ class ActiveShoesInteractor(
     sealed class Action {
         object ViewAppeared : Action()
         object GenerateTestData : Action()
+        data class ShoeSelected(val shoeId: Long) : Action()
     }
     
     fun handle(state: MutableState<ActiveShoesState>, action: Action) {
@@ -53,17 +64,18 @@ class ActiveShoesInteractor(
             is Action.ViewAppeared -> {
                 scope.launch {
                     try {
-                        // Load user settings for distance unit
-                        val settings = userSettingsRepository.userSettingsFlow.first()
-                        
-                        // Collect active shoes
-                        shoeRepository.getActiveShoes().collect { shoes ->
+                        // Combine both flows to react to changes in either
+                        combine(
+                            userSettingsRepository.userSettingsFlow,
+                            shoeRepository.getActiveShoes()
+                        ) { settings, shoes ->
                             state.value = state.value.copy(
                                 shoes = shoes,
                                 isLoading = false,
-                                distanceUnit = settings.distanceUnit
+                                distanceUnit = settings.distanceUnit,
+                                selectedShoeId = settings.selectedShoeId
                             )
-                        }
+                        }.collect { }
                     } catch (e: Exception) {
                         state.value = state.value.copy(isLoading = false)
                     }
@@ -78,6 +90,16 @@ class ActiveShoesInteractor(
                         state.value = state.value.copy(isGeneratingTestData = false)
                     } catch (e: Exception) {
                         state.value = state.value.copy(isGeneratingTestData = false)
+                        // TODO: Handle error state
+                    }
+                }
+            }
+            is Action.ShoeSelected -> {
+                scope.launch {
+                    try {
+                        // Update user settings - the Flow will update state naturally
+                        userSettingsRepository.updateSelectedShoeId(action.shoeId)
+                    } catch (e: Exception) {
                         // TODO: Handle error state
                     }
                 }
@@ -218,7 +240,10 @@ fun ActiveShoesScreen() {
                             ActiveShoesRowView(
                                 shoe = shoe,
                                 distanceUnit = state.value.distanceUnit,
-                                isSelected = shoe.id == state.value.selectedShoeId
+                                isSelected = shoe.id == state.value.selectedShoeId,
+                                onShoeSelected = { shoeId ->
+                                    interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(shoeId))
+                                }
                             )
                         }
                         
@@ -263,11 +288,42 @@ fun ActiveShoesScreen() {
 fun ActiveShoesRowView(
     shoe: Shoe,
     distanceUnit: DistanceUnit,
-    isSelected: Boolean = false
+    isSelected: Boolean = false,
+    onShoeSelected: (Long) -> Unit = {}
 ) {
+    // Animate the distance text position to make room for "Selected" text
+    val distanceTextOffset by animateFloatAsState(
+        targetValue = if (isSelected) 80f else 0f, // 80dp offset when selected
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = androidx.compose.animation.core.FastOutSlowInEasing
+        ),
+        label = "distanceTextOffset"
+    )
+    
+    // Animate selected text alpha and position
+    val selectedTextAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = androidx.compose.animation.core.FastOutSlowInEasing
+        ),
+        label = "selectedTextAlpha"
+    )
+    
+    val selectedTextTranslationX by animateFloatAsState(
+        targetValue = if (isSelected) 0f else -100f,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = androidx.compose.animation.core.FastOutSlowInEasing
+        ),
+        label = "selectedTextTranslationX"
+    )
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onShoeSelected(shoe.id) },
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -302,21 +358,27 @@ fun ActiveShoesRowView(
             
             Spacer(modifier = Modifier.height(4.dp))
             
-            // Distance and selected indicator row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            // Distance and selected indicator row with fixed positioning
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp) // Fixed height to prevent layout changes
             ) {
-                if (isSelected) {
-                    Text(
-                        text = stringResource(R.string.selected),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
+                // Selected text - always present but with alpha and offset animation
+                Text(
+                    text = stringResource(R.string.selected),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .graphicsLayer {
+                            alpha = selectedTextAlpha
+                            translationX = selectedTextTranslationX
+                        }
+                )
                 
+                // Distance text with smooth translation
                 Text(
                     text = "${stringResource(R.string.distance)}: ${shoe.totalDistance} ${distanceUnit.displayString}",
                     style = MaterialTheme.typography.bodyMedium,
@@ -324,7 +386,10 @@ fun ActiveShoesRowView(
                         MaterialTheme.colorScheme.onPrimaryContainer
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .offset(x = distanceTextOffset.dp)
                 )
             }
         }
