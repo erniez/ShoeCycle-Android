@@ -148,18 +148,6 @@ fun ActiveShoesScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    // TODO: Implement add shoe functionality
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.add_shoe)
-                )
-            }
         }
     ) { paddingValues ->
         Box(
