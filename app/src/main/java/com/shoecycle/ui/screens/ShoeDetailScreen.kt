@@ -3,6 +3,7 @@ package com.shoecycle.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
@@ -29,7 +30,11 @@ import java.util.Locale
 
 data class ShoeDetailState(
     val shoe: Shoe? = null,
+    val editedShoe: Shoe? = null,
+    val hasUnsavedChanges: Boolean = false,
     val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
+    val shouldNavigateBack: Boolean = false,
     val errorMessage: String? = null,
     val distanceUnit: String = "mi"
 )
@@ -43,6 +48,13 @@ class ShoeDetailInteractor(
     sealed class Action {
         data class ViewAppeared(val shoeId: Long) : Action()
         object Refresh : Action()
+        data class UpdateShoeName(val name: String) : Action()
+        data class UpdateStartDistance(val distance: String) : Action()
+        data class UpdateMaxDistance(val distance: String) : Action()
+        data class UpdateStartDate(val date: java.util.Date) : Action()
+        data class UpdateEndDate(val date: java.util.Date) : Action()
+        object SaveChanges : Action()
+        object RequestNavigateBack : Action()
     }
     
     fun handle(state: MutableState<ShoeDetailState>, action: Action) {
@@ -51,6 +63,124 @@ class ShoeDetailInteractor(
             is Action.Refresh -> {
                 state.value.shoe?.let { shoe ->
                     loadShoe(state, shoe.id)
+                }
+            }
+            is Action.UpdateShoeName -> {
+                val currentEdited = state.value.editedShoe ?: return
+                val updatedShoe = currentEdited.copy(brand = action.name)
+                state.value = state.value.copy(
+                    editedShoe = updatedShoe,
+                    hasUnsavedChanges = updatedShoe != state.value.shoe
+                )
+            }
+            is Action.UpdateStartDistance -> {
+                val currentEdited = state.value.editedShoe ?: return
+                scope.launch {
+                    try {
+                        val distance = distanceUtility.distance(action.distance)
+                        val updatedShoe = currentEdited.copy(startDistance = distance)
+                        state.value = state.value.copy(
+                            editedShoe = updatedShoe,
+                            hasUnsavedChanges = updatedShoe != state.value.shoe
+                        )
+                    } catch (e: Exception) {
+                        // Keep current value if parsing fails
+                    }
+                }
+            }
+            is Action.UpdateMaxDistance -> {
+                val currentEdited = state.value.editedShoe ?: return
+                scope.launch {
+                    try {
+                        val distance = distanceUtility.distance(action.distance)
+                        val updatedShoe = currentEdited.copy(maxDistance = distance)
+                        state.value = state.value.copy(
+                            editedShoe = updatedShoe,
+                            hasUnsavedChanges = updatedShoe != state.value.shoe
+                        )
+                    } catch (e: Exception) {
+                        // Keep current value if parsing fails
+                    }
+                }
+            }
+            is Action.UpdateStartDate -> {
+                val currentEdited = state.value.editedShoe ?: return
+                val updatedShoe = currentEdited.copy(startDate = action.date)
+                state.value = state.value.copy(
+                    editedShoe = updatedShoe,
+                    hasUnsavedChanges = updatedShoe != state.value.shoe
+                )
+            }
+            is Action.UpdateEndDate -> {
+                val currentEdited = state.value.editedShoe ?: return
+                val updatedShoe = currentEdited.copy(expirationDate = action.date)
+                state.value = state.value.copy(
+                    editedShoe = updatedShoe,
+                    hasUnsavedChanges = updatedShoe != state.value.shoe
+                )
+            }
+            is Action.SaveChanges -> {
+                val editedShoe = state.value.editedShoe ?: return
+                state.value = state.value.copy(isSaving = true)
+                scope.launch {
+                    try {
+                        // Update the shoe details
+                        shoeRepository.updateShoe(editedShoe)
+                        
+                        // Recalculate total distance in case start distance changed
+                        shoeRepository.recalculateShoeTotal(editedShoe.id)
+                        
+                        // Get the updated shoe with recalculated total
+                        val updatedShoe = shoeRepository.getShoeByIdOnce(editedShoe.id)
+                        
+                        state.value = state.value.copy(
+                            shoe = updatedShoe,
+                            editedShoe = updatedShoe,
+                            hasUnsavedChanges = false,
+                            isSaving = false
+                        )
+                    } catch (e: Exception) {
+                        state.value = state.value.copy(
+                            isSaving = false,
+                            errorMessage = "Error saving changes: ${e.message}"
+                        )
+                    }
+                }
+            }
+            is Action.RequestNavigateBack -> {
+                if (state.value.hasUnsavedChanges && !state.value.isSaving) {
+                    // Set flag to navigate after save, then save
+                    state.value = state.value.copy(shouldNavigateBack = true, isSaving = true)
+                    val editedShoe = state.value.editedShoe ?: return
+                    scope.launch {
+                        try {
+                            // Update the shoe details
+                            shoeRepository.updateShoe(editedShoe)
+                            
+                            // Recalculate total distance in case start distance changed
+                            shoeRepository.recalculateShoeTotal(editedShoe.id)
+                            
+                            // Get the updated shoe with recalculated total
+                            val updatedShoe = shoeRepository.getShoeByIdOnce(editedShoe.id)
+                            
+                            state.value = state.value.copy(
+                                shoe = updatedShoe,
+                                editedShoe = updatedShoe,
+                                hasUnsavedChanges = false,
+                                isSaving = false
+                                // shouldNavigateBack remains true for UI to handle
+                            )
+                        } catch (e: Exception) {
+                            state.value = state.value.copy(
+                                isSaving = false,
+                                shouldNavigateBack = false,
+                                errorMessage = "Error saving changes: ${e.message}"
+                            )
+                        }
+                    }
+                } else if (!state.value.isSaving) {
+                    // No unsaved changes, can navigate immediately
+                    state.value = state.value.copy(shouldNavigateBack = true)
                 }
             }
         }
@@ -67,6 +197,8 @@ class ShoeDetailInteractor(
                         
                         state.value = state.value.copy(
                             shoe = shoe,
+                            editedShoe = shoe,
+                            hasUnsavedChanges = false,
                             isLoading = false,
                             errorMessage = null,
                             distanceUnit = unitLabel
@@ -109,12 +241,31 @@ fun ShoeDetailScreen(
         interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(shoeId))
     }
     
+    // Unified back navigation handler
+    fun handleBackNavigation() {
+        interactor.handle(state, ShoeDetailInteractor.Action.RequestNavigateBack)
+    }
+    
+    // Watch for navigation request and handle it
+    LaunchedEffect(state.value.shouldNavigateBack) {
+        if (state.value.shouldNavigateBack) {
+            onNavigateBack()
+            // Reset the flag (though the screen will unmount anyway)
+            state.value = state.value.copy(shouldNavigateBack = false)
+        }
+    }
+    
+    // Handle back navigation with save
+    androidx.activity.compose.BackHandler(enabled = true) {
+        handleBackNavigation()
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.shoe_detail)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = { handleBackNavigation() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -144,7 +295,9 @@ fun ShoeDetailScreen(
                 state.value.shoe != null -> {
                     ShoeDetailContent(
                         state = state.value,
-                        distanceUtility = distanceUtility
+                        distanceUtility = distanceUtility,
+                        interactor = interactor,
+                        stateRef = state
                     )
                 }
                 else -> {
@@ -154,6 +307,30 @@ fun ShoeDetailScreen(
                             interactor.handle(state, ShoeDetailInteractor.Action.Refresh)
                         }
                     )
+                }
+            }
+            
+            // Saving overlay
+            if (state.value.isSaving) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(enabled = false) { }, // Intercept clicks
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        modifier = Modifier.padding(32.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(24.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            Text("Saving changes...")
+                        }
+                    }
                 }
             }
         }
@@ -197,9 +374,11 @@ private fun ErrorScreen(
 @Composable
 private fun ShoeDetailContent(
     state: ShoeDetailState,
-    distanceUtility: DistanceUtility
+    distanceUtility: DistanceUtility,
+    interactor: ShoeDetailInteractor,
+    stateRef: MutableState<ShoeDetailState>
 ) {
-    val shoe = state.shoe ?: return
+    val shoe = state.editedShoe ?: return
     
     LazyColumn(
         modifier = Modifier
@@ -209,7 +388,10 @@ private fun ShoeDetailContent(
     ) {
         item {
             ShoeInformationSection(
-                shoe = shoe
+                shoe = shoe,
+                onShoeNameChange = { name ->
+                    interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateShoeName(name))
+                }
             )
         }
         
@@ -217,12 +399,26 @@ private fun ShoeDetailContent(
             DistanceInformationSection(
                 shoe = shoe,
                 distanceUtility = distanceUtility,
-                distanceUnit = state.distanceUnit
+                distanceUnit = state.distanceUnit,
+                onStartDistanceChange = { distance ->
+                    interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateStartDistance(distance))
+                },
+                onMaxDistanceChange = { distance ->
+                    interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateMaxDistance(distance))
+                }
             )
         }
         
         item {
-            WearTimeInformationSection(shoe = shoe)
+            WearTimeInformationSection(
+                shoe = shoe,
+                onStartDateChange = { date ->
+                    interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateStartDate(date))
+                },
+                onEndDateChange = { date ->
+                    interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateEndDate(date))
+                }
+            )
         }
         
         item {
@@ -233,7 +429,8 @@ private fun ShoeDetailContent(
 
 @Composable
 private fun ShoeInformationSection(
-    shoe: Shoe
+    shoe: Shoe,
+    onShoeNameChange: (String) -> Unit
 ) {
     ShoeCycleSectionCard(
         title = "Shoe",
@@ -244,17 +441,19 @@ private fun ShoeInformationSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = "Name:",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Text(
-                text = shoe.displayName,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+            OutlinedTextField(
+                value = shoe.brand,
+                onValueChange = onShoeNameChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                placeholder = { Text("Enter shoe name") }
             )
         }
     }
@@ -264,7 +463,9 @@ private fun ShoeInformationSection(
 private fun DistanceInformationSection(
     shoe: Shoe,
     distanceUtility: DistanceUtility,
-    distanceUnit: String
+    distanceUnit: String,
+    onStartDistanceChange: (String) -> Unit,
+    onMaxDistanceChange: (String) -> Unit
 ) {
     var startDistanceDisplay by remember { mutableStateOf("") }
     var maxDistanceDisplay by remember { mutableStateOf("") }
@@ -288,45 +489,60 @@ private fun DistanceInformationSection(
             // Start Distance
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "Start:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = "$startDistanceDisplay $distanceUnit",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                OutlinedTextField(
+                    value = startDistanceDisplay,
+                    onValueChange = onStartDistanceChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    suffix = { Text(distanceUnit) },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
                 )
             }
             
             // Max Distance
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "Max:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = "$maxDistanceDisplay $distanceUnit",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                OutlinedTextField(
+                    value = maxDistanceDisplay,
+                    onValueChange = onMaxDistanceChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    suffix = { Text(distanceUnit) },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WearTimeInformationSection(
-    shoe: Shoe
+    shoe: Shoe,
+    onStartDateChange: (java.util.Date) -> Unit,
+    onEndDateChange: (java.util.Date) -> Unit
 ) {
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
     
     ShoeCycleSectionCard(
         title = "Wear Time",
@@ -350,10 +566,19 @@ private fun WearTimeInformationSection(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = dateFormatter.format(shoe.startDate),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                OutlinedTextField(
+                    value = dateFormatter.format(shoe.startDate),
+                    onValueChange = { },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp)
+                        .clickable { showStartDatePicker = true },
+                    enabled = false,
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
             }
             
@@ -368,14 +593,84 @@ private fun WearTimeInformationSection(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = dateFormatter.format(shoe.expirationDate),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                OutlinedTextField(
+                    value = dateFormatter.format(shoe.expirationDate),
+                    onValueChange = { },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp)
+                        .clickable { showEndDatePicker = true },
+                    enabled = false,
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
             }
         }
     }
+    
+    // Date Pickers
+    if (showStartDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = shoe.startDate.time
+        )
+        DatePickerDialog(
+            onDateSelected = { 
+                datePickerState.selectedDateMillis?.let { dateMillis ->
+                    onStartDateChange(java.util.Date(dateMillis))
+                }
+                showStartDatePicker = false
+            },
+            onDismiss = { showStartDatePicker = false }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+    
+    if (showEndDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = shoe.expirationDate.time
+        )
+        DatePickerDialog(
+            onDateSelected = { 
+                datePickerState.selectedDateMillis?.let { dateMillis ->
+                    onEndDateChange(java.util.Date(dateMillis))
+                }
+                showEndDatePicker = false
+            },
+            onDismiss = { showEndDatePicker = false }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+@Composable
+private fun DatePickerDialog(
+    onDateSelected: () -> Unit,
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDateSelected) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        text = {
+            Column {
+                content()
+            }
+        }
+    )
 }
 
 @Composable

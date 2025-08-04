@@ -30,4 +30,7 @@ interface IShoeRepository {
     // Ordering operations
     suspend fun updateShoeOrdering(shoeId: Long, newOrderingValue: Double)
     suspend fun getNextOrderingValue(): Double
+    
+    // Total distance recalculation
+    suspend fun recalculateShoeTotal(shoeId: Long)
 }

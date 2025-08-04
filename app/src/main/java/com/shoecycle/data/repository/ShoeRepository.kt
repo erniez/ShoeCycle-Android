@@ -178,7 +178,7 @@ class ShoeRepository(
         }
     }
 
-    suspend fun recalculateShoeTotal(shoeId: Long) {
+    override suspend fun recalculateShoeTotal(shoeId: Long) {
         try {
             val totalDistance = historyDao.getTotalDistanceForShoe(shoeId) ?: 0.0
             val shoe = getShoeByIdOnce(shoeId)
