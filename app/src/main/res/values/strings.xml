@@ -13,4 +13,8 @@
     <string name="generating">Generating…</string>
     <string name="shoe_detail">Shoe Detail</string>
     <string name="view_details">View Details</string>
+    <string name="new_shoe">New Shoe</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="creating_shoe">Creating shoe…</string>
 </resources>

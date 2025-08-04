@@ -44,6 +44,9 @@ fun ActiveShoesListScreen(
     val interactor = remember { ActiveShoesInteractor(shoeRepository, historyRepository, userSettingsRepository) }
     val state = remember { mutableStateOf(ActiveShoesState()) }
     
+    // Modal state
+    var showAddShoeModal by remember { mutableStateOf(false) }
+    
     LaunchedEffect(Unit) {
         interactor.handle(state, ActiveShoesInteractor.Action.ViewAppeared)
     }
@@ -55,7 +58,7 @@ fun ActiveShoesListScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            // TODO: Implement add shoe functionality
+                            showAddShoeModal = true
                         }
                     ) {
                         Icon(
@@ -192,4 +195,16 @@ fun ActiveShoesListScreen(
             }
         }
     }
+    
+    // Add Shoe Modal
+    AddShoeModal(
+        isVisible = showAddShoeModal,
+        shoeRepository = shoeRepository,
+        onDismiss = { showAddShoeModal = false },
+        onShoeSaved = {
+            showAddShoeModal = false
+            // Refresh the list to show the new shoe
+            interactor.handle(state, ActiveShoesInteractor.Action.ViewAppeared)
+        }
+    )
 }
