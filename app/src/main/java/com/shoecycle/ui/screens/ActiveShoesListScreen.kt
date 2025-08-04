@@ -197,9 +197,8 @@ fun ActiveShoesListScreen(
     }
     
     // Add Shoe Modal
-    AddShoeModal(
+    ShoeDetailModal(
         isVisible = showAddShoeModal,
-        shoeRepository = shoeRepository,
         onDismiss = { showAddShoeModal = false },
         onShoeSaved = {
             showAddShoeModal = false

@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import android.util.Log
 
 data class ShoeDetailState(
     val shoe: Shoe? = null,
@@ -36,7 +37,9 @@ data class ShoeDetailState(
     val isSaving: Boolean = false,
     val shouldNavigateBack: Boolean = false,
     val errorMessage: String? = null,
-    val distanceUnit: String = "mi"
+    val distanceUnit: String = "mi",
+    val isCreateMode: Boolean = false,
+    val onShoeSaved: (() -> Unit)? = null
 )
 
 class ShoeDetailInteractor(
@@ -47,6 +50,7 @@ class ShoeDetailInteractor(
 ) {
     sealed class Action {
         data class ViewAppeared(val shoeId: Long) : Action()
+        object InitializeNewShoe : Action()
         object Refresh : Action()
         data class UpdateShoeName(val name: String) : Action()
         data class UpdateStartDistance(val distance: String) : Action()
@@ -55,11 +59,13 @@ class ShoeDetailInteractor(
         data class UpdateEndDate(val date: java.util.Date) : Action()
         object SaveChanges : Action()
         object RequestNavigateBack : Action()
+        object CancelCreate : Action()
     }
     
     fun handle(state: MutableState<ShoeDetailState>, action: Action) {
         when (action) {
             is Action.ViewAppeared -> loadShoe(state, action.shoeId)
+            is Action.InitializeNewShoe -> initializeNewShoe(state)
             is Action.Refresh -> {
                 state.value.shoe?.let { shoe ->
                     loadShoe(state, shoe.id)
@@ -121,28 +127,55 @@ class ShoeDetailInteractor(
             }
             is Action.SaveChanges -> {
                 val editedShoe = state.value.editedShoe ?: return
-                state.value = state.value.copy(isSaving = true)
+                
+                // Validate shoe name
+                if (editedShoe.brand.isBlank()) {
+                    state.value = state.value.copy(
+                        errorMessage = "Please enter a shoe name"
+                    )
+                    return
+                }
+                
+                state.value = state.value.copy(isSaving = true, errorMessage = null)
                 scope.launch {
                     try {
-                        // Update the shoe details
-                        shoeRepository.updateShoe(editedShoe)
-                        
-                        // Recalculate total distance in case start distance changed
-                        shoeRepository.recalculateShoeTotal(editedShoe.id)
-                        
-                        // Get the updated shoe with recalculated total
-                        val updatedShoe = shoeRepository.getShoeByIdOnce(editedShoe.id)
-                        
-                        state.value = state.value.copy(
-                            shoe = updatedShoe,
-                            editedShoe = updatedShoe,
-                            hasUnsavedChanges = false,
-                            isSaving = false
-                        )
+                        if (state.value.isCreateMode) {
+                            // Create new shoe
+                            val insertedId = shoeRepository.insertShoe(editedShoe)
+                            Log.d("ShoeDetailInteractor", "Successfully created shoe with ID: $insertedId")
+                            
+                            // Call the saved callback if provided
+                            state.value.onShoeSaved?.invoke()
+                            
+                            state.value = state.value.copy(
+                                isSaving = false,
+                                shouldNavigateBack = true
+                            )
+                        } else {
+                            // Update existing shoe
+                            shoeRepository.updateShoe(editedShoe)
+                            
+                            // Recalculate total distance in case start distance changed
+                            shoeRepository.recalculateShoeTotal(editedShoe.id)
+                            
+                            // Get the updated shoe with recalculated total
+                            val updatedShoe = shoeRepository.getShoeByIdOnce(editedShoe.id)
+                            
+                            state.value = state.value.copy(
+                                shoe = updatedShoe,
+                                editedShoe = updatedShoe,
+                                hasUnsavedChanges = false,
+                                isSaving = false
+                            )
+                        }
                     } catch (e: Exception) {
                         state.value = state.value.copy(
                             isSaving = false,
-                            errorMessage = "Error saving changes: ${e.message}"
+                            errorMessage = if (state.value.isCreateMode) {
+                                "Error creating shoe: ${e.message}"
+                            } else {
+                                "Error saving changes: ${e.message}"
+                            }
                         )
                     }
                 }
@@ -183,6 +216,10 @@ class ShoeDetailInteractor(
                     state.value = state.value.copy(shouldNavigateBack = true)
                 }
             }
+            is Action.CancelCreate -> {
+                // In create mode, simply dismiss without saving
+                state.value = state.value.copy(shouldNavigateBack = true)
+            }
         }
     }
     
@@ -218,13 +255,48 @@ class ShoeDetailInteractor(
             }
         }
     }
+    
+    private fun initializeNewShoe(state: MutableState<ShoeDetailState>) {
+        scope.launch {
+            try {
+                val unitLabel = distanceUtility.getUnitLabel()
+                val nextOrderingValue = shoeRepository.getNextOrderingValue()
+                val newShoe = Shoe.createDefault().copy(orderingValue = nextOrderingValue)
+                
+                state.value = state.value.copy(
+                    shoe = newShoe,
+                    editedShoe = newShoe,
+                    hasUnsavedChanges = false,
+                    isLoading = false,
+                    distanceUnit = unitLabel,
+                    isCreateMode = true
+                )
+            } catch (e: Exception) {
+                Log.e("ShoeDetailInteractor", "Error initializing new shoe", e)
+                // Fallback to default if there's an error
+                val unitLabel = distanceUtility.getUnitLabel()
+                val newShoe = Shoe.createDefault()
+                
+                state.value = state.value.copy(
+                    shoe = newShoe,
+                    editedShoe = newShoe,
+                    hasUnsavedChanges = false,
+                    isLoading = false,
+                    distanceUnit = unitLabel,
+                    isCreateMode = true
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoeDetailScreen(
-    shoeId: Long,
-    onNavigateBack: () -> Unit
+    shoeId: Long? = null,
+    isCreateMode: Boolean = false,
+    onNavigateBack: () -> Unit,
+    onShoeSaved: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val shoeRepository = remember { 
@@ -235,10 +307,19 @@ fun ShoeDetailScreen(
     val interactor = remember { 
         ShoeDetailInteractor(shoeRepository, userSettingsRepository, distanceUtility) 
     }
-    val state = remember { mutableStateOf(ShoeDetailState()) }
+    val state = remember { 
+        mutableStateOf(ShoeDetailState(
+            isCreateMode = isCreateMode,
+            onShoeSaved = onShoeSaved
+        )) 
+    }
     
     LaunchedEffect(shoeId) {
-        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(shoeId))
+        if (shoeId != null) {
+            interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(shoeId))
+        } else {
+            interactor.handle(state, ShoeDetailInteractor.Action.InitializeNewShoe)
+        }
     }
     
     // Unified back navigation handler
@@ -262,17 +343,45 @@ fun ShoeDetailScreen(
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.shoe_detail)) },
-                navigationIcon = {
-                    IconButton(onClick = { handleBackNavigation() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+            if (isCreateMode) {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.new_shoe)) },
+                    navigationIcon = {
+                        TextButton(
+                            onClick = { 
+                                interactor.handle(state, ShoeDetailInteractor.Action.CancelCreate)
+                            }
+                        ) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    },
+                    actions = {
+                        TextButton(
+                            onClick = { 
+                                interactor.handle(state, ShoeDetailInteractor.Action.SaveChanges)
+                            },
+                            enabled = !state.value.isSaving
+                        ) {
+                            Text(
+                                text = stringResource(R.string.save),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
-                }
-            )
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.shoe_detail)) },
+                    navigationIcon = {
+                        IconButton(onClick = { handleBackNavigation() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -328,7 +437,7 @@ fun ShoeDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            Text("Saving changes...")
+                            Text(if (state.value.isCreateMode) stringResource(R.string.creating_shoe) else "Saving changes...")
                         }
                     }
                 }

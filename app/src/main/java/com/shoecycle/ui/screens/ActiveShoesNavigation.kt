@@ -44,6 +44,7 @@ fun ActiveShoesNavigation(
             val shoeId = backStackEntry.arguments?.getLong("shoeId") ?: 0L
             ShoeDetailScreen(
                 shoeId = shoeId,
+                isCreateMode = false,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
