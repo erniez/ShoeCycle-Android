@@ -42,11 +42,10 @@ val shoeCycleDestinations = listOf(
 )
 
 @Composable
-fun ShoeCycleApp(modifier: Modifier = Modifier) {
+fun ShoeCycleApp() {
     val navController = rememberNavController()
     
     Scaffold(
-        modifier = modifier,
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination

@@ -27,7 +27,6 @@ import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveShoesListScreen(
     onNavigateToShoeDetail: (Long) -> Unit = {}
@@ -51,29 +50,37 @@ fun ActiveShoesListScreen(
         interactor.handle(state, ActiveShoesInteractor.Action.ViewAppeared)
     }
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.active_shoes)) },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            showAddShoeModal = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.add_shoe)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Custom header with title and add button
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.active_shoes),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(
+                onClick = {
+                    showAddShoeModal = true
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.add_shoe),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
             when {
                 state.value.isLoading -> {

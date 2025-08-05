@@ -316,7 +316,6 @@ class ShoeDetailInteractor(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoeDetailScreen(
     shoeId: Long? = null,
@@ -368,53 +367,66 @@ fun ShoeDetailScreen(
         handleBackNavigation()
     }
     
-    Scaffold(
-        topBar = {
-            if (isCreateMode) {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.new_shoe)) },
-                    navigationIcon = {
-                        TextButton(
-                            onClick = { 
-                                interactor.handle(state, ShoeDetailInteractor.Action.CancelCreate)
-                            }
-                        ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-                    },
-                    actions = {
-                        TextButton(
-                            onClick = { 
-                                interactor.handle(state, ShoeDetailInteractor.Action.SaveChanges)
-                            },
-                            enabled = !state.value.isSaving
-                        ) {
-                            Text(
-                                text = stringResource(R.string.save),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Custom header based on mode
+        if (isCreateMode) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { 
+                        interactor.handle(state, ShoeDetailInteractor.Action.CancelCreate)
                     }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Text(
+                    text = stringResource(R.string.new_shoe),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
                 )
-            } else {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.shoe_detail)) },
-                    navigationIcon = {
-                        IconButton(onClick = { handleBackNavigation() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
+                TextButton(
+                    onClick = { 
+                        interactor.handle(state, ShoeDetailInteractor.Action.SaveChanges)
+                    },
+                    enabled = !state.value.isSaving
+                ) {
+                    Text(
+                        text = stringResource(R.string.save),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { handleBackNavigation() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.shoe_detail),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
         }
-    ) { paddingValues ->
+        
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
             when {
                 state.value.isLoading -> {
