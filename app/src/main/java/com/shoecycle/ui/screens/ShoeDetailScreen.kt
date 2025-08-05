@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 import android.util.Log
+import com.shoecycle.ui.components.ShoeImage
 
 data class ShoeDetailState(
     val shoe: Shoe? = null,
@@ -60,6 +61,20 @@ class ShoeDetailInteractor(
         object SaveChanges : Action()
         object RequestNavigateBack : Action()
         object CancelCreate : Action()
+        data class UpdateShoeImage(val imageKey: String, val thumbnailData: ByteArray) : Action() {            
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+                other as UpdateShoeImage
+                return imageKey == other.imageKey && thumbnailData.contentEquals(other.thumbnailData)
+            }
+            
+            override fun hashCode(): Int {
+                var result = imageKey.hashCode()
+                result = 31 * result + thumbnailData.contentHashCode()
+                return result
+            }
+        }
     }
     
     fun handle(state: MutableState<ShoeDetailState>, action: Action) {
@@ -220,6 +235,17 @@ class ShoeDetailInteractor(
                 // In create mode, simply dismiss without saving
                 state.value = state.value.copy(shouldNavigateBack = true)
             }
+            is Action.UpdateShoeImage -> {
+                val currentEdited = state.value.editedShoe ?: return
+                val updatedShoe = currentEdited.copy(
+                    imageKey = action.imageKey,
+                    thumbnailData = action.thumbnailData
+                )
+                state.value = state.value.copy(
+                    editedShoe = updatedShoe,
+                    hasUnsavedChanges = updatedShoe != state.value.shoe
+                )
+            }
         }
     }
     
@@ -304,6 +330,7 @@ fun ShoeDetailScreen(
     }
     val userSettingsRepository = remember { UserSettingsRepository(context) }
     val distanceUtility = remember { DistanceUtility(userSettingsRepository) }
+    val imageRepository = remember { com.shoecycle.data.repository.ImageRepository(context) }
     val interactor = remember { 
         ShoeDetailInteractor(shoeRepository, userSettingsRepository, distanceUtility) 
     }
@@ -405,6 +432,7 @@ fun ShoeDetailScreen(
                     ShoeDetailContent(
                         state = state.value,
                         distanceUtility = distanceUtility,
+                        imageRepository = imageRepository,
                         interactor = interactor,
                         stateRef = state
                     )
@@ -484,6 +512,7 @@ private fun ErrorScreen(
 private fun ShoeDetailContent(
     state: ShoeDetailState,
     distanceUtility: DistanceUtility,
+    imageRepository: com.shoecycle.data.repository.ImageRepository,
     interactor: ShoeDetailInteractor,
     stateRef: MutableState<ShoeDetailState>
 ) {
@@ -531,7 +560,13 @@ private fun ShoeDetailContent(
         }
         
         item {
-            ShoeImageSection(shoe = shoe)
+            ShoeImageSection(
+                shoe = shoe,
+                imageRepository = imageRepository,
+                onImageUpdated = { imageKey, thumbnailData ->
+                    interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateShoeImage(imageKey, thumbnailData))
+                }
+            )
         }
     }
 }
@@ -784,28 +819,15 @@ private fun DatePickerDialog(
 
 @Composable
 private fun ShoeImageSection(
-    shoe: Shoe
+    shoe: Shoe,
+    imageRepository: com.shoecycle.data.repository.ImageRepository,
+    onImageUpdated: (String, ByteArray) -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .padding(horizontal = 32.dp), // Matching iOS padding
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            // Placeholder for shoe image - will be enhanced in future milestones
-            Icon(
-                imageVector = Icons.Default.Build,
-                contentDescription = "${shoe.displayName} image",
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+    ShoeImage(
+        shoe = shoe,
+        imageRepository = imageRepository,
+        onImageUpdated = onImageUpdated
+    )
 }
 
 @Composable
