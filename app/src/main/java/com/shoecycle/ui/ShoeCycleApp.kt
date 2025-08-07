@@ -22,10 +22,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.shoecycle.R
-import com.shoecycle.ui.screens.AddDistanceScreen
-import com.shoecycle.ui.screens.ActiveShoesScreen
-import com.shoecycle.ui.screens.HallOfFameScreen
-import com.shoecycle.ui.screens.SettingsScreen
+import com.shoecycle.ui.screens.add_distance.AddDistanceScreen
+import com.shoecycle.ui.screens.active_shoes.ActiveShoesScreen
+import com.shoecycle.ui.screens.hall_of_fame.HallOfFameScreen
+import com.shoecycle.ui.screens.settings.SettingsScreen
 
 sealed class ShoeCycleDestination(val route: String, val titleRes: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object AddDistance : ShoeCycleDestination("add_distance", R.string.add_distance, Icons.Filled.Add)

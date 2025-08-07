@@ -1,4 +1,4 @@
-package com.shoecycle.ui.screens
+package com.shoecycle.ui.screens.add_distance
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,13 +12,13 @@ import androidx.compose.ui.text.style.TextAlign
 import com.shoecycle.R
 
 @Composable
-fun HallOfFameScreen() {
+fun AddDistanceScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(R.string.hall_of_fame),
+            text = stringResource(R.string.add_distance),
             style = MaterialTheme.typography.headlineLarge,
             textAlign = TextAlign.Center
         )

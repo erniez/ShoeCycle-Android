@@ -1,4 +1,4 @@
-package com.shoecycle.ui.settings
+package com.shoecycle.ui.screens.settings
 
 import androidx.compose.runtime.MutableState
 import com.shoecycle.data.UserSettingsRepository

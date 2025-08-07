@@ -1,4 +1,4 @@
-package com.shoecycle.ui.screens
+package com.shoecycle.ui.screens.active_shoes
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -26,6 +26,8 @@ import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
+import com.shoecycle.domain.models.Shoe
+import com.shoecycle.ui.screens.active_shoes.components.ShoeDetailModal
 
 @Composable
 fun ActiveShoesListScreen(

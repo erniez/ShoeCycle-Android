@@ -1,32 +1,33 @@
-package com.shoecycle.ui.settings
+package com.shoecycle.ui.screens.settings
 
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class SettingsHealthConnectState(
-    val enabled: Boolean = false
+data class SettingsUnitsState(
+    val selectedUnit: DistanceUnit = DistanceUnit.MILES
 )
 
-class SettingsHealthConnectInteractor(
+class SettingsUnitsInteractor(
     private val repository: UserSettingsRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
-        data class ToggleChanged(val enabled: Boolean) : Action()
+        data class UnitChanged(val unit: DistanceUnit) : Action()
         object ViewAppeared : Action()
     }
     
-    fun handle(state: MutableState<SettingsHealthConnectState>, action: Action) {
+    fun handle(state: MutableState<SettingsUnitsState>, action: Action) {
         when (action) {
-            is Action.ToggleChanged -> {
-                if (state.value.enabled != action.enabled) {
-                    state.value = state.value.copy(enabled = action.enabled)
+            is Action.UnitChanged -> {
+                if (state.value.selectedUnit != action.unit) {
+                    state.value = state.value.copy(selectedUnit = action.unit)
                     scope.launch {
-                        repository.updateHealthConnectEnabled(action.enabled)
+                        repository.updateDistanceUnit(action.unit)
                     }
                 }
             }
@@ -34,7 +35,7 @@ class SettingsHealthConnectInteractor(
                 scope.launch {
                     try {
                         val settings = repository.userSettingsFlow.first()
-                        state.value = state.value.copy(enabled = settings.healthConnectEnabled)
+                        state.value = state.value.copy(selectedUnit = settings.distanceUnit)
                     } catch (e: Exception) {
                         // Handle error silently or with minimal logging if needed
                     }

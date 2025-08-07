@@ -1,33 +1,32 @@
-package com.shoecycle.ui.settings
+package com.shoecycle.ui.screens.settings
 
 import androidx.compose.runtime.MutableState
-import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class SettingsUnitsState(
-    val selectedUnit: DistanceUnit = DistanceUnit.MILES
+data class SettingsStravaState(
+    val enabled: Boolean = false
 )
 
-class SettingsUnitsInteractor(
+class SettingsStravaInteractor(
     private val repository: UserSettingsRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
-        data class UnitChanged(val unit: DistanceUnit) : Action()
+        data class ToggleChanged(val enabled: Boolean) : Action()
         object ViewAppeared : Action()
     }
     
-    fun handle(state: MutableState<SettingsUnitsState>, action: Action) {
+    fun handle(state: MutableState<SettingsStravaState>, action: Action) {
         when (action) {
-            is Action.UnitChanged -> {
-                if (state.value.selectedUnit != action.unit) {
-                    state.value = state.value.copy(selectedUnit = action.unit)
+            is Action.ToggleChanged -> {
+                if (state.value.enabled != action.enabled) {
+                    state.value = state.value.copy(enabled = action.enabled)
                     scope.launch {
-                        repository.updateDistanceUnit(action.unit)
+                        repository.updateStravaEnabled(action.enabled)
                     }
                 }
             }
@@ -35,7 +34,7 @@ class SettingsUnitsInteractor(
                 scope.launch {
                     try {
                         val settings = repository.userSettingsFlow.first()
-                        state.value = state.value.copy(selectedUnit = settings.distanceUnit)
+                        state.value = state.value.copy(enabled = settings.stravaEnabled)
                     } catch (e: Exception) {
                         // Handle error silently or with minimal logging if needed
                     }

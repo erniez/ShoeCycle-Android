@@ -1,4 +1,6 @@
-package com.shoecycle.ui.screens
+package com.shoecycle.ui.screens.active_shoes
+
+import com.shoecycle.ui.screens.shoe_detail.ShoeDetailScreen
 
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally

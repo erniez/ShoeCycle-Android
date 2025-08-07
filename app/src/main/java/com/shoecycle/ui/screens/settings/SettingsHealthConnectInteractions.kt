@@ -1,33 +1,32 @@
-package com.shoecycle.ui.settings
+package com.shoecycle.ui.screens.settings
 
 import androidx.compose.runtime.MutableState
-import com.shoecycle.data.FirstDayOfWeek
 import com.shoecycle.data.UserSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class SettingsFirstDayState(
-    val selectedDay: FirstDayOfWeek = FirstDayOfWeek.MONDAY
+data class SettingsHealthConnectState(
+    val enabled: Boolean = false
 )
 
-class SettingsFirstDayInteractor(
+class SettingsHealthConnectInteractor(
     private val repository: UserSettingsRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
-        data class DayChanged(val day: FirstDayOfWeek) : Action()
+        data class ToggleChanged(val enabled: Boolean) : Action()
         object ViewAppeared : Action()
     }
     
-    fun handle(state: MutableState<SettingsFirstDayState>, action: Action) {
+    fun handle(state: MutableState<SettingsHealthConnectState>, action: Action) {
         when (action) {
-            is Action.DayChanged -> {
-                if (state.value.selectedDay != action.day) {
-                    state.value = state.value.copy(selectedDay = action.day)
+            is Action.ToggleChanged -> {
+                if (state.value.enabled != action.enabled) {
+                    state.value = state.value.copy(enabled = action.enabled)
                     scope.launch {
-                        repository.updateFirstDayOfWeek(action.day)
+                        repository.updateHealthConnectEnabled(action.enabled)
                     }
                 }
             }
@@ -35,7 +34,7 @@ class SettingsFirstDayInteractor(
                 scope.launch {
                     try {
                         val settings = repository.userSettingsFlow.first()
-                        state.value = state.value.copy(selectedDay = settings.firstDayOfWeek)
+                        state.value = state.value.copy(enabled = settings.healthConnectEnabled)
                     } catch (e: Exception) {
                         // Handle error silently or with minimal logging if needed
                     }
