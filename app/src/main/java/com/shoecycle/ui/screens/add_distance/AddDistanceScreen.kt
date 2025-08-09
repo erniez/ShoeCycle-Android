@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -22,17 +23,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.data.UserSettingsData
 import com.shoecycle.data.database.ShoeCycleDatabase
 import com.shoecycle.data.repository.HistoryRepository
 import com.shoecycle.data.repository.ImageRepository
 import com.shoecycle.data.repository.ShoeRepository
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.ui.screens.add_distance.components.ShoeImageView
+import com.shoecycle.ui.screens.add_distance.components.DateDistanceEntryView
+import com.shoecycle.ui.screens.add_distance.services.MockHealthService
+import com.shoecycle.ui.screens.add_distance.services.MockStravaService
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
 fun AddDistanceScreen() {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     
     // Initialize repositories
     val database = remember { ShoeCycleDatabase.getDatabase(context) }
@@ -43,6 +51,10 @@ fun AddDistanceScreen() {
     val selectedShoeStrategy = remember { 
         SelectedShoeStrategy(shoeRepository, userSettingsRepository) 
     }
+    
+    // Mock services
+    val mockHealthService = remember { MockHealthService() }
+    val mockStravaService = remember { MockStravaService() }
     
     // VSI pattern state and interactor
     val state = remember { mutableStateOf(AddDistanceState()) }
@@ -59,6 +71,13 @@ fun AddDistanceScreen() {
     LaunchedEffect(Unit) {
         interactor.handle(state, AddDistanceInteractor.Action.ViewAppeared)
     }
+    
+    // Track user settings for services - reactive to settings changes
+    val userSettings by userSettingsRepository.userSettingsFlow.collectAsState(
+        initial = UserSettingsData()
+    )
+    val healthConnectEnabled = userSettings.healthConnectEnabled
+    val stravaEnabled = userSettings.stravaEnabled
     
     Column(
         modifier = Modifier
@@ -121,26 +140,52 @@ fun AddDistanceScreen() {
             }
         }
         
-        // Placeholder for date-distance entry
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Text(
-                text = "Date-Distance Entry\n(Coming in Commit 2)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp)
-            )
-        }
+        // Date-Distance Entry Component
+        DateDistanceEntryView(
+            shoe = state.value.selectedShoe,
+            currentDate = state.value.runDate,
+            currentDistance = state.value.runDistance,
+            isAddingRun = state.value.isAddingRun,
+            healthConnectEnabled = healthConnectEnabled,
+            stravaEnabled = stravaEnabled,
+            onDateChanged = { date ->
+                interactor.handle(state, AddDistanceInteractor.Action.DateChanged(date))
+            },
+            onDistanceChanged = { distance ->
+                interactor.handle(state, AddDistanceInteractor.Action.DistanceChanged(distance))
+            },
+            onDistanceAdded = {
+                // Handle the add run with mock service calls
+                scope.launch {
+                    interactor.handle(state, AddDistanceInteractor.Action.AddRunClicked)
+                    
+                    // Mock service calls
+                    if (healthConnectEnabled) {
+                        mockHealthService.addWorkout(
+                            date = state.value.runDate,
+                            distance = state.value.runDistance.toDoubleOrNull() ?: 0.0
+                        )
+                    }
+                    if (stravaEnabled) {
+                        mockStravaService.uploadActivity(
+                            date = state.value.runDate,
+                            distance = state.value.runDistance.toDoubleOrNull() ?: 0.0,
+                            shoeName = state.value.selectedShoe?.displayName
+                        )
+                    }
+                }
+            },
+            onBounceRequested = {
+                // Bounce animation will be handled in Commit 3 with progress views
+            },
+            onShowFavorites = {
+                interactor.handle(state, AddDistanceInteractor.Action.ShowFavoritesModal)
+            },
+            onShowHistory = {
+                interactor.handle(state, AddDistanceInteractor.Action.ShowHistoryModal)
+            },
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
         
         // Placeholder for progress views
         Card(
