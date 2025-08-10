@@ -103,48 +103,7 @@ fun AddDistanceScreen() {
             }
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Placeholder for future components
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = if (state.value.selectedShoe != null) {
-                        "Selected: ${state.value.selectedShoe!!.displayName}"
-                    } else {
-                        "No active shoes"
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-                
-                if (state.value.activeShoes.isNotEmpty()) {
-                    Text(
-                        text = "Shoe ${state.value.selectedShoeIndex + 1} of ${state.value.activeShoes.size}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                    
-                    Text(
-                        text = "Swipe up/down on shoe image to switch",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
         
         // Date-Distance Entry Component
         DateDistanceEntryView(
@@ -278,40 +237,52 @@ private fun AddDistanceHeader(
                 }
             }
             
-            // Grouped shoe image with swipe arrows (pinned to trailing edge)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+            // Grouped shoe image with brand name and arrows (pinned to trailing edge)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Shoe image with swipe
-                ShoeImageView(
-                    shoe = selectedShoe,
-                    imageRepository = imageRepository,
-                    onSwipeUp = onSwipeUp,
-                    onSwipeDown = onSwipeDown
-                )
-                
-                // Scroll arrows indicator
-                if (hasMultipleShoes) {
-                    Column(
-                        modifier = Modifier.padding(start = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Swipe up",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Swipe down",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    // Shoe image with swipe
+                    ShoeImageView(
+                        shoe = selectedShoe,
+                        imageRepository = imageRepository,
+                        onSwipeUp = onSwipeUp,
+                        onSwipeDown = onSwipeDown
+                    )
+                    
+                    // Scroll arrows indicator
+                    if (hasMultipleShoes) {
+                        Column(
+                            modifier = Modifier.padding(start = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowUp,
+                                contentDescription = "Swipe up",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Swipe down",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
+                
+                // Shoe brand name under image (iOS style)
+                Text(
+                    text = selectedShoe?.displayName ?: "No Shoe",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
     }
