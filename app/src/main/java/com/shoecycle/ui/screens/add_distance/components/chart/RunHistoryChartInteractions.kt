@@ -11,7 +11,9 @@ data class RunHistoryChartState(
     val chartData: List<WeeklyCollatedNew> = emptyList(),
     val maxDistance: Double = 0.0,
     val xValues: List<Date> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val selectedWeekIndex: Int? = null,
+    val shouldScrollToEnd: Boolean = false
 )
 
 /**
@@ -23,6 +25,9 @@ class RunHistoryChartInteractor {
     sealed class Action {
         object ViewAppeared : Action()
         data class DataUpdated(val collatedHistory: List<WeeklyCollatedNew>) : Action()
+        data class WeekSelected(val index: Int) : Action()
+        object ClearSelection : Action()
+        object ScrollCompleted : Action()
     }
     
     fun handle(state: RunHistoryChartState, action: Action): RunHistoryChartState {
@@ -40,8 +45,30 @@ class RunHistoryChartInteractor {
                     chartData = action.collatedHistory,
                     xValues = xValues,
                     maxDistance = maxDistance,
-                    isLoading = false
+                    isLoading = false,
+                    shouldScrollToEnd = action.collatedHistory.size > 6
                 )
+            }
+            
+            is Action.WeekSelected -> {
+                when {
+                    action.index == -1 -> {
+                        // Clear selection
+                        state.copy(selectedWeekIndex = null)
+                    }
+                    action.index in state.chartData.indices -> {
+                        state.copy(selectedWeekIndex = action.index)
+                    }
+                    else -> state
+                }
+            }
+            
+            is Action.ClearSelection -> {
+                state.copy(selectedWeekIndex = null)
+            }
+            
+            is Action.ScrollCompleted -> {
+                state.copy(shouldScrollToEnd = false)
             }
         }
     }
