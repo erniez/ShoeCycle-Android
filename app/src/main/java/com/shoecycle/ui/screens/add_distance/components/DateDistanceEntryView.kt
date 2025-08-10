@@ -66,15 +66,14 @@ fun DateDistanceEntryView(
         )
     }
     
-    Card(
+    // iOS-style container with gray background
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFF2C2C2E), // iOS dark gray background
+        shadowElevation = 0.dp // Flat design
     ) {
         Column(
             modifier = Modifier
@@ -82,188 +81,247 @@ fun DateDistanceEntryView(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Date and Distance inputs row
+            // Three-column layout: Date | Distance | Add Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                // Date selector
-                OutlinedCard(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            interactor.handle(
-                                state,
-                                DateDistanceEntryInteractor.Action.ShowDatePicker
-                            )
-                        },
-                    shape = RoundedCornerShape(8.dp)
+                // Date column
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Row(
+                    Text(
+                        text = "Date:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .clickable {
+                                interactor.handle(
+                                    state,
+                                    DateDistanceEntryInteractor.Action.ShowDatePicker
+                                )
+                            },
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF1C1C1E) // Darker background for input
                     ) {
                         Text(
                             text = dateFormatter.format(state.value.runDate),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Select date",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White,
+                            modifier = Modifier.padding(12.dp)
                         )
                     }
                 }
                 
-                // Distance input
-                OutlinedTextField(
-                    value = state.value.runDistance,
-                    onValueChange = { 
-                        interactor.handle(
-                            state,
-                            DateDistanceEntryInteractor.Action.DistanceChanged(it),
-                            onDistanceChanged = onDistanceChanged
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Distance") },
-                    placeholder = { Text("0.0") },
-                    suffix = { Text("mi") },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
+                // Distance column
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Distance:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    TextField(
+                        value = state.value.runDistance,
+                        onValueChange = { 
+                            interactor.handle(
+                                state,
+                                DateDistanceEntryInteractor.Action.DistanceChanged(it),
+                                onDistanceChanged = onDistanceChanged
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { 
+                            Text(
+                                "Distance", 
+                                color = Color.Gray
+                            ) 
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Black,
+                            unfocusedContainerColor = Color.Black,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                            }
+                        ),
+                        singleLine = true,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+                
+                // Add button column
+                Column(
+                    modifier = Modifier.weight(0.7f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(24.dp)) // Align with inputs
+                    Button(
+                        onClick = {
                             focusManager.clearFocus()
+                            interactor.handle(
+                                state,
+                                DateDistanceEntryInteractor.Action.AddRunClicked,
+                                onAddRun = onDistanceAdded,
+                                onBounceRequested = onBounceRequested
+                            )
+                        },
+                        enabled = state.value.runDistance.isNotEmpty() && 
+                                 !isAddingRun &&
+                                 shoe != null,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF32D74B) // iOS green
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        if (isAddingRun) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add Distance",
+                                tint = Color.White
+                            )
                         }
-                    ),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp)
-                )
+                    }
+                }
             }
             
-            // History and Favorites buttons row
+            // Service indicators centered directly below Add Distance button (when enabled)
+            val hasEnabledServices = state.value.healthConnectEnabled || state.value.stravaEnabled
+            if (hasEnabledServices) {
+                // Create a Row that matches the three-column layout but only shows indicators in the Add button column
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Empty space for Date column
+                    Spacer(modifier = Modifier.weight(1f))
+                    
+                    // Empty space for Distance column
+                    Spacer(modifier = Modifier.weight(1f))
+                    
+                    // Service indicators aligned with Add button column
+                    Column(
+                        modifier = Modifier.weight(0.7f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Health Connect indicator
+                            if (state.value.healthConnectEnabled) {
+                                ServiceIndicator(
+                                    isActive = true,
+                                    syncStatus = state.value.healthConnectSyncStatus,
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Favorite,
+                                            contentDescription = "Health Connect",
+                                            modifier = Modifier.size(16.dp),
+                                            tint = when (state.value.healthConnectSyncStatus) {
+                                                DateDistanceEntryState.SyncStatus.Success -> Color.Green
+                                                DateDistanceEntryState.SyncStatus.Failed -> Color.Red
+                                                DateDistanceEntryState.SyncStatus.Syncing -> Color(0xFF007AFF)
+                                                else -> Color.White
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                            
+                            if (state.value.healthConnectEnabled && state.value.stravaEnabled) {
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
+                            
+                            // Strava indicator
+                            if (state.value.stravaEnabled) {
+                                ServiceIndicator(
+                                    isActive = true,
+                                    syncStatus = state.value.stravaSyncStatus,
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = "Strava",
+                                            modifier = Modifier.size(16.dp),
+                                            tint = when (state.value.stravaSyncStatus) {
+                                                DateDistanceEntryState.SyncStatus.Success -> Color.Green
+                                                DateDistanceEntryState.SyncStatus.Failed -> Color.Red
+                                                DateDistanceEntryState.SyncStatus.Syncing -> Color(0xFF007AFF)
+                                                else -> Color.White
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // History and Distances buttons row (iOS style)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // History button
-                OutlinedButton(
+                Button(
                     onClick = onShowHistory,
                     modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF48484A) // iOS gray
+                    ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.List,
                         contentDescription = "History",
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("History")
+                    Text("History", color = Color.White)
                 }
                 
-                // Favorites button
-                OutlinedButton(
-                    onClick = onShowFavorites,
+                // Distances button (changed from Favorites to match iOS)
+                Button(
+                    onClick = onShowFavorites, // Still calls favorites for now
                     modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF48484A) // iOS gray
+                    ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Star,
-                        contentDescription = "Favorites",
-                        modifier = Modifier.size(18.dp)
+                        contentDescription = "Distances",
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Favorites")
-                }
-            }
-            
-            // Add Run button with service indicators
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        interactor.handle(
-                            state,
-                            DateDistanceEntryInteractor.Action.AddRunClicked,
-                            onAddRun = onDistanceAdded,
-                            onBounceRequested = onBounceRequested
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state.value.runDistance.isNotEmpty() && 
-                             !isAddingRun &&
-                             shoe != null,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    if (isAddingRun) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Add Run")
-                    }
-                }
-                
-                // Service indicators
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Health Connect indicator
-                    if (state.value.healthConnectEnabled) {
-                        ServiceIndicator(
-                            isActive = true,
-                            syncStatus = state.value.healthConnectSyncStatus,
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = "Health Connect",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = when (state.value.healthConnectSyncStatus) {
-                                        DateDistanceEntryState.SyncStatus.Success -> Color.Green
-                                        DateDistanceEntryState.SyncStatus.Failed -> Color.Red
-                                        DateDistanceEntryState.SyncStatus.Syncing -> MaterialTheme.colorScheme.primary
-                                        else -> MaterialTheme.colorScheme.onPrimary
-                                    }
-                                )
-                            }
-                        )
-                    }
-                    
-                    // Strava indicator
-                    if (state.value.stravaEnabled) {
-                        ServiceIndicator(
-                            isActive = true,
-                            syncStatus = state.value.stravaSyncStatus,
-                            icon = {
-                                // Using a simple icon as placeholder for Strava logo
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "Strava",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = when (state.value.stravaSyncStatus) {
-                                        DateDistanceEntryState.SyncStatus.Success -> Color.Green
-                                        DateDistanceEntryState.SyncStatus.Failed -> Color.Red
-                                        DateDistanceEntryState.SyncStatus.Syncing -> MaterialTheme.colorScheme.primary
-                                        else -> MaterialTheme.colorScheme.onPrimary
-                                    }
-                                )
-                            }
-                        )
-                    }
+                    Text("Distances", color = Color.White)
                 }
             }
             
@@ -272,7 +330,7 @@ fun DateDistanceEntryView(
                 Text(
                     text = "No shoe selected",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+                    color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
