@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -36,6 +37,8 @@ import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDateProgressVie
 import com.shoecycle.ui.screens.add_distance.components.DateProgressViewModel
 import com.shoecycle.ui.screens.add_distance.services.MockHealthService
 import com.shoecycle.ui.screens.add_distance.services.MockStravaService
+import com.shoecycle.ui.screens.add_distance.components.chart.RunHistoryChartView
+import com.shoecycle.ui.screens.add_distance.utils.HistoryCollation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
@@ -171,24 +174,24 @@ fun AddDistanceScreen() {
             modifier = Modifier.padding(horizontal = 16.dp)
         )
         
-        // Placeholder for chart
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Text(
-                text = "Run History Chart\n(Coming in Commit 4)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+        // Run History Chart
+        state.value.selectedShoe?.let { shoe ->
+            val histories by produceState(initialValue = emptyList<com.shoecycle.domain.models.History>()) {
+                value = historyRepository.getHistoryForShoe(shoe.id).first()
+            }
+            
+            val weeklyData = remember(histories) {
+                HistoryCollation.collateHistories(
+                    histories = histories.toSet(),
+                    ascending = true,
+                    firstDayOfWeek = userSettings.firstDayOfWeek
+                )
+            }
+            
+            RunHistoryChartView(
+                chartData = weeklyData,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 48.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
     }
