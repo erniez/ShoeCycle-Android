@@ -112,11 +112,8 @@ class DateDistanceEntryInteractor(
                         simulateStravaSync(state)
                     }
                     
-                    // Request bounce animation
-                    scope.launch {
-                        delay(500)
-                        onBounceRequested?.invoke()
-                    }
+                    // Request bounce animation immediately
+                    onBounceRequested?.invoke()
                 }
             }
 

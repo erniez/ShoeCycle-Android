@@ -31,6 +31,9 @@ import com.shoecycle.data.repository.ShoeRepository
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.ui.screens.add_distance.components.ShoeImageView
 import com.shoecycle.ui.screens.add_distance.components.DateDistanceEntryView
+import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDistanceProgressView
+import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDateProgressView
+import com.shoecycle.ui.screens.add_distance.components.DateProgressViewModel
 import com.shoecycle.ui.screens.add_distance.services.MockHealthService
 import com.shoecycle.ui.screens.add_distance.services.MockStravaService
 import kotlinx.coroutines.flow.first
@@ -55,6 +58,9 @@ fun AddDistanceScreen() {
     // Mock services
     val mockHealthService = remember { MockHealthService() }
     val mockStravaService = remember { MockStravaService() }
+    
+    // Progress view model
+    val progressViewModel = remember { DateProgressViewModel(context, scope) }
     
     // VSI pattern state and interactor
     val state = remember { mutableStateOf(AddDistanceState()) }
@@ -176,7 +182,7 @@ fun AddDistanceScreen() {
                 }
             },
             onBounceRequested = {
-                // Bounce animation will be handled in Commit 3 with progress views
+                progressViewModel.triggerBounce()
             },
             onShowFavorites = {
                 interactor.handle(state, AddDistanceInteractor.Action.ShowFavoritesModal)
@@ -187,26 +193,24 @@ fun AddDistanceScreen() {
             modifier = Modifier.padding(vertical = 16.dp)
         )
         
-        // Placeholder for progress views
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Text(
-                text = "Progress Bars\n(Coming in Commit 3)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp)
-            )
-        }
+        // Progress Views - Vertical layout for iOS parity
+        val bounceRequested by progressViewModel.bounceRequested
+        
+        // Distance Progress View
+        ShoeCycleDistanceProgressView(
+            shoe = state.value.selectedShoe,
+            bounceRequested = bounceRequested,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Date Progress View
+        ShoeCycleDateProgressView(
+            shoe = state.value.selectedShoe,
+            bounceRequested = bounceRequested,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
         
         // Placeholder for chart
         Card(
