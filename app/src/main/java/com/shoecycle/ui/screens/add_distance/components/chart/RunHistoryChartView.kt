@@ -300,62 +300,11 @@ private fun ChartCanvas(
     // Store data point positions for touch detection
     var dataPointPositions by remember { mutableStateOf<List<Offset>>(emptyList()) }
     
-    // Track if this is the initial load for animation (start from zero)
-    var isInitialLoad by remember { mutableStateOf(true) }
-    var showValues by remember { mutableStateOf(false) }
-    
-    // Track data signature to detect shoe changes
-    val dataSignature = remember(data) { 
-        data.hashCode() // Simple way to detect when data fundamentally changes
-    }
-    
-    LaunchedEffect(dataSignature) {
-        if (data.isNotEmpty()) {
-            if (isInitialLoad) {
-                // Initial load: start from zero after delay
-                kotlinx.coroutines.delay(500)
-                showValues = true
-                isInitialLoad = false
-            } else {
-                // Shoe change: morph immediately from old to new values
-                showValues = true
-            }
-        }
-    }
-    
-    // Animate points - either from zero (initial) or from old values (shoe change)
-    val animatedPointValues = remember { mutableStateListOf<Float>() }
-    
-    data.forEachIndexed { index, point ->
-        val targetValue = point.runDistance.toFloat()
-        
-        // Determine starting value
-        val startValue = when {
-            !showValues && isInitialLoad -> 0f  // Initial load starts at zero
-            index < animatedPointValues.size -> animatedPointValues[index]  // Morph from current value
-            else -> targetValue  // New point starts at target
-        }
-        
-        val animatedValue by animateFloatAsState(
-            targetValue = if (showValues) targetValue else startValue,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            ),
-            label = "pointValue_$index"
-        )
-        
-        if (index < animatedPointValues.size) {
-            animatedPointValues[index] = animatedValue
-        } else {
-            animatedPointValues.add(animatedValue)
-        }
-    }
-    
-    // Trim excess values if new data has fewer points
-    while (animatedPointValues.size > data.size) {
-        animatedPointValues.removeAt(animatedPointValues.size - 1)
-    }
+    // Get animated values from the animation controller
+    val animatedPointValues = animationController.animateChartValues(
+        data = data,
+        initialDelay = 500L
+    )
     
     Canvas(
         modifier = modifier
