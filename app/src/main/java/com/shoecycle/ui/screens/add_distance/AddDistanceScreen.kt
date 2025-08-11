@@ -177,7 +177,9 @@ fun AddDistanceScreen() {
         // Run History Chart
         state.value.selectedShoe?.let { shoe ->
             val histories by produceState(initialValue = emptyList<com.shoecycle.domain.models.History>()) {
-                value = historyRepository.getHistoryForShoe(shoe.id).first()
+                historyRepository.getHistoryForShoe(shoe.id).collect { 
+                    value = it 
+                }
             }
             
             val weeklyData = remember(histories) {
