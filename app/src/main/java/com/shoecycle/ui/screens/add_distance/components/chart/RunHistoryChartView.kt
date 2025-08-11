@@ -1,5 +1,6 @@
 package com.shoecycle.ui.screens.add_distance.components.chart
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,6 +48,7 @@ fun RunHistoryChartView(
     // VSI pattern state management
     var state by remember { mutableStateOf(RunHistoryChartState()) }
     val interactor = remember { RunHistoryChartInteractor() }
+    val animationController = remember { ChartAnimationController() }
     
     // Update state when data changes
     LaunchedEffect(chartData) {
@@ -99,6 +101,7 @@ fun RunHistoryChartView(
                     ScrollableChartCanvas(
                         state = state,
                         interactor = interactor,
+                        animationController = animationController,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(16.dp),
@@ -156,6 +159,7 @@ private fun SelectedWeekDetails(
 private fun ScrollableChartCanvas(
     state: RunHistoryChartState,
     interactor: RunHistoryChartInteractor,
+    animationController: ChartAnimationController,
     modifier: Modifier = Modifier,
     onStateChange: (RunHistoryChartState) -> Unit
 ) {
@@ -200,6 +204,7 @@ private fun ScrollableChartCanvas(
                 data = state.chartData,
                 maxDistance = state.maxDistance,
                 selectedWeekIndex = state.selectedWeekIndex,
+                animationController = animationController,
                 onWeekSelected = { index ->
                     onStateChange(interactor.handle(state, RunHistoryChartInteractor.Action.WeekSelected(index)))
                 },
@@ -283,6 +288,7 @@ private fun ChartCanvas(
     data: List<WeeklyCollatedNew>,
     maxDistance: Double,
     selectedWeekIndex: Int?,
+    animationController: ChartAnimationController,
     onWeekSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
     showYAxis: Boolean = true
@@ -293,6 +299,63 @@ private fun ChartCanvas(
     
     // Store data point positions for touch detection
     var dataPointPositions by remember { mutableStateOf<List<Offset>>(emptyList()) }
+    
+    // Track if this is the initial load for animation (start from zero)
+    var isInitialLoad by remember { mutableStateOf(true) }
+    var showValues by remember { mutableStateOf(false) }
+    
+    // Track data signature to detect shoe changes
+    val dataSignature = remember(data) { 
+        data.hashCode() // Simple way to detect when data fundamentally changes
+    }
+    
+    LaunchedEffect(dataSignature) {
+        if (data.isNotEmpty()) {
+            if (isInitialLoad) {
+                // Initial load: start from zero after delay
+                kotlinx.coroutines.delay(500)
+                showValues = true
+                isInitialLoad = false
+            } else {
+                // Shoe change: morph immediately from old to new values
+                showValues = true
+            }
+        }
+    }
+    
+    // Animate points - either from zero (initial) or from old values (shoe change)
+    val animatedPointValues = remember { mutableStateListOf<Float>() }
+    
+    data.forEachIndexed { index, point ->
+        val targetValue = point.runDistance.toFloat()
+        
+        // Determine starting value
+        val startValue = when {
+            !showValues && isInitialLoad -> 0f  // Initial load starts at zero
+            index < animatedPointValues.size -> animatedPointValues[index]  // Morph from current value
+            else -> targetValue  // New point starts at target
+        }
+        
+        val animatedValue by animateFloatAsState(
+            targetValue = if (showValues) targetValue else startValue,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "pointValue_$index"
+        )
+        
+        if (index < animatedPointValues.size) {
+            animatedPointValues[index] = animatedValue
+        } else {
+            animatedPointValues.add(animatedValue)
+        }
+    }
+    
+    // Trim excess values if new data has fewer points
+    while (animatedPointValues.size > data.size) {
+        animatedPointValues.removeAt(animatedPointValues.size - 1)
+    }
     
     Canvas(
         modifier = modifier
@@ -389,17 +452,18 @@ private fun ChartCanvas(
             textMeasurer = textMeasurer
         )
         
-        // Calculate and store data point positions
+        // Calculate and store data point positions with animated values
         val positions = mutableListOf<Offset>()
         data.forEachIndexed { index, point ->
             val x = paddingLeft + (chartWidth * index / (data.size - 1).coerceAtLeast(1))
-            val yRatio = if (maxDistance > 0) point.runDistance / maxDistance else 0.0
+            val animatedDistance = if (index < animatedPointValues.size) animatedPointValues[index].toDouble() else point.runDistance
+            val yRatio = if (maxDistance > 0) animatedDistance / maxDistance else 0.0
             val y = paddingTop + chartHeight * (1 - yRatio).toFloat()
             positions.add(Offset(x, y))
         }
         dataPointPositions = positions
         
-        // Draw data line
+        // Draw data line immediately (no animation)
         if (data.size >= 2) {
             drawDataLine(positions)
         }

@@ -174,9 +174,12 @@ fun AddDistanceScreen() {
             modifier = Modifier.padding(horizontal = 16.dp)
         )
         
-        // Run History Chart
+        // Run History Chart - auto-updates when new distances are added
         state.value.selectedShoe?.let { shoe ->
-            val histories by produceState(initialValue = emptyList<com.shoecycle.domain.models.History>()) {
+            val histories by produceState(
+                initialValue = emptyList<com.shoecycle.domain.models.History>(),
+                key1 = shoe.id  // Re-fetch when shoe changes
+            ) {
                 historyRepository.getHistoryForShoe(shoe.id).collect { 
                     value = it 
                 }
