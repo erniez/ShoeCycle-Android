@@ -1,0 +1,72 @@
+package com.shoecycle.ui.screens.add_distance.modals
+
+import androidx.compose.runtime.MutableState
+import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.domain.DistanceUtility
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+
+data class FavoriteDistancesState(
+    val distanceToAdd: Double = 0.0,
+    val favorite1DisplayString: String? = null,
+    val favorite2DisplayString: String? = null,
+    val favorite3DisplayString: String? = null,
+    val favorite4DisplayString: String? = null
+)
+
+class FavoriteDistancesInteractor(
+    private val userSettingsRepository: UserSettingsRepository,
+    private val distanceUtility: DistanceUtility = DistanceUtility(userSettingsRepository),
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+) {
+    sealed class Action {
+        object ViewAppeared : Action()
+        data class DistanceSelected(val distance: Double) : Action()
+        object CancelPressed : Action()
+    }
+    
+    fun handle(state: MutableState<FavoriteDistancesState>, action: Action) {
+        when (action) {
+            is Action.ViewAppeared -> {
+                loadFavorites(state)
+            }
+            
+            is Action.DistanceSelected -> {
+                state.value = state.value.copy(distanceToAdd = action.distance)
+            }
+            
+            is Action.CancelPressed -> {
+                state.value = state.value.copy(distanceToAdd = 0.0)
+            }
+        }
+    }
+    
+    private fun loadFavorites(state: MutableState<FavoriteDistancesState>) {
+        scope.launch {
+            val settings = userSettingsRepository.userSettingsFlow.firstOrNull()
+            settings?.let {
+                val fav1 = displayString(it.favorite1)
+                val fav2 = displayString(it.favorite2)
+                val fav3 = displayString(it.favorite3)
+                val fav4 = displayString(it.favorite4)
+                
+                state.value = state.value.copy(
+                    favorite1DisplayString = fav1,
+                    favorite2DisplayString = fav2,
+                    favorite3DisplayString = fav3,
+                    favorite4DisplayString = fav4
+                )
+            }
+        }
+    }
+    
+    private suspend fun displayString(distance: Double): String? {
+        return if (distance > 0) {
+            distanceUtility.favoriteDistanceDisplayString(distance)
+        } else {
+            null
+        }
+    }
+}

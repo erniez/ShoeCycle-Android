@@ -40,6 +40,7 @@ import com.shoecycle.ui.screens.add_distance.services.MockStravaService
 import com.shoecycle.ui.screens.add_distance.components.chart.RunHistoryChartView
 import com.shoecycle.ui.screens.add_distance.utils.HistoryCollation
 import com.shoecycle.ui.screens.add_distance.modals.HistoryListView
+import com.shoecycle.ui.screens.add_distance.modals.FavoriteDistancesView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
@@ -211,6 +212,19 @@ fun AddDistanceScreen() {
             userSettingsRepository = userSettingsRepository,
             onDismiss = {
                 interactor.handle(state, AddDistanceInteractor.Action.HideHistoryModal)
+            }
+        )
+    }
+    
+    // Show Favorite Distances Modal
+    if (state.value.showFavoritesModal) {
+        FavoriteDistancesView(
+            userSettingsRepository = userSettingsRepository,
+            onDistanceSelected = { distance ->
+                interactor.handle(state, AddDistanceInteractor.Action.FavoriteDistanceSelected(distance))
+            },
+            onDismiss = {
+                interactor.handle(state, AddDistanceInteractor.Action.HideFavoritesModal)
             }
         )
     }
