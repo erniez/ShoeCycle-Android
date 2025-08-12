@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.shoecycle.domain.models.Shoe
+import com.shoecycle.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -69,13 +70,13 @@ fun ShoeCycleDateProgressView(
                 text = "${daysLeft.coerceAtLeast(0)}",
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00BCD4) // Cyan color
+                color = shoeCycleBlue // Cyan color
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Days Left",
                 style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF00BCD4)
+                color = shoeCycleBlue
             )
         }
         
@@ -89,7 +90,7 @@ fun ShoeCycleDateProgressView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp),
-                color = Color(0xFF00BCD4),
+                color = shoeCycleBlue,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )

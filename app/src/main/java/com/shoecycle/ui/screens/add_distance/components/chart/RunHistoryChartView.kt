@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shoecycle.ui.screens.add_distance.utils.WeeklyCollatedNew
+import com.shoecycle.ui.theme.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -60,7 +61,7 @@ fun RunHistoryChartView(
             .fillMaxWidth()
             .height(240.dp),
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF1C1C1E) // iOS dark background
+        color = shoeCycleBackground
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -83,7 +84,7 @@ fun RunHistoryChartView(
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color = Color(0xFF007AFF) // iOS blue
+                            color = shoeCycleBlue
                         )
                     }
                 } else if (state.chartData.isEmpty()) {
@@ -128,7 +129,7 @@ private fun SelectedWeekDetails(
             Card(
                 modifier = modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF2C2C2E)
+                    containerColor = shoeCycleSecondaryBackground
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -146,7 +147,7 @@ private fun SelectedWeekDetails(
                     )
                     Text(
                         text = "%.1f miles".format(week.runDistance),
-                        color = Color(0xFF32D74B), // Green
+                        color = shoeCycleGreen,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -591,7 +592,7 @@ private fun DrawScope.drawDataLine(
     if (positions.size < 2) return
     
     val path = Path()
-    val lineColor = Color(0xFFFF9500) // Orange
+    val lineColor = shoeCycleOrange
     
     positions.forEachIndexed { index, position ->
         if (index == 0) {
@@ -615,8 +616,8 @@ private fun DrawScope.drawDataPoints(
     positions: List<Offset>,
     selectedIndex: Int?
 ) {
-    val normalColor = Color(0xFF32D74B) // Green
-    val selectedColor = Color(0xFF007AFF) // Blue
+    val normalColor = shoeCycleGreen
+    val selectedColor = shoeCycleBlue
     val normalRadius = 4.dp.toPx()
     val selectedRadius = 6.dp.toPx()
     

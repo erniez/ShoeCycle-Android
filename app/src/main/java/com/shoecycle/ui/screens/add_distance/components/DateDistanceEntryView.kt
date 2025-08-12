@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shoecycle.domain.models.Shoe
+import com.shoecycle.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -72,7 +73,7 @@ fun DateDistanceEntryView(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF2C2C2E), // iOS dark gray background
+        color = shoeCycleSecondaryBackground,
         shadowElevation = 0.dp // Flat design
     ) {
         Column(
@@ -107,7 +108,7 @@ fun DateDistanceEntryView(
                                 )
                             },
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF1C1C1E) // Darker background for input
+                        color = shoeCycleBackground
                     ) {
                         Text(
                             text = dateFormatter.format(state.value.runDate),
@@ -186,7 +187,7 @@ fun DateDistanceEntryView(
                                  !isAddingRun &&
                                  shoe != null,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF32D74B) // iOS green
+                            containerColor = shoeCycleGreen
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -243,8 +244,8 @@ fun DateDistanceEntryView(
                                             modifier = Modifier.size(16.dp),
                                             tint = when (state.value.healthConnectSyncStatus) {
                                                 DateDistanceEntryState.SyncStatus.Success -> Color.Green
-                                                DateDistanceEntryState.SyncStatus.Failed -> Color.Red
-                                                DateDistanceEntryState.SyncStatus.Syncing -> Color(0xFF007AFF)
+                                                DateDistanceEntryState.SyncStatus.Failed -> shoeCycleRed
+                                                DateDistanceEntryState.SyncStatus.Syncing -> shoeCycleBlue
                                                 else -> Color.White
                                             }
                                         )
@@ -268,8 +269,8 @@ fun DateDistanceEntryView(
                                             modifier = Modifier.size(16.dp),
                                             tint = when (state.value.stravaSyncStatus) {
                                                 DateDistanceEntryState.SyncStatus.Success -> Color.Green
-                                                DateDistanceEntryState.SyncStatus.Failed -> Color.Red
-                                                DateDistanceEntryState.SyncStatus.Syncing -> Color(0xFF007AFF)
+                                                DateDistanceEntryState.SyncStatus.Failed -> shoeCycleRed
+                                                DateDistanceEntryState.SyncStatus.Syncing -> shoeCycleBlue
                                                 else -> Color.White
                                             }
                                         )
@@ -291,7 +292,7 @@ fun DateDistanceEntryView(
                     onClick = onShowHistory,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF48484A) // iOS gray
+                        containerColor = shoeCycleTertiaryBackground
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -310,7 +311,7 @@ fun DateDistanceEntryView(
                     onClick = onShowFavorites, // Still calls favorites for now
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF48484A) // iOS gray
+                        containerColor = shoeCycleTertiaryBackground
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {

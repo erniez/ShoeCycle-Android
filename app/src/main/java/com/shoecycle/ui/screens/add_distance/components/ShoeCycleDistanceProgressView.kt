@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.shoecycle.domain.models.Shoe
+import com.shoecycle.ui.theme.*
 
 @Composable
 fun ShoeCycleDistanceProgressView(
@@ -61,14 +62,14 @@ fun ShoeCycleDistanceProgressView(
                 text = "${currentDistance.toInt()}",
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF4CAF50), // Green color
+                color = shoeCycleGreen, // Green color
                 modifier = Modifier.scale(bounceScale)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Miles",
                 style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF4CAF50)
+                color = shoeCycleGreen
             )
         }
         
@@ -82,7 +83,7 @@ fun ShoeCycleDistanceProgressView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp),
-                color = Color(0xFF4CAF50),
+                color = shoeCycleGreen,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
