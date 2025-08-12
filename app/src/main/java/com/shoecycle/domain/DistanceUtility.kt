@@ -16,6 +16,14 @@ class DistanceUtility(
         private const val MILES_TO_KILOMETERS = 1.609344
         private const val MILES_TO_METERS = 1609.34
         private const val KILOMETERS_TO_MILES = 0.621371
+        
+        fun format(distance: Double): String {
+            val formatter = DecimalFormat("#.##").apply {
+                minimumFractionDigits = 0
+                maximumFractionDigits = 2
+            }
+            return formatter.format(distance)
+        }
     }
 
     private val formatter: NumberFormat = DecimalFormat("#.##").apply {

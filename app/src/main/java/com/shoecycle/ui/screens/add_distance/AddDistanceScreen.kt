@@ -39,6 +39,7 @@ import com.shoecycle.ui.screens.add_distance.services.MockHealthService
 import com.shoecycle.ui.screens.add_distance.services.MockStravaService
 import com.shoecycle.ui.screens.add_distance.components.chart.RunHistoryChartView
 import com.shoecycle.ui.screens.add_distance.utils.HistoryCollation
+import com.shoecycle.ui.screens.add_distance.modals.HistoryListView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
@@ -199,6 +200,19 @@ fun AddDistanceScreen() {
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
+    }
+    
+    // Show History Modal
+    if (state.value.showHistoryModal && state.value.selectedShoe != null) {
+        HistoryListView(
+            shoe = state.value.selectedShoe!!,
+            shoeRepository = shoeRepository,
+            historyRepository = historyRepository,
+            userSettingsRepository = userSettingsRepository,
+            onDismiss = {
+                interactor.handle(state, AddDistanceInteractor.Action.HideHistoryModal)
+            }
+        )
     }
 }
 
