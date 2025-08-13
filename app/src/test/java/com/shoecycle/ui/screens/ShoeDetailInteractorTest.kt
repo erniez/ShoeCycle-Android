@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.DistanceUtility
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import com.shoecycle.ui.screens.shoe_detail.ShoeDetailInteractor
 import com.shoecycle.ui.screens.shoe_detail.ShoeDetailState
@@ -27,6 +28,7 @@ class ShoeDetailInteractorTest {
     private val mockShoeRepository = mock<IShoeRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
     private val mockDistanceUtility = mock<DistanceUtility>()
+    private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
 
     private val testShoe = Shoe(
         id = 1L,
@@ -65,6 +67,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -92,6 +95,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -115,6 +119,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -137,6 +142,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -165,6 +171,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -191,6 +198,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState(shoe = testShoe))
@@ -213,6 +221,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -239,6 +248,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(editedShoe = null)
@@ -260,6 +270,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -287,6 +298,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -314,6 +326,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -341,6 +354,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -367,6 +381,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -393,6 +408,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -421,6 +437,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val mockCallback = mock<() -> Unit>()
@@ -452,6 +469,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val invalidShoe = testShoe.copy(brand = "")
@@ -478,6 +496,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -513,6 +532,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val validShoe = testShoe.copy(brand = "Valid Brand")
@@ -540,6 +560,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -569,6 +590,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -602,6 +624,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -628,6 +651,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -655,6 +679,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -685,6 +710,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockDistanceUtility,
+            mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
@@ -701,5 +727,146 @@ class ShoeDetailInteractorTest {
         // Assert
         verify(mockShoeRepository, never()).insertShoe(any())
         assertTrue(state.value.shouldNavigateBack)
+    }
+
+    @Test
+    fun `when DeleteShoe action, should show confirmation dialog`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            showDeleteConfirmation = false
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.DeleteShoe)
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        assertTrue(state.value.showDeleteConfirmation)
+        verify(mockShoeRepository, never()).deleteShoe(any())
+    }
+
+    @Test
+    fun `when ConfirmDelete action, should delete shoe and navigate back`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            showDeleteConfirmation = true
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.ConfirmDelete)
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        verify(mockShoeRepository).deleteShoe(testShoe)
+        verify(mockSelectedShoeStrategy).updateSelectedShoe()
+        assertFalse(state.value.showDeleteConfirmation)
+        assertFalse(state.value.isSaving)
+        assertTrue(state.value.shouldNavigateBack)
+    }
+
+    @Test
+    fun `when ConfirmDelete action with null shoe, should do nothing`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = null,
+            editedShoe = null,
+            showDeleteConfirmation = true
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.ConfirmDelete)
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        verify(mockShoeRepository, never()).deleteShoe(any())
+        verify(mockSelectedShoeStrategy, never()).updateSelectedShoe()
+        assertFalse(state.value.showDeleteConfirmation)
+        assertFalse(state.value.isSaving)
+        assertFalse(state.value.shouldNavigateBack)
+    }
+
+    @Test
+    fun `when ConfirmDelete action fails, should show error message`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            showDeleteConfirmation = true
+        )
+        val state = mutableStateOf(initialState)
+        
+        whenever(mockShoeRepository.deleteShoe(testShoe)).thenThrow(RuntimeException("Delete failed"))
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.ConfirmDelete)
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        verify(mockShoeRepository).deleteShoe(testShoe)
+        verify(mockSelectedShoeStrategy, never()).updateSelectedShoe()
+        assertFalse(state.value.isSaving)
+        assertFalse(state.value.shouldNavigateBack)
+        assertEquals("Error deleting shoe: Delete failed", state.value.errorMessage)
+    }
+
+    @Test
+    fun `when CancelDelete action, should hide confirmation dialog`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            showDeleteConfirmation = true
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.CancelDelete)
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        assertFalse(state.value.showDeleteConfirmation)
+        verify(mockShoeRepository, never()).deleteShoe(any())
     }
 }

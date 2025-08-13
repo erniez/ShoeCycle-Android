@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,8 +21,10 @@ import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.domain.DistanceUtility
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.ui.components.ShoeImage
 import com.shoecycle.domain.models.Shoe
+import com.shoecycle.ui.theme.shoeCycleRed
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,8 +43,11 @@ fun ShoeDetailScreen(
     val userSettingsRepository = remember { UserSettingsRepository(context) }
     val distanceUtility = remember { DistanceUtility(userSettingsRepository) }
     val imageRepository = remember { com.shoecycle.data.repository.ImageRepository(context) }
+    val selectedShoeStrategy = remember { 
+        SelectedShoeStrategy(shoeRepository, userSettingsRepository) 
+    }
     val interactor = remember { 
-        ShoeDetailInteractor(shoeRepository, userSettingsRepository, distanceUtility) 
+        ShoeDetailInteractor(shoeRepository, userSettingsRepository, distanceUtility, selectedShoeStrategy) 
     }
     val state = remember { 
         mutableStateOf(ShoeDetailState(
@@ -193,6 +199,18 @@ fun ShoeDetailScreen(
                 }
             }
         }
+        
+        // Delete confirmation dialog
+        if (state.value.showDeleteConfirmation) {
+            DeleteConfirmationDialog(
+                onConfirm = { 
+                    interactor.handle(state, ShoeDetailInteractor.Action.ConfirmDelete)
+                },
+                onDismiss = { 
+                    interactor.handle(state, ShoeDetailInteractor.Action.CancelDelete)
+                }
+            )
+        }
     }
 }
 
@@ -289,6 +307,17 @@ private fun ShoeDetailContent(
                     interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateShoeImage(imageKey, thumbnailData))
                 }
             )
+        }
+        
+        // Add delete button if not in create mode
+        if (!state.isCreateMode) {
+            item {
+                DeleteButton(
+                    onDeleteClick = {
+                        interactor.handle(stateRef, ShoeDetailInteractor.Action.DeleteShoe)
+                    }
+                )
+            }
         }
     }
 }
@@ -621,4 +650,71 @@ private fun ShoeCycleSectionCard(
             }
         }
     }
+}
+
+@Composable
+private fun DeleteButton(
+    onDeleteClick: () -> Unit
+) {
+    Spacer(modifier = Modifier.height(24.dp))
+    
+    Button(
+        onClick = onDeleteClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = shoeCycleRed,
+            contentColor = Color.White
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete"
+            )
+            Text(
+                text = "Delete Shoe",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+    
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+private fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Delete Shoe")
+        },
+        text = {
+            Text("Are you sure you want to delete this shoe? This action cannot be undone.")
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = shoeCycleRed
+                )
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.MutableState
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.DistanceUtility
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,13 +21,15 @@ data class ShoeDetailState(
     val errorMessage: String? = null,
     val distanceUnit: String = "mi",
     val isCreateMode: Boolean = false,
-    val onShoeSaved: (() -> Unit)? = null
+    val onShoeSaved: (() -> Unit)? = null,
+    val showDeleteConfirmation: Boolean = false
 )
 
 class ShoeDetailInteractor(
     private val shoeRepository: IShoeRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val distanceUtility: DistanceUtility,
+    private val selectedShoeStrategy: SelectedShoeStrategy,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -41,6 +44,9 @@ class ShoeDetailInteractor(
         object SaveChanges : Action()
         object RequestNavigateBack : Action()
         object CancelCreate : Action()
+        object DeleteShoe : Action()
+        object ConfirmDelete : Action()
+        object CancelDelete : Action()
         data class UpdateShoeImage(val imageKey: String, val thumbnailData: ByteArray) : Action() {            
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
@@ -214,6 +220,48 @@ class ShoeDetailInteractor(
             is Action.CancelCreate -> {
                 // In create mode, simply dismiss without saving
                 state.value = state.value.copy(shouldNavigateBack = true)
+            }
+            is Action.DeleteShoe -> {
+                // Show confirmation dialog
+                state.value = state.value.copy(showDeleteConfirmation = true)
+            }
+            is Action.ConfirmDelete -> {
+                // Proceed with deletion
+                val currentShoe = state.value.shoe
+                if (currentShoe == null) {
+                    // Hide confirmation dialog and do nothing
+                    state.value = state.value.copy(showDeleteConfirmation = false)
+                    return
+                }
+                
+                state.value = state.value.copy(
+                    showDeleteConfirmation = false,
+                    isSaving = true
+                )
+                scope.launch {
+                    try {
+                        shoeRepository.deleteShoe(currentShoe)
+                        Log.d("ShoeDetailInteractor", "Successfully deleted shoe: ${currentShoe.brand}")
+                        
+                        // Update selected shoe strategy in case we deleted the selected shoe
+                        selectedShoeStrategy.updateSelectedShoe()
+                        
+                        state.value = state.value.copy(
+                            isSaving = false,
+                            shouldNavigateBack = true
+                        )
+                    } catch (e: Exception) {
+                        Log.e("ShoeDetailInteractor", "Error deleting shoe", e)
+                        state.value = state.value.copy(
+                            isSaving = false,
+                            errorMessage = "Error deleting shoe: ${e.message}"
+                        )
+                    }
+                }
+            }
+            is Action.CancelDelete -> {
+                // Hide confirmation dialog
+                state.value = state.value.copy(showDeleteConfirmation = false)
             }
             is Action.UpdateShoeImage -> {
                 val currentEdited = state.value.editedShoe ?: return
