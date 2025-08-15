@@ -869,4 +869,179 @@ class ShoeDetailInteractorTest {
         assertFalse(state.value.showDeleteConfirmation)
         verify(mockShoeRepository, never()).deleteShoe(any())
     }
+
+    // Given: Shoe with hallOfFame = false
+    // When: HallOfFameToggled action with true
+    // Then: Should update shoe to hall of fame and save immediately
+    @Test
+    fun `when HallOfFameToggled action to true, should add shoe to hall of fame`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            hasUnsavedChanges = false
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.HallOfFameToggled(true))
+        testScheduler.advanceUntilIdle()
+
+        // Assert - After async save completes
+        val expectedUpdatedShoe = testShoe.copy(hallOfFame = true)
+        assertEquals("Edited shoe should be in hall of fame", true, state.value.editedShoe?.hallOfFame)
+        assertEquals("Original shoe should be updated", expectedUpdatedShoe, state.value.shoe)
+        assertFalse("Should not have unsaved changes after save", state.value.hasUnsavedChanges)
+        
+        // Verify repository calls
+        verify(mockShoeRepository).updateShoe(expectedUpdatedShoe)
+        verify(mockSelectedShoeStrategy).updateSelectedShoe()
+    }
+
+    // Given: Shoe with hallOfFame = true
+    // When: HallOfFameToggled action with false
+    // Then: Should remove shoe from hall of fame and save immediately
+    @Test
+    fun `when HallOfFameToggled action to false, should remove shoe from hall of fame`() = runTest {
+        // Arrange
+        val hallOfFameShoe = testShoe.copy(hallOfFame = true)
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = hallOfFameShoe,
+            editedShoe = hallOfFameShoe,
+            hasUnsavedChanges = false
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.HallOfFameToggled(false))
+        testScheduler.advanceUntilIdle()
+
+        // Assert - After async save completes
+        val expectedUpdatedShoe = hallOfFameShoe.copy(hallOfFame = false)
+        assertEquals("Edited shoe should not be in hall of fame", false, state.value.editedShoe?.hallOfFame)
+        assertEquals("Original shoe should be updated", expectedUpdatedShoe, state.value.shoe)
+        assertFalse("Should not have unsaved changes after save", state.value.hasUnsavedChanges)
+        
+        // Verify repository calls
+        verify(mockShoeRepository).updateShoe(expectedUpdatedShoe)
+        verify(mockSelectedShoeStrategy).updateSelectedShoe()
+    }
+
+    // Given: Shoe in normal state
+    // When: HallOfFameToggled action with null edited shoe
+    // Then: Should do nothing
+    @Test
+    fun `when HallOfFameToggled action with null edited shoe, should do nothing`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = null,
+            hasUnsavedChanges = false
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.HallOfFameToggled(true))
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        assertNull("Edited shoe should remain null", state.value.editedShoe)
+        assertFalse("Should not mark as changed", state.value.hasUnsavedChanges)
+        verify(mockShoeRepository, never()).updateShoe(any())
+        verify(mockSelectedShoeStrategy, never()).updateSelectedShoe()
+    }
+
+    // Given: Repository update fails
+    // When: HallOfFameToggled action is handled
+    // Then: Should handle error gracefully
+    @Test
+    fun `when HallOfFameToggled action repository fails, should handle error gracefully`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            hasUnsavedChanges = false
+        )
+        val state = mutableStateOf(initialState)
+        
+        val expectedUpdatedShoe = testShoe.copy(hallOfFame = true)
+        whenever(mockShoeRepository.updateShoe(expectedUpdatedShoe)).thenThrow(RuntimeException("Database error"))
+
+        // Act
+        interactor.handle(state, ShoeDetailInteractor.Action.HallOfFameToggled(true))
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        assertEquals("Edited shoe should show hall of fame status", true, state.value.editedShoe?.hallOfFame)
+        assertTrue("Should show error message", state.value.errorMessage?.contains("Error updating hall of fame status") == true)
+        assertTrue("Should contain original error", state.value.errorMessage?.contains("Database error") == true)
+        verify(mockShoeRepository).updateShoe(expectedUpdatedShoe)
+        verify(mockSelectedShoeStrategy, never()).updateSelectedShoe() // Should not update on error
+    }
+
+    // Given: Shoe with specific hall of fame states
+    // When: Multiple HallOfFameToggled actions
+    // Then: Should update selected shoe strategy each time
+    @Test
+    fun `when HallOfFameToggled action succeeds, should update selected shoe strategy`() = runTest {
+        // Arrange
+        val interactor = ShoeDetailInteractor(
+            mockShoeRepository,
+            mockUserSettingsRepository,
+            mockDistanceUtility,
+            mockSelectedShoeStrategy,
+            this
+        )
+        val initialState = ShoeDetailState(
+            shoe = testShoe,
+            editedShoe = testShoe,
+            hasUnsavedChanges = false
+        )
+        val state = mutableStateOf(initialState)
+
+        // Act - Toggle to hall of fame
+        interactor.handle(state, ShoeDetailInteractor.Action.HallOfFameToggled(true))
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        verify(mockSelectedShoeStrategy).updateSelectedShoe()
+        
+        // Reset mocks for second test
+        org.mockito.kotlin.reset(mockSelectedShoeStrategy)
+        
+        // Act - Toggle back to active
+        interactor.handle(state, ShoeDetailInteractor.Action.HallOfFameToggled(false))
+        testScheduler.advanceUntilIdle()
+
+        // Assert
+        verify(mockSelectedShoeStrategy).updateSelectedShoe()
+    }
 }
