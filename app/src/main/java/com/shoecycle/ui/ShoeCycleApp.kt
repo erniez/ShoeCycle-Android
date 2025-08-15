@@ -17,21 +17,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.shoecycle.R
 import com.shoecycle.ui.screens.add_distance.AddDistanceScreen
 import com.shoecycle.ui.screens.active_shoes.ActiveShoesScreen
 import com.shoecycle.ui.screens.hall_of_fame.HallOfFameScreen
 import com.shoecycle.ui.screens.settings.SettingsScreen
+import com.shoecycle.ui.screens.shoe_detail.ShoeDetailScreen
 
 sealed class ShoeCycleDestination(val route: String, val titleRes: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object AddDistance : ShoeCycleDestination("add_distance", R.string.add_distance, Icons.Filled.Add)
     object ActiveShoes : ShoeCycleDestination("active_shoes", R.string.active_shoes, Icons.Filled.Home)
     object HallOfFame : ShoeCycleDestination("hall_of_fame", R.string.hall_of_fame, Icons.Filled.Star)
     object Settings : ShoeCycleDestination("settings", R.string.settings, Icons.Filled.Settings)
+}
+
+// Additional navigation routes that are not bottom navigation items
+object AdditionalRoutes {
+    const val SHOE_DETAIL = "shoe_detail/{shoeId}"
+    
+    fun createShoeDetailRoute(shoeId: Long) = "shoe_detail/$shoeId"
 }
 
 val shoeCycleDestinations = listOf(
@@ -82,7 +92,24 @@ fun ShoeCycleApp() {
                 ActiveShoesScreen()
             }
             composable(ShoeCycleDestination.HallOfFame.route) {
-                HallOfFameScreen()
+                HallOfFameScreen(
+                    onNavigateToShoeDetail = { shoeId ->
+                        navController.navigate(AdditionalRoutes.createShoeDetailRoute(shoeId))
+                    }
+                )
+            }
+            composable(
+                route = AdditionalRoutes.SHOE_DETAIL,
+                arguments = listOf(navArgument("shoeId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val shoeId = backStackEntry.arguments?.getLong("shoeId") ?: 0L
+                ShoeDetailScreen(
+                    shoeId = shoeId,
+                    isCreateMode = false,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
             composable(ShoeCycleDestination.Settings.route) {
                 SettingsScreen()
