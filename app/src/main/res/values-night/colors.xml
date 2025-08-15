@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme variants for iOS color assets -->
+    <color name="opposite_black_light">#000000</color>
+    <color name="opposite_black_dark">#FFFFFF</color>
+    
+    <color name="section_background_light">#1C1C1E</color>
+    <color name="section_background_dark">#2C2C2E</color>
+</resources>
