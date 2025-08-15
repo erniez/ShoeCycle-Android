@@ -309,6 +309,19 @@ private fun ShoeDetailContent(
             )
         }
         
+        // Add Hall of Fame selector if not in create mode
+        if (!state.isCreateMode) {
+            item {
+                HallOfFameSelector(
+                    isInHallOfFame = shoe.hallOfFame,
+                    onToggle = { newValue ->
+                        interactor.handle(stateRef, ShoeDetailInteractor.Action.HallOfFameToggled(newValue))
+                    },
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+        }
+        
         // Add delete button if not in create mode
         if (!state.isCreateMode) {
             item {

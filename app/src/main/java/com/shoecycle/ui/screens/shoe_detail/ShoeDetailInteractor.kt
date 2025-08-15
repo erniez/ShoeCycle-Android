@@ -61,6 +61,7 @@ class ShoeDetailInteractor(
                 return result
             }
         }
+        data class HallOfFameToggled(val isInHallOfFame: Boolean) : Action()
     }
     
     fun handle(state: MutableState<ShoeDetailState>, action: Action) {
@@ -273,6 +274,37 @@ class ShoeDetailInteractor(
                     editedShoe = updatedShoe,
                     hasUnsavedChanges = updatedShoe != state.value.shoe
                 )
+            }
+            is Action.HallOfFameToggled -> {
+                val currentEdited = state.value.editedShoe ?: return
+                val updatedShoe = currentEdited.copy(hallOfFame = action.isInHallOfFame)
+                state.value = state.value.copy(
+                    editedShoe = updatedShoe,
+                    hasUnsavedChanges = updatedShoe != state.value.shoe
+                )
+                
+                // Save immediately like iOS implementation
+                scope.launch {
+                    try {
+                        shoeRepository.updateShoe(updatedShoe)
+                        
+                        // Update selected shoe strategy in case this affects the selected shoe
+                        selectedShoeStrategy.updateSelectedShoe()
+                        
+                        // Update the original shoe reference to reflect the change
+                        state.value = state.value.copy(
+                            shoe = updatedShoe,
+                            hasUnsavedChanges = false
+                        )
+                        
+                        Log.d("ShoeDetailInteractor", "Successfully updated hall of fame status for shoe: ${updatedShoe.brand}")
+                    } catch (e: Exception) {
+                        Log.e("ShoeDetailInteractor", "Error updating hall of fame status", e)
+                        state.value = state.value.copy(
+                            errorMessage = "Error updating hall of fame status: ${e.message}"
+                        )
+                    }
+                }
             }
         }
     }
