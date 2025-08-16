@@ -17,10 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
@@ -251,27 +253,13 @@ private fun AddDistanceHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Logo placeholder (pinned to leading edge)
-            Card(
-                modifier = Modifier.size(80.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "LOGO",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
+            // Logo (pinned to leading edge)
+            Image(
+                painter = painterResource(id = R.drawable.img_shoecycle_logo),
+                contentDescription = "ShoeCycle Logo",
+                modifier = Modifier.height(80.dp),
+                contentScale = ContentScale.Fit
+            )
             
             // Grouped shoe image with brand name and arrows (pinned to trailing edge)
             Column(
