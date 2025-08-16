@@ -47,6 +47,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 
+private val HEADER_IMAGE_SIZE = 120.dp
+
 @Composable
 fun AddDistanceScreen() {
     val context = LocalContext.current
@@ -251,62 +253,63 @@ private fun AddDistanceHeader(
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             // Logo (pinned to leading edge)
             Image(
                 painter = painterResource(id = R.drawable.img_shoecycle_logo),
                 contentDescription = "ShoeCycle Logo",
-                modifier = Modifier.height(80.dp),
+                modifier = Modifier.height(HEADER_IMAGE_SIZE),
                 contentScale = ContentScale.Fit
             )
             
             // Grouped shoe image with brand name and arrows (pinned to trailing edge)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
+                // Shoe image with brand name
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Shoe image with swipe
                     ShoeImageView(
                         shoe = selectedShoe,
                         imageRepository = imageRepository,
                         onSwipeUp = onSwipeUp,
-                        onSwipeDown = onSwipeDown
+                        onSwipeDown = onSwipeDown,
+                        imageSize = HEADER_IMAGE_SIZE
                     )
                     
-                    // Scroll arrows indicator
-                    if (hasMultipleShoes) {
-                        Column(
-                            modifier = Modifier.padding(start = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowUp,
-                                contentDescription = "Swipe up",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Swipe down",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                    // Shoe brand name under image (iOS style)
+                    Text(
+                        text = selectedShoe?.displayName ?: "No Shoe",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
                 
-                // Shoe brand name under image (iOS style)
-                Text(
-                    text = selectedShoe?.displayName ?: "No Shoe",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                // Scroll arrows indicator
+                if (hasMultipleShoes) {
+                    Column(
+                        modifier = Modifier.padding(start = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowUp,
+                            contentDescription = "Swipe up",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Swipe down",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }

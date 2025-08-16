@@ -19,6 +19,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.repository.ImageRepository
@@ -32,6 +33,7 @@ fun ShoeImageView(
     imageRepository: ImageRepository,
     onSwipeUp: () -> Unit,
     onSwipeDown: () -> Unit,
+    imageSize: Dp,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -50,7 +52,7 @@ fun ShoeImageView(
     
     Card(
         modifier = modifier
-            .size(120.dp)
+            .size(imageSize)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
