@@ -112,8 +112,6 @@ fun AddDistanceScreen() {
             }
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
         // Date-Distance Entry Component
         DateDistanceEntryView(
             shoe = state.value.selectedShoe,
@@ -132,19 +130,19 @@ fun AddDistanceScreen() {
                 // Handle the add run with mock service calls
                 scope.launch {
                     interactor.handle(state, AddDistanceInteractor.Action.AddRunClicked)
-                    
+
                     // Mock service calls
                     if (healthConnectEnabled) {
                         mockHealthService.addWorkout(
                             date = state.value.runDate,
-                            distance = state.value.runDistance.toDoubleOrNull() ?: 0.0
+                            distance = state.value.runDistance.toDoubleOrNull() ?: 0.0,
                         )
                     }
                     if (stravaEnabled) {
                         mockStravaService.uploadActivity(
                             date = state.value.runDate,
                             distance = state.value.runDistance.toDoubleOrNull() ?: 0.0,
-                            shoeName = state.value.selectedShoe?.displayName
+                            shoeName = state.value.selectedShoe?.displayName,
                         )
                     }
                 }
@@ -158,12 +156,13 @@ fun AddDistanceScreen() {
             onShowHistory = {
                 interactor.handle(state, AddDistanceInteractor.Action.ShowHistoryModal)
             },
-            modifier = Modifier.padding(vertical = 16.dp)
         )
-        
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Progress Views - Vertical layout for iOS parity
         val bounceRequested by progressViewModel.bounceRequested
-        
+
         // Distance Progress View
         ShoeCycleDistanceProgressView(
             shoe = state.value.selectedShoe,
