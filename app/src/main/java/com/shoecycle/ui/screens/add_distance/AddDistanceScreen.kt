@@ -201,7 +201,7 @@ fun AddDistanceScreen() {
             RunHistoryChartView(
                 chartData = weeklyData,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(vertical = 8.dp)
             )
         }
     }

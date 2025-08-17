@@ -37,6 +37,8 @@ import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+private val Y_AXIS_LABEL_WIDTH = 24.dp
+
 /**
  * Interactive Run History Chart component
  * Displays weekly running distance data with touch interactions and scrolling
@@ -187,7 +189,7 @@ private fun ScrollableChartCanvas(
     
     // Y-axis overlays chart content, chart scrolls behind it
     Box(
-        modifier = modifier.padding(start = 35.dp) // Space for Y-axis labels
+        modifier = modifier.padding(start = Y_AXIS_LABEL_WIDTH) // Space for Y-axis labels
     ) {
         // Scrollable chart area
         Box(
@@ -223,8 +225,8 @@ private fun ScrollableChartCanvas(
             maxDistance = state.maxDistance,
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .offset(x = (-35).dp) // Position labels in the padding area
-                .width(35.dp)
+                .offset(x = -Y_AXIS_LABEL_WIDTH) // Position labels in the padding area
+                .width(Y_AXIS_LABEL_WIDTH)
                 .fillMaxHeight()
         )
     }
@@ -343,7 +345,7 @@ private fun ChartCanvas(
         val canvasHeight = size.height
         val paddingTop = 16.dp.toPx()
         val paddingBottom = 32.dp.toPx() // More space for X-axis labels
-        val paddingLeft = if (showYAxis) 60f else 0f
+        val paddingLeft = 0f
         val paddingRight = 16.dp.toPx()
         
         // Calculate chart area
