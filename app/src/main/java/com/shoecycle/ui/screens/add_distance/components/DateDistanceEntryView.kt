@@ -1,5 +1,6 @@
 package com.shoecycle.ui.screens.add_distance.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -167,41 +168,40 @@ fun DateDistanceEntryView(
                     )
                 }
                 
-                // Add button column
+                // Add button column - aligned to top with labels
                 Column(
                     modifier = Modifier.weight(0.7f),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Spacer(modifier = Modifier.height(24.dp)) // Align with inputs
-                    Button(
-                        onClick = {
-                            focusManager.clearFocus()
-                            interactor.handle(
-                                state,
-                                DateDistanceEntryInteractor.Action.AddRunClicked,
-                                onAddRun = onDistanceAdded,
-                                onBounceRequested = onBounceRequested
-                            )
-                        },
-                        enabled = state.value.runDistance.isNotEmpty() && 
-                                 !isAddingRun &&
-                                 shoe != null,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = shoeCycleGreen
-                        ),
-                        shape = RoundedCornerShape(8.dp)
+                    Box(
+                        contentAlignment = Alignment.Center
                     ) {
+                        val isEnabled = state.value.runDistance.isNotEmpty() && 
+                                       !isAddingRun && 
+                                       shoe != null
+                        
+                        Image(
+                            painter = painterResource(id = com.shoecycle.R.drawable.btn_add_run),
+                            contentDescription = "Add Distance",
+                            modifier = Modifier
+                                .size(56.dp)
+                                .alpha(if (isEnabled) 1f else 0.5f)
+                                .clickable(enabled = isEnabled) {
+                                    focusManager.clearFocus()
+                                    interactor.handle(
+                                        state,
+                                        DateDistanceEntryInteractor.Action.AddRunClicked,
+                                        onAddRun = onDistanceAdded,
+                                        onBounceRequested = onBounceRequested
+                                    )
+                                }
+                        )
+                        
                         if (isAddingRun) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(24.dp),
                                 color = Color.White,
                                 strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add Distance",
-                                tint = Color.White
                             )
                         }
                     }
