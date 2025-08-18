@@ -43,7 +43,12 @@ private val SERVICE_INDICATOR_SIZE = 24.dp
 private val SERVICE_INDICATOR_ICON_SIZE = 16.dp
 private val SERVICE_INDICATOR_SPACING = 12.dp
 private val DISTANCE_FIELD_MIN_WIDTH = 100.dp
-private val DISTANCE_FIELD_MAX_WIDTH = 150.dp
+private val DISTANCE_FIELD_MAX_WIDTH = 110.dp
+private val DATE_COLUMN_WIDTH = 120.dp
+private val DISTANCE_COLUMN_WIDTH = 130.dp
+private val BUTTON_CONTENT_PADDING = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+private val INPUT_FIELD_HEIGHT = 56.dp
+private val TEXT_FIELD_CONTENT_PADDING = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +112,9 @@ fun DateDistanceEntryView(
                 verticalAlignment = Alignment.Top
             ) {
                 // Date column
-                Column {
+                Column(
+                    modifier = Modifier.width(DATE_COLUMN_WIDTH)
+                ) {
 
                     Text(
                         text = "Date:",
@@ -117,6 +124,8 @@ fun DateDistanceEntryView(
                     Spacer(modifier = Modifier.height(LABEL_BOTTOM_SPACING))
                     Surface(
                         modifier = Modifier
+                            .fillMaxWidth()
+                            .height(INPUT_FIELD_HEIGHT)
                             .clickable {
                                 interactor.handle(
                                     state,
@@ -141,7 +150,8 @@ fun DateDistanceEntryView(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = shoeCycleTertiaryBackground
                         ),
-                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS)
+                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS),
+                        contentPadding = BUTTON_CONTENT_PADDING
                     ) {
                         Icon(
                             imageVector = Icons.Default.List,
@@ -155,7 +165,9 @@ fun DateDistanceEntryView(
                 }
                 
                 // Distance column
-                Column {
+                Column(
+                    modifier = Modifier.width(DISTANCE_COLUMN_WIDTH)
+                ) {
 
                     Text(
                         text = "Distance:",
@@ -172,7 +184,9 @@ fun DateDistanceEntryView(
                                 onDistanceChanged = onDistanceChanged
                             )
                         },
-                        modifier = Modifier.widthIn(min = DISTANCE_FIELD_MIN_WIDTH, max = DISTANCE_FIELD_MAX_WIDTH),
+                        modifier = Modifier
+                            .widthIn(max = DISTANCE_FIELD_MAX_WIDTH)
+                            .height(INPUT_FIELD_HEIGHT),
                         placeholder = { 
                             Text(
                                 "Distance", 
@@ -207,7 +221,8 @@ fun DateDistanceEntryView(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = shoeCycleTertiaryBackground
                         ),
-                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS)
+                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS),
+                        contentPadding = BUTTON_CONTENT_PADDING
                     ) {
                         Icon(
                             imageVector = Icons.Default.Star,
