@@ -28,6 +28,23 @@ import com.shoecycle.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Constants for spacing and sizing
+private val LABEL_BOTTOM_SPACING = 4.dp
+private val COLUMN_SPACING = 12.dp
+private val ADD_BUTTON_SIZE = 56.dp
+private val PROGRESS_INDICATOR_SIZE = 24.dp
+private val BUTTON_TOP_PADDING = 4.dp
+private val ICON_SIZE = 18.dp
+private val ICON_SPACING = 4.dp
+private val SURFACE_CORNER_RADIUS = 8.dp
+private val CONTAINER_CORNER_RADIUS = 12.dp
+private val CONTAINER_PADDING = 16.dp
+private val SERVICE_INDICATOR_SIZE = 24.dp
+private val SERVICE_INDICATOR_ICON_SIZE = 16.dp
+private val SERVICE_INDICATOR_SPACING = 12.dp
+private val DISTANCE_FIELD_MIN_WIDTH = 100.dp
+private val DISTANCE_FIELD_MAX_WIDTH = 150.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateDistanceEntryView(
@@ -72,64 +89,80 @@ fun DateDistanceEntryView(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(12.dp),
+            .padding(horizontal = CONTAINER_PADDING),
+        shape = RoundedCornerShape(CONTAINER_CORNER_RADIUS),
         color = shoeCycleSecondaryBackground,
         shadowElevation = 0.dp // Flat design
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(CONTAINER_PADDING),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Three-column layout: Date | Distance | Add Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(COLUMN_SPACING),
                 verticalAlignment = Alignment.Top
             ) {
                 // Date column
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column {
+
                     Text(
                         text = "Date:",
                         style = MaterialTheme.typography.labelMedium,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(LABEL_BOTTOM_SPACING))
                     Surface(
                         modifier = Modifier
-                            .fillMaxWidth()
                             .clickable {
                                 interactor.handle(
                                     state,
                                     DateDistanceEntryInteractor.Action.ShowDatePicker
                                 )
                             },
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS),
                         color = shoeCycleBackground
                     ) {
                         Text(
                             text = dateFormatter.format(state.value.runDate),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White,
-                            modifier = Modifier.padding(12.dp)
+                            modifier = Modifier.padding(CONTAINER_CORNER_RADIUS)
                         )
+                    }
+                    
+                    // History button in Date column
+                    Spacer(modifier = Modifier.height(BUTTON_TOP_PADDING))
+                    Button(
+                        onClick = onShowHistory,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = shoeCycleTertiaryBackground
+                        ),
+                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.List,
+                            contentDescription = "History",
+                            modifier = Modifier.size(ICON_SIZE),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(ICON_SPACING))
+                        Text("History", color = Color.White)
                     }
                 }
                 
                 // Distance column
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column {
+
                     Text(
                         text = "Distance:",
                         style = MaterialTheme.typography.labelMedium,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(LABEL_BOTTOM_SPACING))
                     TextField(
                         value = state.value.runDistance,
                         onValueChange = { 
@@ -139,7 +172,7 @@ fun DateDistanceEntryView(
                                 onDistanceChanged = onDistanceChanged
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.widthIn(min = DISTANCE_FIELD_MIN_WIDTH, max = DISTANCE_FIELD_MAX_WIDTH),
                         placeholder = { 
                             Text(
                                 "Distance", 
@@ -164,14 +197,34 @@ fun DateDistanceEntryView(
                             }
                         ),
                         singleLine = true,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS)
                     )
+                    
+                    // Distances button in Distance column
+                    Spacer(modifier = Modifier.height(BUTTON_TOP_PADDING))
+                    Button(
+                        onClick = onShowFavorites,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = shoeCycleTertiaryBackground
+                        ),
+                        shape = RoundedCornerShape(SURFACE_CORNER_RADIUS)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Distances",
+                            modifier = Modifier.size(ICON_SIZE),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(ICON_SPACING))
+                        Text("Distances", color = Color.White)
+                    }
                 }
-                
+
+                Spacer(modifier = Modifier.weight(1f))
+
                 // Add button column - aligned to top with labels
                 Column(
-                    modifier = Modifier.weight(0.7f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
                         contentAlignment = Alignment.Center
@@ -184,7 +237,7 @@ fun DateDistanceEntryView(
                             painter = painterResource(id = com.shoecycle.R.drawable.btn_add_run),
                             contentDescription = "Add Distance",
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(ADD_BUTTON_SIZE)
                                 .alpha(if (isEnabled) 1f else 0.5f)
                                 .clickable(enabled = isEnabled) {
                                     focusManager.clearFocus()
@@ -199,35 +252,17 @@ fun DateDistanceEntryView(
                         
                         if (isAddingRun) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(PROGRESS_INDICATOR_SIZE),
                                 color = Color.White,
                                 strokeWidth = 2.dp
                             )
                         }
                     }
-                }
-            }
-            
-            // Service indicators centered directly below Add Distance button (when enabled)
-            val hasEnabledServices = state.value.healthConnectEnabled || state.value.stravaEnabled
-            if (hasEnabledServices) {
-                // Create a Row that matches the three-column layout but only shows indicators in the Add button column
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Empty space for Date column
-                    Spacer(modifier = Modifier.weight(1f))
                     
-                    // Empty space for Distance column
-                    Spacer(modifier = Modifier.weight(1f))
-                    
-                    // Service indicators aligned with Add button column
-                    Column(
-                        modifier = Modifier.weight(0.7f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    // Service indicators below Add button (when enabled)
+                    val hasEnabledServices = state.value.healthConnectEnabled || state.value.stravaEnabled
+                    if (hasEnabledServices) {
+                        Spacer(modifier = Modifier.height(BUTTON_TOP_PADDING))
                         Row(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
@@ -241,7 +276,7 @@ fun DateDistanceEntryView(
                                         Icon(
                                             imageVector = Icons.Default.Favorite,
                                             contentDescription = "Health Connect",
-                                            modifier = Modifier.size(16.dp),
+                                            modifier = Modifier.size(SERVICE_INDICATOR_ICON_SIZE),
                                             tint = when (state.value.healthConnectSyncStatus) {
                                                 DateDistanceEntryState.SyncStatus.Success -> Color.Green
                                                 DateDistanceEntryState.SyncStatus.Failed -> shoeCycleRed
@@ -254,7 +289,7 @@ fun DateDistanceEntryView(
                             }
                             
                             if (state.value.healthConnectEnabled && state.value.stravaEnabled) {
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(SERVICE_INDICATOR_SPACING))
                             }
                             
                             // Strava indicator
@@ -266,7 +301,7 @@ fun DateDistanceEntryView(
                                         Icon(
                                             imageVector = Icons.Default.PlayArrow,
                                             contentDescription = "Strava",
-                                            modifier = Modifier.size(16.dp),
+                                            modifier = Modifier.size(SERVICE_INDICATOR_ICON_SIZE),
                                             tint = when (state.value.stravaSyncStatus) {
                                                 DateDistanceEntryState.SyncStatus.Success -> Color.Green
                                                 DateDistanceEntryState.SyncStatus.Failed -> shoeCycleRed
@@ -279,50 +314,6 @@ fun DateDistanceEntryView(
                             }
                         }
                     }
-                }
-            }
-            
-            // History and Distances buttons row (iOS style)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // History button
-                Button(
-                    onClick = onShowHistory,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = shoeCycleTertiaryBackground
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.List,
-                        contentDescription = "History",
-                        modifier = Modifier.size(18.dp),
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("History", color = Color.White)
-                }
-                
-                // Distances button (changed from Favorites to match iOS)
-                Button(
-                    onClick = onShowFavorites, // Still calls favorites for now
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = shoeCycleTertiaryBackground
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Distances",
-                        modifier = Modifier.size(18.dp),
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Distances", color = Color.White)
                 }
             }
             
@@ -373,7 +364,7 @@ private fun ServiceIndicator(
 ) {
     Box(
         modifier = modifier
-            .size(24.dp)
+            .size(SERVICE_INDICATOR_SIZE)
             .clip(CircleShape)
             .background(
                 color = when (syncStatus) {
