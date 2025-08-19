@@ -1,6 +1,7 @@
 package com.shoecycle.ui.screens.add_distance.modals
 
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.domain.DistanceUtility
 import kotlinx.coroutines.CoroutineScope
@@ -13,12 +14,12 @@ data class FavoriteDistancesState(
     val favorite1DisplayString: String? = null,
     val favorite2DisplayString: String? = null,
     val favorite3DisplayString: String? = null,
-    val favorite4DisplayString: String? = null
+    val favorite4DisplayString: String? = null,
+    val distanceUnit: DistanceUnit = DistanceUnit.MILES
 )
 
 class FavoriteDistancesInteractor(
     private val userSettingsRepository: UserSettingsRepository,
-    private val distanceUtility: DistanceUtility = DistanceUtility(userSettingsRepository),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -45,26 +46,29 @@ class FavoriteDistancesInteractor(
     
     private fun loadFavorites(state: MutableState<FavoriteDistancesState>) {
         scope.launch {
-            val settings = userSettingsRepository.userSettingsFlow.firstOrNull()
-            settings?.let {
-                val fav1 = displayString(it.favorite1)
-                val fav2 = displayString(it.favorite2)
-                val fav3 = displayString(it.favorite3)
-                val fav4 = displayString(it.favorite4)
-                
-                state.value = state.value.copy(
-                    favorite1DisplayString = fav1,
-                    favorite2DisplayString = fav2,
-                    favorite3DisplayString = fav3,
-                    favorite4DisplayString = fav4
-                )
+            userSettingsRepository.userSettingsFlow.collect { settings ->
+                settings?.let {
+                    val unit = it.distanceUnit
+                    val fav1 = displayString(it.favorite1, unit)
+                    val fav2 = displayString(it.favorite2, unit)
+                    val fav3 = displayString(it.favorite3, unit)
+                    val fav4 = displayString(it.favorite4, unit)
+                    
+                    state.value = state.value.copy(
+                        favorite1DisplayString = fav1,
+                        favorite2DisplayString = fav2,
+                        favorite3DisplayString = fav3,
+                        favorite4DisplayString = fav4,
+                        distanceUnit = unit
+                    )
+                }
             }
         }
     }
     
-    private suspend fun displayString(distance: Double): String? {
+    private fun displayString(distance: Double, unit: DistanceUnit): String? {
         return if (distance > 0) {
-            distanceUtility.favoriteDistanceDisplayString(distance)
+            DistanceUtility.favoriteDistanceDisplayString(distance, unit)
         } else {
             null
         }

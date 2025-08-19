@@ -1,9 +1,10 @@
 package com.shoecycle.ui.screens
 
 import androidx.compose.runtime.mutableStateOf
+import com.shoecycle.data.DistanceUnit
+import com.shoecycle.data.UserSettingsData
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
-import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import com.shoecycle.ui.screens.shoe_detail.ShoeDetailInteractor
@@ -27,7 +28,6 @@ class ShoeDetailInteractorTest {
 
     private val mockShoeRepository = mock<IShoeRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
-    private val mockDistanceUtility = mock<DistanceUtility>()
     private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
 
     private val testShoe = Shoe(
@@ -55,7 +55,7 @@ class ShoeDetailInteractorTest {
         assertFalse(state.isSaving)
         assertFalse(state.shouldNavigateBack)
         assertNull(state.errorMessage)
-        assertEquals("mi", state.distanceUnit)
+        assertEquals(DistanceUnit.MILES, state.distanceUnit)
         assertFalse(state.isCreateMode)
         assertNull(state.onShoeSaved)
     }
@@ -66,14 +66,14 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
         
         whenever(mockShoeRepository.getShoeById(1L)).thenReturn(flowOf(testShoe))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(1L))
@@ -85,7 +85,7 @@ class ShoeDetailInteractorTest {
         assertFalse(state.value.hasUnsavedChanges)
         assertFalse(state.value.isLoading)
         assertNull(state.value.errorMessage)
-        assertEquals("mi", state.value.distanceUnit)
+        assertEquals(DistanceUnit.MILES, state.value.distanceUnit)
     }
 
     @Test
@@ -94,13 +94,14 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
         
         whenever(mockShoeRepository.getShoeById(1L)).thenReturn(flowOf(null))
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(1L))
@@ -118,13 +119,14 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
         
         whenever(mockShoeRepository.getShoeById(1L)).thenThrow(RuntimeException("Database error"))
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(1L))
@@ -141,13 +143,13 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
         
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("km")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.KM)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         whenever(mockShoeRepository.getNextOrderingValue()).thenReturn(2.0)
 
         // Act
@@ -160,7 +162,7 @@ class ShoeDetailInteractorTest {
         assertEquals(2.0, state.value.editedShoe?.orderingValue)
         assertFalse(state.value.hasUnsavedChanges)
         assertFalse(state.value.isLoading)
-        assertEquals("km", state.value.distanceUnit)
+        assertEquals(DistanceUnit.KM, state.value.distanceUnit)
         assertTrue(state.value.isCreateMode)
     }
 
@@ -170,13 +172,13 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
         
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         whenever(mockShoeRepository.getNextOrderingValue()).thenThrow(RuntimeException("Database error"))
 
         // Act
@@ -187,7 +189,7 @@ class ShoeDetailInteractorTest {
         assertNotNull(state.value.shoe)
         assertNotNull(state.value.editedShoe)
         assertFalse(state.value.isLoading)
-        assertEquals("mi", state.value.distanceUnit)
+        assertEquals(DistanceUnit.MILES, state.value.distanceUnit)
         assertTrue(state.value.isCreateMode)
     }
 
@@ -197,14 +199,14 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ShoeDetailState(shoe = testShoe))
         
         whenever(mockShoeRepository.getShoeById(1L)).thenReturn(flowOf(testShoe))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.Refresh)
@@ -220,7 +222,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -247,7 +248,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -269,18 +269,16 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
             shoe = testShoe,
             editedShoe = testShoe,
-            hasUnsavedChanges = false
+            hasUnsavedChanges = false,
+            distanceUnit = DistanceUnit.MILES
         )
         val state = mutableStateOf(initialState)
-        
-        whenever(mockDistanceUtility.distance("25.5")).thenReturn(25.5)
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.UpdateStartDistance("25.5"))
@@ -292,31 +290,29 @@ class ShoeDetailInteractorTest {
     }
 
     @Test
-    fun `when UpdateStartDistance action with parsing error, should keep current value`() = runTest {
+    fun `when UpdateStartDistance action with invalid input, should set to zero`() = runTest {
         // Arrange
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
             shoe = testShoe,
             editedShoe = testShoe,
-            hasUnsavedChanges = false
+            hasUnsavedChanges = false,
+            distanceUnit = DistanceUnit.MILES
         )
         val state = mutableStateOf(initialState)
-        
-        whenever(mockDistanceUtility.distance("invalid")).thenThrow(NumberFormatException("Invalid number"))
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.UpdateStartDistance("invalid"))
         testScheduler.advanceUntilIdle()
 
-        // Assert
-        assertEquals(testShoe.startDistance, state.value.editedShoe?.startDistance)
-        assertFalse(state.value.hasUnsavedChanges)
+        // Assert - DistanceUtility.distance returns 0.0 for invalid input
+        assertEquals(0.0, state.value.editedShoe?.startDistance)
+        assertTrue(state.value.hasUnsavedChanges)
     }
 
     @Test
@@ -325,18 +321,16 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
         val initialState = ShoeDetailState(
             shoe = testShoe,
             editedShoe = testShoe,
-            hasUnsavedChanges = false
+            hasUnsavedChanges = false,
+            distanceUnit = DistanceUnit.MILES
         )
         val state = mutableStateOf(initialState)
-        
-        whenever(mockDistanceUtility.distance("400.0")).thenReturn(400.0)
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.UpdateMaxDistance("400.0"))
@@ -353,7 +347,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -380,7 +373,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -407,7 +399,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -436,7 +427,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -468,7 +458,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -495,7 +484,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -531,7 +519,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -559,7 +546,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -589,7 +575,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -623,7 +608,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -650,7 +634,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -678,7 +661,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -709,7 +691,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -735,7 +716,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -761,7 +741,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -790,7 +769,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -819,7 +797,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -850,7 +827,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -879,7 +855,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -915,7 +890,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -950,7 +924,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -981,7 +954,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )
@@ -1016,7 +988,6 @@ class ShoeDetailInteractorTest {
         val interactor = ShoeDetailInteractor(
             mockShoeRepository,
             mockUserSettingsRepository,
-            mockDistanceUtility,
             mockSelectedShoeStrategy,
             this
         )

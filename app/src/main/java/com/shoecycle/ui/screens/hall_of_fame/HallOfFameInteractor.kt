@@ -2,6 +2,7 @@ package com.shoecycle.ui.screens.hall_of_fame
 
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.DistanceUtility
@@ -15,13 +16,12 @@ data class HallOfFameState(
     val shoes: List<Shoe> = emptyList(),
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
-    val distanceUnit: String = "mi"
+    val distanceUnit: DistanceUnit = DistanceUnit.MILES
 )
 
 class HallOfFameInteractor(
     private val shoeRepository: IShoeRepository,
     private val userSettingsRepository: UserSettingsRepository,
-    private val distanceUtility: DistanceUtility,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -33,9 +33,20 @@ class HallOfFameInteractor(
         when (action) {
             is Action.ViewAppeared -> {
                 loadHallOfFameShoes(state)
+                observeSettings(state)
             }
             is Action.Refresh -> {
                 loadHallOfFameShoes(state)
+            }
+        }
+    }
+    
+    private fun observeSettings(state: MutableState<HallOfFameState>) {
+        scope.launch {
+            userSettingsRepository.userSettingsFlow.collect { settings ->
+                settings?.let {
+                    state.value = state.value.copy(distanceUnit = it.distanceUnit)
+                }
             }
         }
     }
@@ -45,9 +56,6 @@ class HallOfFameInteractor(
         
         scope.launch {
             try {
-                // Get distance unit for display
-                val unitLabel = distanceUtility.getUnitLabel()
-                
                 // Collect hall of fame shoes (where hallOfFame = true)
                 shoeRepository.getRetiredShoes().catch { exception ->
                     Log.e("HallOfFameInteractor", "Error loading hall of fame shoes", exception)
@@ -60,8 +68,7 @@ class HallOfFameInteractor(
                     state.value = state.value.copy(
                         shoes = hallOfFameShoes,
                         isLoading = false,
-                        errorMessage = null,
-                        distanceUnit = unitLabel
+                        errorMessage = null
                     )
                 }
             } catch (e: Exception) {

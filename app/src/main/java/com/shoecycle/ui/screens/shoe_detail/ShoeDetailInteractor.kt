@@ -2,6 +2,7 @@ package com.shoecycle.ui.screens.shoe_detail
 
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.DistanceUtility
@@ -19,7 +20,7 @@ data class ShoeDetailState(
     val isSaving: Boolean = false,
     val shouldNavigateBack: Boolean = false,
     val errorMessage: String? = null,
-    val distanceUnit: String = "mi",
+    val distanceUnit: DistanceUnit = DistanceUnit.MILES,
     val isCreateMode: Boolean = false,
     val onShoeSaved: (() -> Unit)? = null,
     val showDeleteConfirmation: Boolean = false
@@ -28,7 +29,6 @@ data class ShoeDetailState(
 class ShoeDetailInteractor(
     private val shoeRepository: IShoeRepository,
     private val userSettingsRepository: UserSettingsRepository,
-    private val distanceUtility: DistanceUtility,
     private val selectedShoeStrategy: SelectedShoeStrategy,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
@@ -66,8 +66,14 @@ class ShoeDetailInteractor(
     
     fun handle(state: MutableState<ShoeDetailState>, action: Action) {
         when (action) {
-            is Action.ViewAppeared -> loadShoe(state, action.shoeId)
-            is Action.InitializeNewShoe -> initializeNewShoe(state)
+            is Action.ViewAppeared -> {
+                loadShoe(state, action.shoeId)
+                observeSettings(state)
+            }
+            is Action.InitializeNewShoe -> {
+                initializeNewShoe(state)
+                observeSettings(state)
+            }
             is Action.Refresh -> {
                 state.value.shoe?.let { shoe ->
                     loadShoe(state, shoe.id)
@@ -83,32 +89,28 @@ class ShoeDetailInteractor(
             }
             is Action.UpdateStartDistance -> {
                 val currentEdited = state.value.editedShoe ?: return
-                scope.launch {
-                    try {
-                        val distance = distanceUtility.distance(action.distance)
-                        val updatedShoe = currentEdited.copy(startDistance = distance)
-                        state.value = state.value.copy(
-                            editedShoe = updatedShoe,
-                            hasUnsavedChanges = updatedShoe != state.value.shoe
-                        )
-                    } catch (e: Exception) {
-                        // Keep current value if parsing fails
-                    }
+                try {
+                    val distance = DistanceUtility.distance(action.distance, state.value.distanceUnit)
+                    val updatedShoe = currentEdited.copy(startDistance = distance)
+                    state.value = state.value.copy(
+                        editedShoe = updatedShoe,
+                        hasUnsavedChanges = updatedShoe != state.value.shoe
+                    )
+                } catch (e: Exception) {
+                    // Keep current value if parsing fails
                 }
             }
             is Action.UpdateMaxDistance -> {
                 val currentEdited = state.value.editedShoe ?: return
-                scope.launch {
-                    try {
-                        val distance = distanceUtility.distance(action.distance)
-                        val updatedShoe = currentEdited.copy(maxDistance = distance)
-                        state.value = state.value.copy(
-                            editedShoe = updatedShoe,
-                            hasUnsavedChanges = updatedShoe != state.value.shoe
-                        )
-                    } catch (e: Exception) {
-                        // Keep current value if parsing fails
-                    }
+                try {
+                    val distance = DistanceUtility.distance(action.distance, state.value.distanceUnit)
+                    val updatedShoe = currentEdited.copy(maxDistance = distance)
+                    state.value = state.value.copy(
+                        editedShoe = updatedShoe,
+                        hasUnsavedChanges = updatedShoe != state.value.shoe
+                    )
+                } catch (e: Exception) {
+                    // Keep current value if parsing fails
                 }
             }
             is Action.UpdateStartDate -> {
@@ -309,6 +311,16 @@ class ShoeDetailInteractor(
         }
     }
     
+    private fun observeSettings(state: MutableState<ShoeDetailState>) {
+        scope.launch {
+            userSettingsRepository.userSettingsFlow.collect { settings ->
+                settings?.let {
+                    state.value = state.value.copy(distanceUnit = it.distanceUnit)
+                }
+            }
+        }
+    }
+    
     private fun loadShoe(state: MutableState<ShoeDetailState>, shoeId: Long) {
         state.value = state.value.copy(isLoading = true, errorMessage = null)
         
@@ -316,15 +328,12 @@ class ShoeDetailInteractor(
             try {
                 shoeRepository.getShoeById(shoeId).collect { shoe ->
                     if (shoe != null) {
-                        val unitLabel = distanceUtility.getUnitLabel()
-                        
                         state.value = state.value.copy(
                             shoe = shoe,
                             editedShoe = shoe,
                             hasUnsavedChanges = false,
                             isLoading = false,
-                            errorMessage = null,
-                            distanceUnit = unitLabel
+                            errorMessage = null
                         )
                     } else {
                         state.value = state.value.copy(
@@ -345,7 +354,6 @@ class ShoeDetailInteractor(
     private fun initializeNewShoe(state: MutableState<ShoeDetailState>) {
         scope.launch {
             try {
-                val unitLabel = distanceUtility.getUnitLabel()
                 val nextOrderingValue = shoeRepository.getNextOrderingValue()
                 val newShoe = Shoe.createDefault().copy(orderingValue = nextOrderingValue)
                 
@@ -354,13 +362,11 @@ class ShoeDetailInteractor(
                     editedShoe = newShoe,
                     hasUnsavedChanges = false,
                     isLoading = false,
-                    distanceUnit = unitLabel,
                     isCreateMode = true
                 )
             } catch (e: Exception) {
                 Log.e("ShoeDetailInteractor", "Error initializing new shoe", e)
                 // Fallback to default if there's an error
-                val unitLabel = distanceUtility.getUnitLabel()
                 val newShoe = Shoe.createDefault()
                 
                 state.value = state.value.copy(
@@ -368,7 +374,6 @@ class ShoeDetailInteractor(
                     editedShoe = newShoe,
                     hasUnsavedChanges = false,
                     isLoading = false,
-                    distanceUnit = unitLabel,
                     isCreateMode = true
                 )
             }

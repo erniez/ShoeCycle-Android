@@ -5,7 +5,6 @@ import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsData
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
-import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -21,7 +20,6 @@ class HallOfFameInteractorTest {
 
     private val mockShoeRepository = mock<IShoeRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
-    private val mockDistanceUtility = mock<DistanceUtility>()
     
     private fun createTestShoe(id: Long = 1L, brand: String = "Test Shoe", totalDistance: Double = 100.0): Shoe {
         return Shoe(
@@ -48,12 +46,12 @@ class HallOfFameInteractorTest {
         )
         
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(testShoes))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -67,7 +65,7 @@ class HallOfFameInteractorTest {
         assertEquals("Should have 2 shoes", 2, state.value.shoes.size)
         assertEquals("First shoe should be Nike Air", "Nike Air", state.value.shoes[0].brand)
         assertEquals("Second shoe should be Adidas Ultra", "Adidas Ultra", state.value.shoes[1].brand)
-        assertEquals("Distance unit should be miles", "mi", state.value.distanceUnit)
+        assertEquals("Distance unit should be miles", DistanceUnit.MILES, state.value.distanceUnit)
         assertNull("Should have no error", state.value.errorMessage)
     }
 
@@ -77,12 +75,12 @@ class HallOfFameInteractorTest {
     @Test
     fun testViewAppearedHandlesEmptyHallOfFame() = runTest {
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(emptyList()))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("km")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.KM)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -93,7 +91,7 @@ class HallOfFameInteractorTest {
         
         assertFalse("Should not be loading", state.value.isLoading)
         assertTrue("Should have empty shoes list", state.value.shoes.isEmpty())
-        assertEquals("Distance unit should be km", "km", state.value.distanceUnit)
+        assertEquals("Distance unit should be km", DistanceUnit.KM, state.value.distanceUnit)
         assertNull("Should have no error", state.value.errorMessage)
     }
 
@@ -104,12 +102,12 @@ class HallOfFameInteractorTest {
     fun testViewAppearedHandlesRepositoryError() = runTest {
         val errorMessage = "Database connection failed"
         whenever(mockShoeRepository.getRetiredShoes()).thenThrow(RuntimeException(errorMessage))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -138,12 +136,12 @@ class HallOfFameInteractorTest {
         whenever(mockShoeRepository.getRetiredShoes())
             .thenReturn(flowOf(initialShoes))
             .thenReturn(flowOf(refreshedShoes))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -167,12 +165,12 @@ class HallOfFameInteractorTest {
     @Test
     fun testLoadingStateManagement() = runTest {
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(emptyList()))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -200,12 +198,12 @@ class HallOfFameInteractorTest {
         )
         
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(testShoes))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("mi")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -224,12 +222,12 @@ class HallOfFameInteractorTest {
     @Test
     fun testDistanceUnitHandling() = runTest {
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(emptyList()))
-        whenever(mockDistanceUtility.getUnitLabel()).thenReturn("km")
+        val userSettings = UserSettingsData(distanceUnit = DistanceUnit.KM)
+        whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
         
         val interactor = HallOfFameInteractor(
             mockShoeRepository, 
-            mockUserSettingsRepository, 
-            mockDistanceUtility,
+            mockUserSettingsRepository,
             this
         )
         val state = mutableStateOf(HallOfFameState())
@@ -237,7 +235,7 @@ class HallOfFameInteractorTest {
         interactor.handle(state, HallOfFameInteractor.Action.ViewAppeared)
         testScheduler.advanceUntilIdle()
         
-        assertEquals("Should use distance utility unit label", "km", state.value.distanceUnit)
-        verify(mockDistanceUtility).getUnitLabel()
+        assertEquals("Should use correct distance unit", DistanceUnit.KM, state.value.distanceUnit)
+        verify(mockUserSettingsRepository, atLeastOnce()).userSettingsFlow
     }
 }

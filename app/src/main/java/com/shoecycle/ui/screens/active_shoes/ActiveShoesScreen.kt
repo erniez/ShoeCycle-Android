@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.DistanceUnit
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.models.Shoe
 
 @Composable
@@ -133,7 +134,7 @@ fun ActiveShoesRowView(
                     
                     // Distance text with smooth translation
                     Text(
-                        text = "${stringResource(R.string.distance)}: ${shoe.totalDistance} ${distanceUnit.displayString}",
+                        text = "${stringResource(R.string.distance)}: ${DistanceUtility.displayString(shoe.totalDistance, distanceUnit)} ${DistanceUtility.getUnitLabel(distanceUnit)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) {
                             MaterialTheme.colorScheme.onPrimaryContainer

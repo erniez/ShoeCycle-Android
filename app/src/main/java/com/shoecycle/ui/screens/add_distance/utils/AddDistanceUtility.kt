@@ -8,7 +8,7 @@ import kotlin.math.roundToInt
  * Enhanced distance utility for Add Distance screen
  * Provides iOS-compatible distance formatting and conversion utilities
  */
-object DistanceUtility {
+object AddDistanceUtility {
     
     private const val MILES_TO_KILOMETERS = 1.609344
     private const val KILOMETERS_TO_MILES = 0.621371

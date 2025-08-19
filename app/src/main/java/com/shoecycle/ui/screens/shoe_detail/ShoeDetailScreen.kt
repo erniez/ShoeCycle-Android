@@ -41,13 +41,12 @@ fun ShoeDetailScreen(
         com.shoecycle.data.repository.ShoeRepository.create(context)
     }
     val userSettingsRepository = remember { UserSettingsRepository(context) }
-    val distanceUtility = remember { DistanceUtility(userSettingsRepository) }
     val imageRepository = remember { com.shoecycle.data.repository.ImageRepository(context) }
     val selectedShoeStrategy = remember { 
         SelectedShoeStrategy(shoeRepository, userSettingsRepository) 
     }
     val interactor = remember { 
-        ShoeDetailInteractor(shoeRepository, userSettingsRepository, distanceUtility, selectedShoeStrategy) 
+        ShoeDetailInteractor(shoeRepository, userSettingsRepository, selectedShoeStrategy) 
     }
     val state = remember { 
         mutableStateOf(ShoeDetailState(
@@ -159,7 +158,6 @@ fun ShoeDetailScreen(
                 state.value.shoe != null -> {
                     ShoeDetailContent(
                         state = state.value,
-                        distanceUtility = distanceUtility,
                         imageRepository = imageRepository,
                         interactor = interactor,
                         stateRef = state
@@ -251,7 +249,6 @@ private fun ErrorScreen(
 @Composable
 private fun ShoeDetailContent(
     state: ShoeDetailState,
-    distanceUtility: DistanceUtility,
     imageRepository: com.shoecycle.data.repository.ImageRepository,
     interactor: ShoeDetailInteractor,
     stateRef: MutableState<ShoeDetailState>
@@ -276,7 +273,6 @@ private fun ShoeDetailContent(
         item {
             DistanceInformationSection(
                 shoe = shoe,
-                distanceUtility = distanceUtility,
                 distanceUnit = state.distanceUnit,
                 onStartDistanceChange = { distance ->
                     interactor.handle(stateRef, ShoeDetailInteractor.Action.UpdateStartDistance(distance))
@@ -370,18 +366,13 @@ private fun ShoeInformationSection(
 @Composable
 private fun DistanceInformationSection(
     shoe: Shoe,
-    distanceUtility: DistanceUtility,
-    distanceUnit: String,
+    distanceUnit: com.shoecycle.data.DistanceUnit,
     onStartDistanceChange: (String) -> Unit,
     onMaxDistanceChange: (String) -> Unit
 ) {
-    var startDistanceDisplay by remember { mutableStateOf("") }
-    var maxDistanceDisplay by remember { mutableStateOf("") }
-    
-    LaunchedEffect(shoe, distanceUnit) {
-        startDistanceDisplay = distanceUtility.displayString(shoe.startDistance)
-        maxDistanceDisplay = distanceUtility.displayString(shoe.maxDistance)
-    }
+    val startDistanceDisplay = DistanceUtility.displayString(shoe.startDistance, distanceUnit)
+    val maxDistanceDisplay = DistanceUtility.displayString(shoe.maxDistance, distanceUnit)
+    val unitLabel = DistanceUtility.getUnitLabel(distanceUnit)
     
     ShoeCycleSectionCard(
         title = "Distance",
@@ -409,7 +400,7 @@ private fun DistanceInformationSection(
                     onValueChange = onStartDistanceChange,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    suffix = { Text(distanceUnit) },
+                    suffix = { Text(unitLabel) },
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                     )
@@ -431,7 +422,7 @@ private fun DistanceInformationSection(
                     onValueChange = onMaxDistanceChange,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    suffix = { Text(distanceUnit) },
+                    suffix = { Text(unitLabel) },
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                     )

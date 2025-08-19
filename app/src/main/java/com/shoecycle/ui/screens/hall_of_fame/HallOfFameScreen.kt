@@ -25,9 +25,8 @@ fun HallOfFameScreen(
         com.shoecycle.data.repository.ShoeRepository.create(context)
     }
     val userSettingsRepository = remember { UserSettingsRepository(context) }
-    val distanceUtility = remember { DistanceUtility(userSettingsRepository) }
     val interactor = remember { 
-        HallOfFameInteractor(shoeRepository, userSettingsRepository, distanceUtility) 
+        HallOfFameInteractor(shoeRepository, userSettingsRepository) 
     }
     val state = remember { mutableStateOf(HallOfFameState()) }
     
@@ -67,7 +66,6 @@ fun HallOfFameScreen(
                 HallOfFameContent(
                     shoes = state.value.shoes,
                     distanceUnit = state.value.distanceUnit,
-                    distanceUtility = distanceUtility,
                     onShoeClick = onNavigateToShoeDetail
                 )
             }
@@ -131,8 +129,7 @@ private fun EmptyStateScreen() {
 @Composable
 private fun HallOfFameContent(
     shoes: List<com.shoecycle.domain.models.Shoe>,
-    distanceUnit: String,
-    distanceUtility: DistanceUtility,
+    distanceUnit: com.shoecycle.data.DistanceUnit,
     onShoeClick: (Long) -> Unit
 ) {
     LazyColumn(
@@ -142,7 +139,6 @@ private fun HallOfFameContent(
             HallOfFameRow(
                 shoe = shoe,
                 distanceUnit = distanceUnit,
-                distanceUtility = distanceUtility,
                 onClick = { onShoeClick(shoe.id) }
             )
         }
@@ -152,19 +148,15 @@ private fun HallOfFameContent(
 @Composable
 private fun HallOfFameRow(
     shoe: com.shoecycle.domain.models.Shoe,
-    distanceUnit: String,
-    distanceUtility: DistanceUtility,
+    distanceUnit: com.shoecycle.data.DistanceUnit,
     onClick: () -> Unit
 ) {
-    var distanceDisplay by remember { mutableStateOf("") }
-    
-    LaunchedEffect(shoe.totalDistance, distanceUnit) {
-        distanceDisplay = distanceUtility.displayString(shoe.totalDistance)
-    }
+    val distanceDisplay = DistanceUtility.displayString(shoe.totalDistance, distanceUnit)
+    val unitLabel = DistanceUtility.getUnitLabel(distanceUnit)
     
     HallOfFameRowView(
         shoe = shoe,
-        distanceUnit = distanceUnit,
+        distanceUnit = unitLabel,
         distanceDisplay = distanceDisplay,
         onClick = onClick
     )
