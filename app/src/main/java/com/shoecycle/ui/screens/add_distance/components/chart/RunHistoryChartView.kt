@@ -107,6 +107,7 @@ fun RunHistoryChartView(
                 } else {
                     ScrollableChartCanvas(
                         state = state,
+                        distanceUnit = distanceUnit,
                         interactor = interactor,
                         animationController = animationController,
                         modifier = Modifier
@@ -166,6 +167,7 @@ private fun SelectedWeekDetails(
 @Composable
 private fun ScrollableChartCanvas(
     state: RunHistoryChartState,
+    distanceUnit: DistanceUnit,
     interactor: RunHistoryChartInteractor,
     animationController: ChartAnimationController,
     modifier: Modifier = Modifier,
@@ -211,6 +213,7 @@ private fun ScrollableChartCanvas(
             ChartCanvas(
                 data = state.chartData,
                 maxDistance = state.maxDistance,
+                distanceUnit = distanceUnit,
                 selectedWeekIndex = state.selectedWeekIndex,
                 animationController = animationController,
                 onWeekSelected = { index ->
@@ -228,6 +231,7 @@ private fun ScrollableChartCanvas(
         // Fixed Y-axis labels overlay on top
         YAxisLabels(
             maxDistance = state.maxDistance,
+            distanceUnit = distanceUnit,
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .offset(x = -Y_AXIS_LABEL_WIDTH) // Position labels in the padding area
@@ -240,6 +244,7 @@ private fun ScrollableChartCanvas(
 @Composable
 private fun YAxisLabels(
     maxDistance: Double,
+    distanceUnit: DistanceUnit,
     modifier: Modifier = Modifier
 ) {
     val textMeasurer = rememberTextMeasurer()
@@ -266,11 +271,11 @@ private fun YAxisLabels(
         )
         
         for (i in 0..labelCount) {
-            val value = maxDistance * (labelCount - i) / labelCount
+            val valueInMiles = maxDistance * (labelCount - i) / labelCount
             val y = padding + (chartHeight * i / labelCount)
             
-            // Draw label as integer, right-aligned to the left of axis
-            val text = value.toInt().toString()
+            // Use DistanceUtility to convert and format
+            val text = DistanceUtility.displayString(valueInMiles, distanceUnit).substringBefore(".")
             val textResult = textMeasurer.measure(text, textStyle)
             drawText(
                 textLayoutResult = textResult,
@@ -295,6 +300,7 @@ private fun YAxisLabels(
 private fun ChartCanvas(
     data: List<WeeklyCollatedNew>,
     maxDistance: Double,
+    distanceUnit: DistanceUnit,
     selectedWeekIndex: Int?,
     animationController: ChartAnimationController,
     onWeekSelected: (Int) -> Unit,
@@ -378,6 +384,7 @@ private fun ChartCanvas(
         if (maxDistance > 0) {
             drawMaxDistanceLine(
                 maxDistance = maxDistance,
+                distanceUnit = distanceUnit,
                 paddingLeft = paddingLeft,
                 paddingTop = paddingTop,
                 chartWidth = chartWidth,
@@ -390,6 +397,7 @@ private fun ChartCanvas(
         if (showYAxis) {
             drawYAxisLabels(
                 maxDistance = maxDistance,
+                distanceUnit = distanceUnit,
                 paddingLeft = paddingLeft,
                 paddingTop = paddingTop,
                 chartHeight = chartHeight,
@@ -484,6 +492,7 @@ private fun DrawScope.drawAxes(
 
 private fun DrawScope.drawMaxDistanceLine(
     maxDistance: Double,
+    distanceUnit: DistanceUnit,
     paddingLeft: Float,
     paddingTop: Float,
     chartWidth: Float,
@@ -501,8 +510,11 @@ private fun DrawScope.drawMaxDistanceLine(
         pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 5f))
     )
     
+    // Use DistanceUtility to convert and format
+    val displayMax = DistanceUtility.displayString(maxDistance, distanceUnit).substringBefore(".")
+    
     // Draw label
-    val text = "Max: %d".format(maxDistance.toInt())
+    val text = "Max: $displayMax ${DistanceUtility.getUnitLabel(distanceUnit)}"
     val textStyle = TextStyle(
         color = Color.White.copy(alpha = 0.7f),
         fontSize = 10.sp
@@ -519,6 +531,7 @@ private fun DrawScope.drawMaxDistanceLine(
 
 private fun DrawScope.drawYAxisLabels(
     maxDistance: Double,
+    distanceUnit: DistanceUnit,
     paddingLeft: Float,
     paddingTop: Float,
     chartHeight: Float,
@@ -534,11 +547,11 @@ private fun DrawScope.drawYAxisLabels(
     val maxLabelWidth = textMeasurer.measure("999", textStyle).size.width
     
     for (i in 0..labelCount) {
-        val value = maxDistance * (labelCount - i) / labelCount
+        val valueInMiles = maxDistance * (labelCount - i) / labelCount
         val y = paddingTop + (chartHeight * i / labelCount)
         
-        // Draw label as integer
-        val text = value.toInt().toString()
+        // Use DistanceUtility to convert and format
+        val text = DistanceUtility.displayString(valueInMiles, distanceUnit).substringBefore(".")
         val textResult = textMeasurer.measure(text, textStyle)
         drawText(
             textLayoutResult = textResult,
