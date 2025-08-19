@@ -10,6 +10,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.domain.models.Shoe
 import com.shoecycle.ui.theme.*
 import java.text.SimpleDateFormat
@@ -18,6 +19,7 @@ import java.util.*
 @Composable
 fun ShoeCycleDateProgressView(
     shoe: Shoe?,
+    distanceUnit: DistanceUnit, // Added for consistency, not used in date view
     bounceRequested: Boolean, // Kept for interface compatibility but not used
     modifier: Modifier = Modifier
 ) {

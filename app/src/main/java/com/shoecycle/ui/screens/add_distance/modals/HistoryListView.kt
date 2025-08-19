@@ -187,8 +187,8 @@ private fun HistoryListContent(
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                         append("YTD: ")
                     }
-                    append(DistanceUtility.format(ytd))
-                    append(" ${distanceUnit.displayString()}")
+                    append(DistanceUtility.displayString(ytd, distanceUnit))
+                    append(" ${DistanceUtility.getUnitLabel(distanceUnit)}")
                 },
                 style = MaterialTheme.typography.titleMedium,
                 color = shoeCycleOrange
@@ -208,7 +208,7 @@ private fun HistoryListContent(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Distance (${distanceUnit.displayString()})",
+                text = "Distance (${DistanceUtility.getUnitLabel(distanceUnit)})",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -279,7 +279,8 @@ private fun HistorySectionHeader(
             text = buildAnnotatedString {
                 append("Total for ${section.monthString}: ")
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(DistanceUtility.format(section.runTotal))
+                    append(DistanceUtility.displayString(section.runTotal, distanceUnit))
+                    append(" ${DistanceUtility.getUnitLabel(distanceUnit)}")
                 }
             },
             style = MaterialTheme.typography.bodyLarge,
@@ -300,7 +301,7 @@ private fun YearlyTotalRow(
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
-            text = "Total for the year: ${DistanceUtility.format(yearTotal)} ${distanceUnit.displayString()}",
+            text = "Total for the year: ${DistanceUtility.displayString(yearTotal, distanceUnit)} ${DistanceUtility.getUnitLabel(distanceUnit)}",
             style = MaterialTheme.typography.bodyLarge,
             color = shoeCycleOrange,
             fontWeight = FontWeight.Bold
@@ -328,9 +329,4 @@ private fun ExportDialog(
             }
         }
     )
-}
-
-private fun DistanceUnit.displayString(): String = when (this) {
-    DistanceUnit.MILES -> "mi"
-    DistanceUnit.KM -> "km"
 }

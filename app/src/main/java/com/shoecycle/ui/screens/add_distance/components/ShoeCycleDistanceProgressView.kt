@@ -10,18 +10,27 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shoecycle.data.DistanceUnit
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.models.Shoe
 import com.shoecycle.ui.theme.*
 
 @Composable
 fun ShoeCycleDistanceProgressView(
     shoe: Shoe?,
+    distanceUnit: DistanceUnit,
     bounceRequested: Boolean,
     modifier: Modifier = Modifier
 ) {
     // Use shoe's max distance or default to 350 (matching iOS)
     val targetDistance = shoe?.maxDistance ?: 350.0
     val currentDistance = shoe?.totalDistance ?: 0.0
+    
+    // Convert distances for display
+    val displayCurrentDistance = DistanceUtility.displayString(currentDistance, distanceUnit)
+    val displayTargetDistance = DistanceUtility.displayString(targetDistance, distanceUnit)
+    val unitLabel = DistanceUtility.getUnitLabel(distanceUnit)
+    
     val progress = if (targetDistance > 0) {
         (currentDistance / targetDistance).coerceIn(0.0, 1.0).toFloat()
     } else {
@@ -59,7 +68,7 @@ fun ShoeCycleDistanceProgressView(
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
-                text = "${currentDistance.toInt()}",
+                text = displayCurrentDistance,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = shoeCycleGreen, // Green color
@@ -67,7 +76,7 @@ fun ShoeCycleDistanceProgressView(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Miles",
+                text = unitLabel.uppercase(),
                 style = MaterialTheme.typography.titleLarge,
                 color = shoeCycleGreen
             )
@@ -98,7 +107,7 @@ fun ShoeCycleDistanceProgressView(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "${targetDistance.toInt()}",
+                    text = displayTargetDistance,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )

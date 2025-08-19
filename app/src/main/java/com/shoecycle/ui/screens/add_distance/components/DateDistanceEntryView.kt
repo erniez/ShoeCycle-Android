@@ -23,6 +23,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.shoecycle.data.DistanceUnit
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.models.Shoe
 import com.shoecycle.ui.theme.*
 import java.text.SimpleDateFormat
@@ -56,6 +58,7 @@ fun DateDistanceEntryView(
     shoe: Shoe?,
     currentDate: Date,
     currentDistance: String,
+    distanceUnit: DistanceUnit,
     isAddingRun: Boolean,
     healthConnectEnabled: Boolean,
     stravaEnabled: Boolean,
@@ -170,7 +173,7 @@ fun DateDistanceEntryView(
                 ) {
 
                     Text(
-                        text = "Distance:",
+                        text = "Distance (${DistanceUtility.getUnitLabel(distanceUnit)}):",
                         style = MaterialTheme.typography.labelMedium,
                         color = Color.White
                     )

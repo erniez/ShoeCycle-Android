@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.size
 import com.shoecycle.data.DistanceUnit
+import com.shoecycle.domain.DistanceUtility
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +90,7 @@ private fun HistoryListItemContent(
         )
         
         Text(
-            text = "${viewModel.runDistanceString} ${distanceUnit.displayString()}",
+            text = "${DistanceUtility.displayString(viewModel.runDistance, distanceUnit)} ${DistanceUtility.getUnitLabel(distanceUnit)}",
             style = MaterialTheme.typography.bodyLarge
         )
     }
@@ -124,9 +125,4 @@ private fun DismissBackground(dismissState: SwipeToDismissBoxState) {
             )
         }
     }
-}
-
-private fun DistanceUnit.displayString(): String = when (this) {
-    DistanceUnit.MILES -> "mi"
-    DistanceUnit.KM -> "km"
 }

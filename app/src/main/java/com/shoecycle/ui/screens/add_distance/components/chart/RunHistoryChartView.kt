@@ -29,6 +29,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shoecycle.data.DistanceUnit
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.ui.screens.add_distance.utils.WeeklyCollatedNew
 import com.shoecycle.ui.theme.*
 import kotlinx.coroutines.launch
@@ -46,6 +48,7 @@ private val Y_AXIS_LABEL_WIDTH = 24.dp
 @Composable
 fun RunHistoryChartView(
     chartData: List<WeeklyCollatedNew>,
+    distanceUnit: DistanceUnit,
     modifier: Modifier = Modifier
 ) {
     // VSI pattern state management
@@ -71,6 +74,7 @@ fun RunHistoryChartView(
             // Selected week details (if any)
             SelectedWeekDetails(
                 state = state,
+                distanceUnit = distanceUnit,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             
@@ -121,6 +125,7 @@ fun RunHistoryChartView(
 @Composable
 private fun SelectedWeekDetails(
     state: RunHistoryChartState,
+    distanceUnit: DistanceUnit,
     modifier: Modifier = Modifier
 ) {
     state.selectedWeekIndex?.let { index ->
@@ -148,7 +153,7 @@ private fun SelectedWeekDetails(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "%.1f miles".format(week.runDistance),
+                        text = "${DistanceUtility.displayString(week.runDistance, distanceUnit)} ${DistanceUtility.getUnitLabel(distanceUnit)}",
                         color = shoeCycleGreen,
                         style = MaterialTheme.typography.titleMedium
                     )

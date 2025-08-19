@@ -31,6 +31,7 @@ import com.shoecycle.data.database.ShoeCycleDatabase
 import com.shoecycle.data.repository.HistoryRepository
 import com.shoecycle.data.repository.ImageRepository
 import com.shoecycle.data.repository.ShoeRepository
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.ui.screens.add_distance.components.ShoeImageView
 import com.shoecycle.ui.screens.add_distance.components.DateDistanceEntryView
@@ -117,6 +118,7 @@ fun AddDistanceScreen() {
             shoe = state.value.selectedShoe,
             currentDate = state.value.runDate,
             currentDistance = state.value.runDistance,
+            distanceUnit = state.value.distanceUnit,
             isAddingRun = state.value.isAddingRun,
             healthConnectEnabled = healthConnectEnabled,
             stravaEnabled = stravaEnabled,
@@ -131,17 +133,22 @@ fun AddDistanceScreen() {
                 scope.launch {
                     interactor.handle(state, AddDistanceInteractor.Action.AddRunClicked)
 
-                    // Mock service calls
+                    // Mock service calls - convert distance to miles for storage
+                    val distanceInMiles = DistanceUtility.distance(
+                        state.value.runDistance, 
+                        state.value.distanceUnit
+                    )
+                    
                     if (healthConnectEnabled) {
                         mockHealthService.addWorkout(
                             date = state.value.runDate,
-                            distance = state.value.runDistance.toDoubleOrNull() ?: 0.0,
+                            distance = distanceInMiles,
                         )
                     }
                     if (stravaEnabled) {
                         mockStravaService.uploadActivity(
                             date = state.value.runDate,
-                            distance = state.value.runDistance.toDoubleOrNull() ?: 0.0,
+                            distance = distanceInMiles,
                             shoeName = state.value.selectedShoe?.displayName,
                         )
                     }
@@ -166,6 +173,7 @@ fun AddDistanceScreen() {
         // Distance Progress View
         ShoeCycleDistanceProgressView(
             shoe = state.value.selectedShoe,
+            distanceUnit = state.value.distanceUnit,
             bounceRequested = bounceRequested,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -175,6 +183,7 @@ fun AddDistanceScreen() {
         // Date Progress View
         ShoeCycleDateProgressView(
             shoe = state.value.selectedShoe,
+            distanceUnit = state.value.distanceUnit,
             bounceRequested = bounceRequested,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -200,6 +209,7 @@ fun AddDistanceScreen() {
             
             RunHistoryChartView(
                 chartData = weeklyData,
+                distanceUnit = state.value.distanceUnit,
                 modifier = Modifier
                     .padding(vertical = 8.dp)
             )

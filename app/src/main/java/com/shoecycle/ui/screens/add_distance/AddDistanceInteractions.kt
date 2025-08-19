@@ -1,9 +1,11 @@
 package com.shoecycle.ui.screens.add_distance
 
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +24,8 @@ data class AddDistanceState(
     val isAddingRun: Boolean = false,
     val showHistoryModal: Boolean = false,
     val showFavoritesModal: Boolean = false,
-    val lastAddedRunId: Long? = null
+    val lastAddedRunId: Long? = null,
+    val distanceUnit: DistanceUnit = DistanceUnit.MILES
 )
 
 class AddDistanceInteractor(
@@ -52,6 +55,7 @@ class AddDistanceInteractor(
         when (action) {
             is Action.ViewAppeared -> {
                 loadActiveShoes(state)
+                observeSettings(state)
             }
             
             is Action.SwipeUp -> {
@@ -119,6 +123,16 @@ class AddDistanceInteractor(
         }
     }
 
+    private fun observeSettings(state: MutableState<AddDistanceState>) {
+        scope.launch {
+            userSettingsRepository.userSettingsFlow.collect { settings ->
+                settings?.let {
+                    state.value = state.value.copy(distanceUnit = it.distanceUnit)
+                }
+            }
+        }
+    }
+    
     private fun loadActiveShoes(state: MutableState<AddDistanceState>) {
         state.value = state.value.copy(isLoadingShoes = true)
         scope.launch {
@@ -169,9 +183,13 @@ class AddDistanceInteractor(
     private fun addRun(state: MutableState<AddDistanceState>) {
         val shoe = state.value.selectedShoe ?: return
         val distanceStr = state.value.runDistance
-        val distance = distanceStr.toDoubleOrNull() ?: return
+        val enteredDistance = distanceStr.toDoubleOrNull() ?: return
         
-        if (distance <= 0) return
+        if (enteredDistance <= 0) return
+        
+        // Convert the entered distance to miles for storage
+        // DistanceUtility.distance() converts from display unit to miles
+        val distanceInMiles = DistanceUtility.distance(distanceStr, state.value.distanceUnit)
         
         state.value = state.value.copy(isAddingRun = true)
         
@@ -180,7 +198,7 @@ class AddDistanceInteractor(
                 val runId = historyRepository.addRun(
                     shoeId = shoe.id,
                     runDate = state.value.runDate,
-                    runDistance = distance
+                    runDistance = distanceInMiles
                 )
                 
                 shoeRepository.recalculateShoeTotal(shoe.id)
