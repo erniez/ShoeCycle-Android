@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -70,12 +71,18 @@ fun DateDistanceEntryView(
     onShowHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     
     // Local state for the child component
     val state = remember { mutableStateOf(DateDistanceEntryState()) }
-    val interactor = remember { DateDistanceEntryInteractor() }
+    val interactor = remember(shoe) {  // Recreate interactor when shoe changes
+        DateDistanceEntryInteractor(
+            context = context,
+            currentShoeId = { shoe?.id?.toString() }
+        )
+    }
     
     // Sync parent state with local state
     LaunchedEffect(currentDate, currentDistance) {

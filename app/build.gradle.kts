@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.shoecycle"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -22,13 +22,22 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            buildConfigField("boolean", "USE_MOCK_SERVICES", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("boolean", "USE_MOCK_SERVICES", "false")
         }
+    }
+    
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {
@@ -86,6 +95,9 @@ dependencies {
     
     // Accompanist for permissions
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    
+    // Health Connect
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha08")
     
     // Testing
     testImplementation("junit:junit:4.13.2")

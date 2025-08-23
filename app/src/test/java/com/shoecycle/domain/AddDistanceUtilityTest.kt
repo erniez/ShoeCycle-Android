@@ -82,9 +82,9 @@ class AddDistanceUtilityTest {
     }
 
     @Test
-    fun `stravaDistance converts miles to meters correctly`() {
-        // When: Converting 1 mile for Strava
-        val result = DistanceUtility.stravaDistance(1.0)
+    fun `milesToMeters converts miles to meters correctly`() {
+        // When: Converting 1 mile to meters
+        val result = DistanceUtility.milesToMeters(1.0)
 
         // Then: Distance is converted to meters (1609.34)
         assertEquals(1609.34, result, 0.01)

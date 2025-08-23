@@ -38,7 +38,7 @@ import com.shoecycle.ui.screens.add_distance.components.DateDistanceEntryView
 import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDistanceProgressView
 import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDateProgressView
 import com.shoecycle.ui.screens.add_distance.components.DateProgressViewModel
-import com.shoecycle.ui.screens.add_distance.services.MockHealthService
+import com.shoecycle.domain.ServiceLocator
 import com.shoecycle.ui.screens.add_distance.services.MockStravaService
 import com.shoecycle.ui.screens.add_distance.components.chart.RunHistoryChartView
 import com.shoecycle.ui.screens.add_distance.utils.HistoryCollation
@@ -65,8 +65,14 @@ fun AddDistanceScreen() {
         SelectedShoeStrategy(shoeRepository, userSettingsRepository) 
     }
     
-    // Mock services
-    val mockHealthService = remember { MockHealthService() }
+    // Initialize ServiceLocator if needed
+    LaunchedEffect(Unit) {
+        if (!ServiceLocator.isInitialized()) {
+            ServiceLocator.initialize(context)
+        }
+    }
+    
+    // Services - Health Connect is handled by DateDistanceEntryInteractor
     val mockStravaService = remember { MockStravaService() }
     
     // Progress view model
@@ -129,23 +135,16 @@ fun AddDistanceScreen() {
                 interactor.handle(state, AddDistanceInteractor.Action.DistanceChanged(distance))
             },
             onDistanceAdded = {
-                // Handle the add run with mock service calls
+                // Handle the add run - Health Connect sync is now handled by DateDistanceEntryInteractor
                 scope.launch {
                     interactor.handle(state, AddDistanceInteractor.Action.AddRunClicked)
 
-                    // Mock service calls - convert distance to miles for storage
-                    val distanceInMiles = DistanceUtility.distance(
-                        state.value.runDistance, 
-                        state.value.distanceUnit
-                    )
-                    
-                    if (healthConnectEnabled) {
-                        mockHealthService.addWorkout(
-                            date = state.value.runDate,
-                            distance = distanceInMiles,
-                        )
-                    }
+                    // Strava sync still using mock service for now
                     if (stravaEnabled) {
+                        val distanceInMiles = DistanceUtility.distance(
+                            state.value.runDistance, 
+                            state.value.distanceUnit
+                        )
                         mockStravaService.uploadActivity(
                             date = state.value.runDate,
                             distance = distanceInMiles,

@@ -63,7 +63,7 @@ object DistanceUtility {
         }
     }
 
-    fun stravaDistance(miles: Double): Double {
+    fun milesToMeters(miles: Double): Double {
         return miles * MILES_TO_METERS
     }
 

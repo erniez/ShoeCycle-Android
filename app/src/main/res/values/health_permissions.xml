@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="health_permissions">
+        <item>android.permission.health.WRITE_EXERCISE</item>
+    </array>
+    
+    <!-- Declare the app name for Health Connect -->
+    <string name="health_connect_app_name">ShoeCycle</string>
+</resources>

@@ -1,4 +1,4 @@
-package com.shoecycle.ui.screens.add_distance.services
+package com.shoecycle.domain.services
 
 import android.util.Log
 import kotlinx.coroutines.delay
@@ -9,35 +9,25 @@ import kotlin.random.Random
  * Mock implementation of Health Connect service for development and testing.
  * Simulates adding workout data to Health Connect with random success/failure.
  */
-class MockHealthService {
+class MockHealthService : HealthService {
     
     companion object {
         private const val TAG = "MockHealthService"
         private const val MOCK_DELAY_MS = 1000L
         private const val SUCCESS_RATE = 0.7 // 70% success rate
-    }
-    
-    data class HealthConnectError(
-        val type: ErrorType,
-        override val message: String
-    ) : Exception(message) {
-        enum class ErrorType {
-            AUTHORIZATION_DENIED,
-            NETWORK_ERROR,
-            UNKNOWN_ERROR
-        }
+        private const val AUTHORIZATION_SUCCESS_RATE = 0.8 // 80% success rate for auth
     }
     
     /**
      * Simulates adding a workout to Health Connect.
      * Randomly succeeds or fails to simulate real-world conditions.
      */
-    suspend fun addWorkout(
+    override suspend fun addWorkout(
         date: Date,
         distance: Double,
-        durationMinutes: Int? = null
-    ): Result<WorkoutResult> {
-        Log.d(TAG, "Mock: Adding workout - Date: $date, Distance: $distance mi")
+        shoeId: String?
+    ): Result<HealthService.WorkoutResult> {
+        Log.d(TAG, "Mock: Adding workout - Date: $date, Distance: $distance mi, ShoeId: $shoeId")
         
         // Simulate network delay
         delay(MOCK_DELAY_MS)
@@ -47,7 +37,7 @@ class MockHealthService {
             val workoutId = "mock_workout_${System.currentTimeMillis()}"
             Log.d(TAG, "Mock: Successfully added workout with ID: $workoutId")
             Result.success(
-                WorkoutResult(
+                HealthService.WorkoutResult(
                     workoutId = workoutId,
                     syncedAt = Date(),
                     distance = distance,
@@ -57,16 +47,13 @@ class MockHealthService {
         } else {
             // Randomly select an error type
             val error = when (Random.nextInt(3)) {
-                0 -> HealthConnectError(
-                    HealthConnectError.ErrorType.AUTHORIZATION_DENIED,
+                0 -> HealthService.HealthServiceError.AuthorizationDenied(
                     "Mock: User has not granted permission to write workout data"
                 )
-                1 -> HealthConnectError(
-                    HealthConnectError.ErrorType.NETWORK_ERROR,
+                1 -> HealthService.HealthServiceError.NetworkError(
                     "Mock: Unable to sync with Health Connect servers"
                 )
-                else -> HealthConnectError(
-                    HealthConnectError.ErrorType.UNKNOWN_ERROR,
+                else -> HealthService.HealthServiceError.UnknownError(
                     "Mock: An unexpected error occurred"
                 )
             }
@@ -78,7 +65,7 @@ class MockHealthService {
     /**
      * Simulates checking if Health Connect is available and authorized.
      */
-    suspend fun isAuthorized(): Boolean {
+    override suspend fun isAuthorized(): Boolean {
         delay(500)
         // Randomly return authorization status
         val authorized = Random.nextBoolean()
@@ -89,18 +76,17 @@ class MockHealthService {
     /**
      * Simulates requesting Health Connect permissions.
      */
-    suspend fun requestAuthorization(): Result<Boolean> {
+    override suspend fun requestAuthorization(): Result<Boolean> {
         Log.d(TAG, "Mock: Requesting Health Connect authorization")
         delay(1500)
         
-        return if (Random.nextDouble() < 0.8) { // 80% chance of success
+        return if (Random.nextDouble() < AUTHORIZATION_SUCCESS_RATE) {
             Log.d(TAG, "Mock: Authorization granted")
             Result.success(true)
         } else {
             Log.d(TAG, "Mock: Authorization denied")
             Result.failure(
-                HealthConnectError(
-                    HealthConnectError.ErrorType.AUTHORIZATION_DENIED,
+                HealthService.HealthServiceError.AuthorizationDenied(
                     "Mock: User denied Health Connect permissions"
                 )
             )
@@ -110,7 +96,7 @@ class MockHealthService {
     /**
      * Simulates deleting a workout from Health Connect.
      */
-    suspend fun deleteWorkout(workoutId: String): Result<Unit> {
+    override suspend fun deleteWorkout(workoutId: String): Result<Unit> {
         Log.d(TAG, "Mock: Deleting workout with ID: $workoutId")
         delay(800)
         
@@ -120,18 +106,10 @@ class MockHealthService {
         } else {
             Log.e(TAG, "Mock: Failed to delete workout")
             Result.failure(
-                HealthConnectError(
-                    HealthConnectError.ErrorType.UNKNOWN_ERROR,
+                HealthService.HealthServiceError.UnknownError(
                     "Mock: Failed to delete workout from Health Connect"
                 )
             )
         }
     }
-    
-    data class WorkoutResult(
-        val workoutId: String,
-        val syncedAt: Date,
-        val distance: Double,
-        val date: Date
-    )
 }

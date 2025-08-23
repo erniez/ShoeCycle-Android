@@ -1,6 +1,10 @@
 package com.shoecycle.ui.screens.add_distance.components
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.MutableState
+import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.services.HealthService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -27,8 +31,14 @@ data class DateDistanceEntryState(
 }
 
 class DateDistanceEntryInteractor(
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val context: Context,
+    private val healthService: HealthService = ServiceLocator.provideHealthService(context),
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
+    private val currentShoeId: (() -> String?)? = null
 ) {
+    companion object {
+        private const val TAG = "DateDistanceEntryInteractor"
+    }
     sealed class Action {
         data class DateChanged(val date: Date) : Action()
         data class DistanceChanged(val distance: String) : Action()
@@ -104,9 +114,13 @@ class DateDistanceEntryInteractor(
                     // Trigger the parent's add run action
                     onAddRun?.invoke()
                     
-                    // Simulate service syncs if enabled
+                    // Sync with Health Connect if enabled
                     if (state.value.healthConnectEnabled) {
-                        simulateHealthConnectSync(state)
+                        syncWithHealthConnect(
+                            state = state,
+                            date = state.value.runDate,
+                            distance = distance
+                        )
                     }
                     if (state.value.stravaEnabled) {
                         simulateStravaSync(state)
@@ -135,21 +149,61 @@ class DateDistanceEntryInteractor(
         }
     }
 
-    private fun simulateHealthConnectSync(state: MutableState<DateDistanceEntryState>) {
+    private fun syncWithHealthConnect(
+        state: MutableState<DateDistanceEntryState>,
+        date: Date,
+        distance: Double
+    ) {
         scope.launch {
+            Log.d(TAG, "Starting Health Connect sync for distance: $distance mi on date: $date")
+            
+            // Update UI to show syncing
             state.value = state.value.copy(
                 healthConnectSyncStatus = DateDistanceEntryState.SyncStatus.Syncing
             )
-            delay(1000)
-            // Randomly succeed or fail for mock
-            val success = kotlin.random.Random.nextBoolean()
-            state.value = state.value.copy(
-                healthConnectSyncStatus = if (success) {
-                    DateDistanceEntryState.SyncStatus.Success
-                } else {
-                    DateDistanceEntryState.SyncStatus.Failed
+            
+            try {
+                // Check if authorized first
+                if (!healthService.isAuthorized()) {
+                    Log.d(TAG, "Health Connect not authorized, requesting permissions")
+                    val authResult = healthService.requestAuthorization()
+                    if (authResult.isFailure) {
+                        Log.e(TAG, "Failed to get Health Connect authorization")
+                        state.value = state.value.copy(
+                            healthConnectSyncStatus = DateDistanceEntryState.SyncStatus.Failed
+                        )
+                        delay(2000)
+                        state.value = state.value.copy(
+                            healthConnectSyncStatus = DateDistanceEntryState.SyncStatus.Idle
+                        )
+                        return@launch
+                    }
                 }
-            )
+                
+                // Add workout to Health Connect
+                val result = healthService.addWorkout(
+                    date = date,
+                    distance = distance,
+                    shoeId = currentShoeId?.invoke()
+                )
+                
+                // Update UI based on result
+                state.value = state.value.copy(
+                    healthConnectSyncStatus = if (result.isSuccess) {
+                        Log.d(TAG, "Successfully synced to Health Connect: ${result.getOrNull()?.workoutId}")
+                        DateDistanceEntryState.SyncStatus.Success
+                    } else {
+                        Log.e(TAG, "Failed to sync to Health Connect", result.exceptionOrNull())
+                        DateDistanceEntryState.SyncStatus.Failed
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error during Health Connect sync", e)
+                state.value = state.value.copy(
+                    healthConnectSyncStatus = DateDistanceEntryState.SyncStatus.Failed
+                )
+            }
+            
             // Reset status after showing result
             delay(2000)
             state.value = state.value.copy(
