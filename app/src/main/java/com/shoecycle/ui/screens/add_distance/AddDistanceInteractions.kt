@@ -111,8 +111,10 @@ class AddDistanceInteractor(
             }
             
             is Action.FavoriteDistanceSelected -> {
+                // Favorite distances are stored in miles, convert for display
+                val displayDistance = DistanceUtility.displayString(action.distance, state.value.distanceUnit)
                 state.value = state.value.copy(
-                    runDistance = action.distance.toString(),
+                    runDistance = displayDistance,
                     showFavoritesModal = false
                 )
             }

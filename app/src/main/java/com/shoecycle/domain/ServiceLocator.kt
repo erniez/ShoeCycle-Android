@@ -61,6 +61,18 @@ object ServiceLocator {
      */
     fun resetServiceMode() {
         currentMode = null
+        testHealthService = null
+    }
+    
+    // Test-specific health service override
+    private var testHealthService: HealthService? = null
+    
+    /**
+     * Sets a specific HealthService for testing purposes.
+     * This overrides the normal service selection logic.
+     */
+    fun setTestHealthService(service: HealthService) {
+        testHealthService = service
     }
     
     /**
@@ -69,6 +81,9 @@ object ServiceLocator {
      * @return HealthService implementation
      */
     fun provideHealthService(context: Context? = null): HealthService {
+        // Return test service if set (for unit testing)
+        testHealthService?.let { return it }
+        
         val ctx = context ?: applicationContext
             ?: throw IllegalStateException("ServiceLocator not initialized. Call initialize() first.")
         

@@ -3,6 +3,7 @@ package com.shoecycle.ui.screens.add_distance.components
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import com.shoecycle.domain.services.HealthService
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.Assert.*
@@ -194,12 +195,24 @@ class DateDistanceEntryInteractorTest {
             )
         )
         
-        // When
-        interactor.handle(state, DateDistanceEntryInteractor.Action.AddRunClicked)
-        testScheduler.advanceUntilIdle()
+        var addRunInvoked = false
         
-        // Then - Verify Health Connect was called
-        verify(mockHealthService).addWorkout(any(), eq(5.0), eq("shoe123"))
+        // When
+        interactor.handle(
+            state = state,
+            action = DateDistanceEntryInteractor.Action.AddRunClicked,
+            onAddRun = { addRunInvoked = true }
+        )
+        
+        // Wait for coroutine to complete
+        advanceUntilIdle()
+        
+        // Then - Verify callback was invoked
+        assertTrue(addRunInvoked)
+        
+        // Verify Health Connect will be called asynchronously
+        // Note: The actual Health Connect call happens in a coroutine launched by the interactor
+        verify(mockHealthService, timeout(1000)).addWorkout(any(), eq(5.0), eq("shoe123"))
     }
 
     @Test

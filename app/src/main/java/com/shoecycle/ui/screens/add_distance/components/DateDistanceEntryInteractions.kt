@@ -3,6 +3,7 @@ package com.shoecycle.ui.screens.add_distance.components
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.ServiceLocator
 import com.shoecycle.domain.services.HealthService
 import kotlinx.coroutines.CoroutineScope
@@ -93,6 +94,7 @@ class DateDistanceEntryInteractor(
             }
 
             is Action.ShowFavoritesModal -> {
+                state.value = state.value.copy(showFavoritesModal = true)
                 onShowFavorites?.invoke()
             }
 
@@ -101,6 +103,7 @@ class DateDistanceEntryInteractor(
             }
 
             is Action.ShowHistoryModal -> {
+                state.value = state.value.copy(showHistoryModal = true)
                 onShowHistory?.invoke()
             }
 
@@ -132,11 +135,13 @@ class DateDistanceEntryInteractor(
             }
 
             is Action.FavoriteDistanceSelected -> {
+                // Format the distance for display (removes trailing zeros)
+                val formattedDistance = DistanceUtility.format(action.distance)
                 state.value = state.value.copy(
-                    runDistance = action.distance.toString(),
+                    runDistance = formattedDistance,
                     showFavoritesModal = false
                 )
-                onDistanceChanged?.invoke(action.distance.toString())
+                onDistanceChanged?.invoke(formattedDistance)
             }
 
             is Action.UpdateHealthConnectStatus -> {
