@@ -24,7 +24,7 @@ class SelectedShoeStrategyTest {
     private lateinit var selectedShoeStrategy: SelectedShoeStrategy
 
     private val testShoe1 = Shoe(
-        id = 1L,
+        id = "test-shoe-1",
         brand = "Test Brand 1",
         maxDistance = 350.0,
         totalDistance = 100.0,
@@ -36,7 +36,7 @@ class SelectedShoeStrategyTest {
     )
 
     private val testShoe2 = Shoe(
-        id = 2L,
+        id = "test-shoe-2",
         brand = "Test Brand 2", 
         maxDistance = 400.0,
         totalDistance = 50.0,
@@ -70,7 +70,7 @@ class SelectedShoeStrategyTest {
     fun `updateSelectedShoe with valid selected shoe does nothing`() = runTest {
         // Given: Active shoes and valid selected shoe
         val activeShoes = listOf(testShoe1, testShoe2)
-        val userSettings = UserSettingsData(selectedShoeId = 1L)
+        val userSettings = UserSettingsData(selectedShoeId = "test-shoe-1")
         
         whenever(shoeRepository.getActiveShoes()).thenReturn(flowOf(activeShoes))
         whenever(userSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
@@ -95,27 +95,27 @@ class SelectedShoeStrategyTest {
         selectedShoeStrategy.updateSelectedShoe()
 
         // Then: First active shoe is selected
-        verify(userSettingsRepository).updateSelectedShoeId(1L)
+        verify(userSettingsRepository).updateSelectedShoeId("test-shoe-1")
     }
 
     @Test
     fun `selectShoe with valid active shoe updates selection`() = runTest {
         // Given: Valid active shoe
-        whenever(shoeRepository.getShoeByIdOnce(2L)).thenReturn(testShoe2)
+        whenever(shoeRepository.getShoeByIdOnce("test-shoe-2")).thenReturn(testShoe2)
 
         // When: selectShoe is called
-        selectedShoeStrategy.selectShoe(2L)
+        selectedShoeStrategy.selectShoe("test-shoe-2")
 
         // Then: Shoe is selected
-        verify(userSettingsRepository).updateSelectedShoeId(2L)
+        verify(userSettingsRepository).updateSelectedShoeId("test-shoe-2")
     }
 
     @Test
     fun `getSelectedShoe returns correct shoe when valid ID`() = runTest {
         // Given: Valid selected shoe ID
-        val userSettings = UserSettingsData(selectedShoeId = 1L)
+        val userSettings = UserSettingsData(selectedShoeId = "test-shoe-1")
         whenever(userSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
-        whenever(shoeRepository.getShoeByIdOnce(1L)).thenReturn(testShoe1)
+        whenever(shoeRepository.getShoeByIdOnce("test-shoe-1")).thenReturn(testShoe1)
 
         // When: getSelectedShoe is called
         val result = selectedShoeStrategy.getSelectedShoe()

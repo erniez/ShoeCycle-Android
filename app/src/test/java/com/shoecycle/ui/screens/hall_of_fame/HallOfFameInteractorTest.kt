@@ -21,7 +21,7 @@ class HallOfFameInteractorTest {
     private val mockShoeRepository = mock<IShoeRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
     
-    private fun createTestShoe(id: Long = 1L, brand: String = "Test Shoe", totalDistance: Double = 100.0): Shoe {
+    private fun createTestShoe(id: String = "test-shoe-1", brand: String = "Test Shoe", totalDistance: Double = 100.0): Shoe {
         return Shoe(
             id = id,
             brand = brand,
@@ -41,8 +41,8 @@ class HallOfFameInteractorTest {
     @Test
     fun testViewAppearedLoadsHallOfFameShoes() = runTest {
         val testShoes = listOf(
-            createTestShoe(1L, "Nike Air", 250.0),
-            createTestShoe(2L, "Adidas Ultra", 180.0)
+            createTestShoe("test-shoe-1", "Nike Air", 250.0),
+            createTestShoe("test-shoe-2", "Adidas Ultra", 180.0)
         )
         
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(testShoes))
@@ -127,10 +127,10 @@ class HallOfFameInteractorTest {
     // Then: Should reload data from repository
     @Test
     fun testRefreshReloadsData() = runTest {
-        val initialShoes = listOf(createTestShoe(1L, "Old Shoe"))
+        val initialShoes = listOf(createTestShoe("test-shoe-1", "Old Shoe"))
         val refreshedShoes = listOf(
-            createTestShoe(1L, "Old Shoe"),
-            createTestShoe(2L, "New Shoe")
+            createTestShoe("test-shoe-1", "Old Shoe"),
+            createTestShoe("test-shoe-2", "New Shoe")
         )
         
         whenever(mockShoeRepository.getRetiredShoes())
@@ -192,9 +192,9 @@ class HallOfFameInteractorTest {
     @Test
     fun testShoeOrderingFromRepository() = runTest {
         val testShoes = listOf(
-            createTestShoe(1L, "First Shoe", 300.0),
-            createTestShoe(2L, "Second Shoe", 150.0),
-            createTestShoe(3L, "Third Shoe", 450.0)
+            createTestShoe("test-shoe-1", "First Shoe", 300.0),
+            createTestShoe("test-shoe-2", "Second Shoe", 150.0),
+            createTestShoe("test-shoe-3", "Third Shoe", 450.0)
         )
         
         whenever(mockShoeRepository.getRetiredShoes()).thenReturn(flowOf(testShoes))

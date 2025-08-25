@@ -32,7 +32,7 @@ class ActiveShoesIntegrationTest {
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
 
     private val testShoe = Shoe(
-        id = 1L,
+        id = "test-shoe-1",
         brand = "Test Brand",
         maxDistance = 350.0,
         totalDistance = 100.0,
@@ -45,7 +45,7 @@ class ActiveShoesIntegrationTest {
 
     private val testUserSettings = UserSettingsData(
         distanceUnit = DistanceUnit.MILES,
-        selectedShoeId = 1L
+        selectedShoeId = "test-shoe-1"
     )
 
     @Test
@@ -70,7 +70,7 @@ class ActiveShoesIntegrationTest {
         // Assert initial state
         assertEquals(1, state.value.shoes.size)
         assertEquals(DistanceUnit.MILES, state.value.distanceUnit)
-        assertEquals(1L, state.value.selectedShoeId)
+        assertEquals("test-shoe-1", state.value.selectedShoeId)
         assertFalse(state.value.isLoading)
     }
 
@@ -87,14 +87,14 @@ class ActiveShoesIntegrationTest {
 
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(testUserSettings))
         whenever(mockShoeRepository.getActiveShoes()).thenReturn(flowOf(listOf(testShoe)))
-        whenever(mockShoeRepository.insertShoe(any())).thenReturn(2L)
+        whenever(mockShoeRepository.insertShoe(any())).thenReturn("test-shoe-2")
         whenever(mockHistoryRepository.insertHistory(any())).thenReturn(1L)
 
         // Act - Execute multiple actions in sequence
         interactor.handle(state, ActiveShoesInteractor.Action.ViewAppeared)
         testScheduler.advanceUntilIdle()
 
-        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(2L))
+        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected("test-shoe-2"))
         testScheduler.advanceUntilIdle()
 
         interactor.handle(state, ActiveShoesInteractor.Action.GenerateTestData)
@@ -103,7 +103,7 @@ class ActiveShoesIntegrationTest {
         // Assert - All actions completed successfully
         assertFalse(state.value.isLoading)
         assertFalse(state.value.isGeneratingTestData)
-        verify(mockUserSettingsRepository).updateSelectedShoeId(2L)
+        verify(mockUserSettingsRepository).updateSelectedShoeId("test-shoe-2")
     }
 
     @Test
@@ -126,7 +126,7 @@ class ActiveShoesIntegrationTest {
         interactor.handle(state, ActiveShoesInteractor.Action.ViewAppeared)
         testScheduler.advanceUntilIdle()
 
-        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(1L))
+        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected("test-shoe-1"))
         testScheduler.advanceUntilIdle()
 
         interactor.handle(state, ActiveShoesInteractor.Action.GenerateTestData)
@@ -150,8 +150,8 @@ class ActiveShoesIntegrationTest {
 
         val shoes = listOf(
             testShoe,
-            testShoe.copy(id = 2L, brand = "Brand 2"),
-            testShoe.copy(id = 3L, brand = "Brand 3")
+            testShoe.copy(id = "test-shoe-2", brand = "Brand 2"),
+            testShoe.copy(id = "test-shoe-3", brand = "Brand 3")
         )
 
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(testUserSettings))
@@ -163,18 +163,18 @@ class ActiveShoesIntegrationTest {
 
         // Assert initial state
         assertEquals(3, state.value.shoes.size)
-        assertEquals(1L, state.value.selectedShoeId)
+        assertEquals("test-shoe-1", state.value.selectedShoeId)
 
         // Act - Select different shoes
-        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(2L))
+        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected("test-shoe-2"))
         testScheduler.advanceUntilIdle()
 
-        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(3L))
+        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected("test-shoe-3"))
         testScheduler.advanceUntilIdle()
 
         // Assert - Repository calls were made
-        verify(mockUserSettingsRepository).updateSelectedShoeId(2L)
-        verify(mockUserSettingsRepository).updateSelectedShoeId(3L)
+        verify(mockUserSettingsRepository).updateSelectedShoeId("test-shoe-2")
+        verify(mockUserSettingsRepository).updateSelectedShoeId("test-shoe-3")
     }
 
     @Test
@@ -189,7 +189,7 @@ class ActiveShoesIntegrationTest {
         val state = mutableStateOf(ActiveShoesState())
 
         // Mock repository returns - MockShoeGenerator needs these to succeed
-        whenever(mockShoeRepository.insertShoe(any())).thenReturn(5L)
+        whenever(mockShoeRepository.insertShoe(any())).thenReturn("test-shoe-5")
         whenever(mockHistoryRepository.insertHistory(any())).thenReturn(1L)
         whenever(mockShoeRepository.updateTotalDistance(any(), any())).thenReturn(Unit)
 
@@ -244,13 +244,13 @@ class ActiveShoesIntegrationTest {
 
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(testUserSettings))
         whenever(mockShoeRepository.getActiveShoes()).thenReturn(flowOf(listOf(testShoe)))
-        whenever(mockShoeRepository.insertShoe(any())).thenReturn(2L)
+        whenever(mockShoeRepository.insertShoe(any())).thenReturn("test-shoe-2")
         whenever(mockHistoryRepository.insertHistory(any())).thenReturn(1L)
 
         // Act - Start multiple operations
         interactor.handle(state, ActiveShoesInteractor.Action.ViewAppeared)
         interactor.handle(state, ActiveShoesInteractor.Action.GenerateTestData)
-        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(2L))
+        interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected("test-shoe-2"))
         
         testScheduler.advanceUntilIdle()
 

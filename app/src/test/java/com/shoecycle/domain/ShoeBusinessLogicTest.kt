@@ -25,7 +25,7 @@ class ShoeBusinessLogicTest {
     private lateinit var shoeBusinessLogic: ShoeBusinessLogic
 
     private val testShoe = Shoe(
-        id = 1L,
+        id = "test-shoe-id-1",
         brand = "Test Brand",
         maxDistance = 350.0,
         totalDistance = 100.0,
@@ -47,57 +47,57 @@ class ShoeBusinessLogicTest {
     fun `createShoe with defaults creates shoe with correct values`() = runTest {
         // Given: Repository returns next ordering value and shoe ID
         whenever(shoeRepository.getNextOrderingValue()).thenReturn(2.0)
-        whenever(shoeRepository.insertShoe(org.mockito.kotlin.any())).thenReturn(5L)
+        whenever(shoeRepository.insertShoe(org.mockito.kotlin.any())).thenReturn("new-shoe-id-5")
 
         // When: Creating a new shoe
         val shoeId = shoeBusinessLogic.createShoe("Nike Air Max")
 
         // Then: Shoe is created
-        assertEquals(5L, shoeId)
+        assertEquals("new-shoe-id-5", shoeId)
         verify(shoeRepository).insertShoe(org.mockito.kotlin.any())
     }
 
     @Test
     fun `retireShoe calls repository retire method`() = runTest {
         // When: Retiring a shoe
-        shoeBusinessLogic.retireShoe(1L)
+        shoeBusinessLogic.retireShoe("test-shoe-id-1")
 
         // Then: Repository retire method is called
-        verify(shoeRepository).retireShoe(1L)
+        verify(shoeRepository).retireShoe("test-shoe-id-1")
     }
 
     @Test
     fun `reactivateShoe calls repository reactivate method`() = runTest {
         // When: Reactivating a shoe
-        shoeBusinessLogic.reactivateShoe(1L)
+        shoeBusinessLogic.reactivateShoe("test-shoe-id-1")
 
         // Then: Repository reactivate method is called
-        verify(shoeRepository).reactivateShoe(1L)
+        verify(shoeRepository).reactivateShoe("test-shoe-id-1")
     }
 
     @Test
     fun `logDistance creates history and recalculates total`() = runTest {
         // Given: Repository setup
         whenever(historyRepository.insertHistory(org.mockito.kotlin.any())).thenReturn(5L)
-        whenever(shoeRepository.getShoeByIdOnce(1L)).thenReturn(testShoe)
-        whenever(historyRepository.getTotalDistanceForShoe(1L)).thenReturn(18.0)
+        whenever(shoeRepository.getShoeByIdOnce("test-shoe-id-1")).thenReturn(testShoe)
+        whenever(historyRepository.getTotalDistanceForShoe("test-shoe-id-1")).thenReturn(18.0)
 
         // When: Logging distance
-        shoeBusinessLogic.logDistance(1L, 5.0, Date())
+        shoeBusinessLogic.logDistance("test-shoe-id-1", 5.0, Date())
 
         // Then: History is created and total is recalculated
         verify(historyRepository).insertHistory(org.mockito.kotlin.any())
-        verify(shoeRepository).updateTotalDistance(1L, 68.0) // 50 (start) + 18 (history total)
+        verify(shoeRepository).updateTotalDistance("test-shoe-id-1", 68.0) // 50 (start) + 18 (history total)
     }
 
     @Test
     fun `isShoeNearExpiration returns true for shoe near max distance`() = runTest {
         // Given: Shoe near expiration (90% of max distance)
         val nearExpirationShoe = testShoe.copy(totalDistance = 320.0, maxDistance = 350.0)
-        whenever(shoeRepository.getShoeByIdOnce(1L)).thenReturn(nearExpirationShoe)
+        whenever(shoeRepository.getShoeByIdOnce("test-shoe-id-1")).thenReturn(nearExpirationShoe)
 
         // When: Checking expiration status
-        val result = shoeBusinessLogic.isShoeNearExpiration(1L)
+        val result = shoeBusinessLogic.isShoeNearExpiration("test-shoe-id-1")
 
         // Then: Returns true (remaining distance is 30, which is < 35 (10% of 350))
         assertTrue(result)
@@ -107,10 +107,10 @@ class ShoeBusinessLogicTest {
     fun `isShoeNearExpiration returns false for shoe with plenty of distance`() = runTest {
         // Given: Shoe with plenty of distance remaining
         val newShoe = testShoe.copy(totalDistance = 50.0, maxDistance = 350.0)
-        whenever(shoeRepository.getShoeByIdOnce(1L)).thenReturn(newShoe)
+        whenever(shoeRepository.getShoeByIdOnce("test-shoe-id-1")).thenReturn(newShoe)
 
         // When: Checking expiration status
-        val result = shoeBusinessLogic.isShoeNearExpiration(1L)
+        val result = shoeBusinessLogic.isShoeNearExpiration("test-shoe-id-1")
 
         // Then: Returns false
         assertFalse(result)

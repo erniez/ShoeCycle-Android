@@ -32,7 +32,7 @@ class ActiveShoesInteractorTest {
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
 
     private val testShoe = Shoe(
-        id = 1L,
+        id = "test-shoe-1",
         brand = "Test Brand",
         maxDistance = 350.0,
         totalDistance = 100.0,
@@ -45,7 +45,7 @@ class ActiveShoesInteractorTest {
 
     private val testUserSettings = UserSettingsData(
         distanceUnit = DistanceUnit.MILES,
-        selectedShoeId = 1L
+        selectedShoeId = "test-shoe-1"
     )
 
     @Test
@@ -70,7 +70,7 @@ class ActiveShoesInteractorTest {
         // Assert
         assertEquals(shoes, state.value.shoes)
         assertEquals(DistanceUnit.MILES, state.value.distanceUnit)
-        assertEquals(1L, state.value.selectedShoeId)
+        assertEquals("test-shoe-1", state.value.selectedShoeId)
         assertFalse(state.value.isLoading)
     }
 
@@ -96,7 +96,7 @@ class ActiveShoesInteractorTest {
         // Assert
         assertTrue(state.value.shoes.isEmpty())
         assertEquals(DistanceUnit.MILES, state.value.distanceUnit)
-        assertEquals(1L, state.value.selectedShoeId)
+        assertEquals("test-shoe-1", state.value.selectedShoeId)
         assertFalse(state.value.isLoading)
     }
 
@@ -154,7 +154,7 @@ class ActiveShoesInteractorTest {
             this
         )
         val state = mutableStateOf(ActiveShoesState())
-        val selectedShoeId = 5L
+        val selectedShoeId = "test-shoe-5"
 
         // Act
         interactor.handle(state, ActiveShoesInteractor.Action.ShoeSelected(selectedShoeId))
@@ -174,7 +174,7 @@ class ActiveShoesInteractorTest {
             this
         )
         val state = mutableStateOf(ActiveShoesState())
-        val selectedShoeId = 5L
+        val selectedShoeId = "test-shoe-5"
 
         whenever(mockUserSettingsRepository.updateSelectedShoeId(selectedShoeId))
             .thenThrow(RuntimeException("Test exception"))
@@ -199,7 +199,7 @@ class ActiveShoesInteractorTest {
         val state = mutableStateOf(ActiveShoesState())
 
         // Mock successful repository operations
-        whenever(mockShoeRepository.insertShoe(any())).thenReturn(1L)
+        whenever(mockShoeRepository.insertShoe(any())).thenReturn("generated-shoe-1")
         whenever(mockHistoryRepository.insertHistory(any())).thenReturn(1L)
 
         // Act
@@ -259,8 +259,8 @@ class ActiveShoesInteractorTest {
         val state = mutableStateOf(ActiveShoesState())
         
         val initialShoes = listOf(testShoe)
-        val updatedShoes = listOf(testShoe, testShoe.copy(id = 2L))
-        val updatedSettings = testUserSettings.copy(selectedShoeId = 2L)
+        val updatedShoes = listOf(testShoe, testShoe.copy(id = "test-shoe-2"))
+        val updatedSettings = testUserSettings.copy(selectedShoeId = "test-shoe-2")
 
         whenever(mockUserSettingsRepository.userSettingsFlow)
             .thenReturn(flowOf(testUserSettings, updatedSettings))
@@ -273,7 +273,7 @@ class ActiveShoesInteractorTest {
 
         // Assert - Should reflect the latest values from both flows
         assertEquals(2, state.value.shoes.size)
-        assertEquals(2L, state.value.selectedShoeId)
+        assertEquals("test-shoe-2", state.value.selectedShoeId)
         assertFalse(state.value.isLoading)
     }
 }

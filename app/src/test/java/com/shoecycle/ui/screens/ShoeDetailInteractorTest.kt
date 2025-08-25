@@ -31,7 +31,7 @@ class ShoeDetailInteractorTest {
     private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
 
     private val testShoe = Shoe(
-        id = 1L,
+        id = "test-shoe-1",
         brand = "Test Brand",
         maxDistance = 350.0,
         totalDistance = 100.0,
@@ -71,12 +71,12 @@ class ShoeDetailInteractorTest {
         )
         val state = mutableStateOf(ShoeDetailState())
         
-        whenever(mockShoeRepository.getShoeById(1L)).thenReturn(flowOf(testShoe))
+        whenever(mockShoeRepository.getShoeById("test-shoe-1")).thenReturn(flowOf(testShoe))
         val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
-        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(1L))
+        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared("test-shoe-1"))
         testScheduler.advanceUntilIdle()
 
         // Assert
@@ -99,12 +99,12 @@ class ShoeDetailInteractorTest {
         )
         val state = mutableStateOf(ShoeDetailState())
         
-        whenever(mockShoeRepository.getShoeById(1L)).thenReturn(flowOf(null))
+        whenever(mockShoeRepository.getShoeById("test-shoe-1")).thenReturn(flowOf(null))
         val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
-        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(1L))
+        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared("test-shoe-1"))
         testScheduler.advanceUntilIdle()
 
         // Assert
@@ -124,12 +124,12 @@ class ShoeDetailInteractorTest {
         )
         val state = mutableStateOf(ShoeDetailState())
         
-        whenever(mockShoeRepository.getShoeById(1L)).thenThrow(RuntimeException("Database error"))
+        whenever(mockShoeRepository.getShoeById("test-shoe-1")).thenThrow(RuntimeException("Database error"))
         val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
         // Act
-        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared(1L))
+        interactor.handle(state, ShoeDetailInteractor.Action.ViewAppeared("test-shoe-1"))
         testScheduler.advanceUntilIdle()
 
         // Assert
@@ -204,7 +204,7 @@ class ShoeDetailInteractorTest {
         )
         val state = mutableStateOf(ShoeDetailState(shoe = testShoe))
         
-        whenever(mockShoeRepository.getShoeById(1L)).thenReturn(flowOf(testShoe))
+        whenever(mockShoeRepository.getShoeById("test-shoe-1")).thenReturn(flowOf(testShoe))
         val userSettings = UserSettingsData(distanceUnit = DistanceUnit.MILES)
         whenever(mockUserSettingsRepository.userSettingsFlow).thenReturn(flowOf(userSettings))
 
@@ -213,7 +213,7 @@ class ShoeDetailInteractorTest {
         testScheduler.advanceUntilIdle()
 
         // Assert
-        verify(mockShoeRepository).getShoeById(1L)
+        verify(mockShoeRepository).getShoeById("test-shoe-1")
     }
 
     @Test
@@ -439,7 +439,7 @@ class ShoeDetailInteractorTest {
         )
         val state = mutableStateOf(initialState)
         
-        whenever(mockShoeRepository.insertShoe(validShoe)).thenReturn(2L)
+        whenever(mockShoeRepository.insertShoe(validShoe)).thenReturn("new-shoe-2")
 
         // Act
         interactor.handle(state, ShoeDetailInteractor.Action.SaveChanges)

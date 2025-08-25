@@ -190,7 +190,7 @@ class HistoryCalculationsTest {
         val date = createDate(year, month, day)
         return History(
             id = id,
-            shoeId = 1L,
+            shoeId = "test-shoe-id",
             runDistance = distance,
             runDate = date
         )

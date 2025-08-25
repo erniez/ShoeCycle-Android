@@ -52,7 +52,8 @@ class ShoeRepositoryTest {
         val insertedId = shoeRepository.insertShoe(shoe)
         
         // Then
-        assertTrue("Inserted ID should be positive", insertedId > 0)
+        assertNotNull("Inserted ID should not be null", insertedId)
+        assertTrue("Inserted ID should not be empty", insertedId.isNotEmpty())
     }
 
     @Test
@@ -304,7 +305,7 @@ class ShoeRepositoryTest {
     @Test
     fun getShoeByIdOnce_withInvalidId_returnsNull() = runTest {
         // When
-        val retrievedShoe = shoeRepository.getShoeByIdOnce(999L)
+        val retrievedShoe = shoeRepository.getShoeByIdOnce("invalid-id-999")
         
         // Then
         assertNull("Non-existent shoe should return null", retrievedShoe)
@@ -313,14 +314,14 @@ class ShoeRepositoryTest {
     @Test
     fun retireShoe_withInvalidId_doesNotThrow() = runTest {
         // When/Then - Should not throw exception
-        shoeRepository.retireShoe(999L)
+        shoeRepository.retireShoe("invalid-id-999")
         // Test passes if no exception is thrown
     }
 
     @Test
     fun updateTotalDistance_withInvalidId_doesNotThrow() = runTest {
         // When/Then - Should not throw exception
-        shoeRepository.updateTotalDistance(999L, 100.0)
+        shoeRepository.updateTotalDistance("invalid-id-999", 100.0)
         // Test passes if no exception is thrown
     }
 

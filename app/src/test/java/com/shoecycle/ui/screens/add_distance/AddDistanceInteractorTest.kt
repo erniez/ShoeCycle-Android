@@ -27,7 +27,7 @@ class AddDistanceInteractorTest {
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
     private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
     
-    private fun createTestShoe(id: Long = 1L, brand: String = "Test Shoe"): Shoe {
+    private fun createTestShoe(id: String = "test-shoe-1", brand: String = "Test Shoe"): Shoe {
         return Shoe(
             id = id,
             brand = brand,
@@ -38,7 +38,7 @@ class AddDistanceInteractorTest {
             expirationDate = Date(System.currentTimeMillis() + 365L * 24 * 60 * 60 * 1000), // 1 year from now
             imageKey = null,
             thumbnailData = null,
-            orderingValue = id.toDouble(),
+            orderingValue = 1.0,
             hallOfFame = false
         )
     }
@@ -53,7 +53,7 @@ class AddDistanceInteractorTest {
             mockUserSettingsRepository,
             mockSelectedShoeStrategy
         )
-        val testShoes = listOf(createTestShoe(1), createTestShoe(2), createTestShoe(3))
+        val testShoes = listOf(createTestShoe("test-shoe-1"), createTestShoe("test-shoe-2"), createTestShoe("test-shoe-3"))
         val state = mutableStateOf(
             AddDistanceState(
                 activeShoes = testShoes,
@@ -80,7 +80,7 @@ class AddDistanceInteractorTest {
             mockUserSettingsRepository,
             mockSelectedShoeStrategy
         )
-        val testShoes = listOf(createTestShoe(1), createTestShoe(2), createTestShoe(3))
+        val testShoes = listOf(createTestShoe("test-shoe-1"), createTestShoe("test-shoe-2"), createTestShoe("test-shoe-3"))
         val state = mutableStateOf(
             AddDistanceState(
                 activeShoes = testShoes,
@@ -106,7 +106,7 @@ class AddDistanceInteractorTest {
             mockUserSettingsRepository,
             mockSelectedShoeStrategy
         )
-        val testShoes = listOf(createTestShoe(1), createTestShoe(2), createTestShoe(3))
+        val testShoes = listOf(createTestShoe("test-shoe-1"), createTestShoe("test-shoe-2"), createTestShoe("test-shoe-3"))
         val state = mutableStateOf(
             AddDistanceState(
                 activeShoes = testShoes,
@@ -170,7 +170,7 @@ class AddDistanceInteractorTest {
             mockUserSettingsRepository,
             mockSelectedShoeStrategy
         )
-        val testShoe = createTestShoe(1)
+        val testShoe = createTestShoe("test-shoe-1")
         val testDate = Date()
         val state = mutableStateOf(
             AddDistanceState(
@@ -196,7 +196,7 @@ class AddDistanceInteractorTest {
         // Using ArgumentCaptor to capture the actual value
         val distanceCaptor = ArgumentCaptor.forClass(Double::class.java)
         verify(mockHistoryRepository).addRun(
-            shoeId = eq(1L),
+            shoeId = eq("test-shoe-1"),
             runDate = eq(testDate),
             runDistance = distanceCaptor.capture()
         )
@@ -240,7 +240,7 @@ class AddDistanceInteractorTest {
             mockUserSettingsRepository,
             mockSelectedShoeStrategy
         )
-        val testShoe = createTestShoe(1)
+        val testShoe = createTestShoe("test-shoe-1")
         val state = mutableStateOf(
             AddDistanceState(
                 selectedShoe = testShoe,
@@ -266,7 +266,7 @@ class AddDistanceInteractorTest {
             mockUserSettingsRepository,
             mockSelectedShoeStrategy
         )
-        val testShoe = createTestShoe(1)
+        val testShoe = createTestShoe("test-shoe-1")
         
         // Test zero
         val stateZero = mutableStateOf(

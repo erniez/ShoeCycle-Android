@@ -10,12 +10,12 @@ import com.shoecycle.data.repository.ShoeRepository
 import com.shoecycle.domain.models.History
 import com.shoecycle.domain.models.Shoe
 import java.util.Date
-import java.util.concurrent.atomic.AtomicLong
+import java.util.UUID
 
 object TestDatabaseSetup {
     
-    private val shoeIdCounter = AtomicLong(1)
-    private val historyIdCounter = AtomicLong(1)
+    private var shoeIdCounter = 1
+    private var historyIdCounter = 1L
     
     fun createInMemoryDatabase(): ShoeCycleDatabase {
         return Room.inMemoryDatabaseBuilder(
@@ -37,12 +37,12 @@ object TestDatabaseSetup {
 
 object TestDataFactory {
     
-    private val shoeIdCounter = AtomicLong(1)
-    private val historyIdCounter = AtomicLong(1)
+    private var shoeIdCounter = 1
+    private var historyIdCounter = 1L
     
     fun createTestShoe(
-        id: Long = 0,
-        brand: String = "Test Shoe ${shoeIdCounter.getAndIncrement()}",
+        id: String = UUID.randomUUID().toString(),
+        brand: String = "Test Shoe ${shoeIdCounter++}",
         maxDistance: Double = 350.0,
         totalDistance: Double = 0.0,
         startDistance: Double = 0.0,
@@ -69,7 +69,7 @@ object TestDataFactory {
     
     fun createTestHistory(
         id: Long = 0,
-        shoeId: Long,
+        shoeId: String,
         runDate: Date = Date(),
         runDistance: Double = 5.0
     ): History {
@@ -92,8 +92,13 @@ object TestDataFactory {
         }
     }
     
+    fun resetCounters() {
+        shoeIdCounter = 1
+        historyIdCounter = 1L
+    }
+    
     fun createMultipleTestHistories(
-        shoeId: Long,
+        shoeId: String,
         count: Int,
         startDate: Date = Date(),
         distanceRange: Double = 5.0
@@ -113,7 +118,7 @@ object TestDataFactory {
     }
     
     fun createWeeklyTestHistories(
-        shoeId: Long,
+        shoeId: String,
         weekCount: Int,
         runsPerWeek: Int = 3
     ): List<History> {
@@ -143,7 +148,7 @@ object TestDataFactory {
     }
     
     fun createDateRangeHistories(
-        shoeId: Long,
+        shoeId: String,
         startDate: Date,
         endDate: Date,
         intervalDays: Int = 2
@@ -171,8 +176,4 @@ object TestDataFactory {
         return histories
     }
     
-    fun resetCounters() {
-        shoeIdCounter.set(1)
-        historyIdCounter.set(1)
-    }
 }
