@@ -31,7 +31,7 @@ import java.util.Locale
 
 @Composable
 fun ShoeDetailScreen(
-    shoeId: Long? = null,
+    shoeId: String? = null,
     isCreateMode: Boolean = false,
     onNavigateBack: () -> Unit,
     onShoeSaved: (() -> Unit)? = null

@@ -2,11 +2,12 @@ package com.shoecycle.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(tableName = "shoes")
 data class ShoeEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val brand: String,
     val maxDistance: Double,
     val totalDistance: Double,

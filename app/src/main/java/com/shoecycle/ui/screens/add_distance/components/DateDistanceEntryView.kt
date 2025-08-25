@@ -80,7 +80,7 @@ fun DateDistanceEntryView(
     val interactor = remember(shoe) {  // Recreate interactor when shoe changes
         DateDistanceEntryInteractor(
             context = context,
-            currentShoeId = { shoe?.id?.toString() }
+            currentShoeId = { shoe?.id }
         )
     }
     

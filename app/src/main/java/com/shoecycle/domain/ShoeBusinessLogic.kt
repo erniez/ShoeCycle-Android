@@ -24,7 +24,7 @@ class ShoeBusinessLogic(
         brand: String,
         maxDistance: Double = DEFAULT_MAX_DISTANCE,
         startDistance: Double = 0.0
-    ): Long {
+    ): String {
         val now = Date()
         val expirationDate = calculateExpirationDate(now, EXPIRATION_MONTHS)
         val orderingValue = shoeRepository.getNextOrderingValue()
@@ -45,7 +45,7 @@ class ShoeBusinessLogic(
         return shoeId
     }
 
-    suspend fun retireShoe(shoeId: Long) {
+    suspend fun retireShoe(shoeId: String) {
         try {
             shoeRepository.retireShoe(shoeId)
             Log.d(TAG, "Retired shoe with ID: $shoeId")
@@ -55,7 +55,7 @@ class ShoeBusinessLogic(
         }
     }
 
-    suspend fun reactivateShoe(shoeId: Long) {
+    suspend fun reactivateShoe(shoeId: String) {
         try {
             shoeRepository.reactivateShoe(shoeId)
             Log.d(TAG, "Reactivated shoe with ID: $shoeId")
@@ -65,7 +65,7 @@ class ShoeBusinessLogic(
         }
     }
 
-    suspend fun logDistance(shoeId: Long, distance: Double, date: Date = Date(), notes: String? = null) {
+    suspend fun logDistance(shoeId: String, distance: Double, date: Date = Date(), notes: String? = null) {
         try {
             val historyId = historyRepository.insertHistory(
                 History(
@@ -85,7 +85,7 @@ class ShoeBusinessLogic(
         }
     }
 
-    suspend fun recalculateShoeTotal(shoeId: Long) {
+    suspend fun recalculateShoeTotal(shoeId: String) {
         try {
             val shoe = shoeRepository.getShoeByIdOnce(shoeId)
             if (shoe != null) {
@@ -101,7 +101,7 @@ class ShoeBusinessLogic(
         }
     }
 
-    suspend fun updateShoeDistance(shoeId: Long, newDistance: Double) {
+    suspend fun updateShoeDistance(shoeId: String, newDistance: Double) {
         try {
             val shoe = shoeRepository.getShoeByIdOnce(shoeId)
             if (shoe != null) {
@@ -115,12 +115,12 @@ class ShoeBusinessLogic(
         }
     }
 
-    suspend fun isShoeNearExpiration(shoeId: Long): Boolean {
+    suspend fun isShoeNearExpiration(shoeId: String): Boolean {
         val shoe = shoeRepository.getShoeByIdOnce(shoeId)
         return shoe?.isNearExpiration ?: false
     }
 
-    suspend fun getShoeStatistics(shoeId: Long): ShoeStatistics? {
+    suspend fun getShoeStatistics(shoeId: String): ShoeStatistics? {
         return try {
             val shoe = shoeRepository.getShoeByIdOnce(shoeId) ?: return null
             val history = historyRepository.getHistoryForShoe(shoeId).first()

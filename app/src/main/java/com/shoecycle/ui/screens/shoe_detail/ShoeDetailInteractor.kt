@@ -33,7 +33,7 @@ class ShoeDetailInteractor(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
-        data class ViewAppeared(val shoeId: Long) : Action()
+        data class ViewAppeared(val shoeId: String) : Action()
         object InitializeNewShoe : Action()
         object Refresh : Action()
         data class UpdateShoeName(val name: String) : Action()
@@ -321,7 +321,7 @@ class ShoeDetailInteractor(
         }
     }
     
-    private fun loadShoe(state: MutableState<ShoeDetailState>, shoeId: Long) {
+    private fun loadShoe(state: MutableState<ShoeDetailState>, shoeId: String) {
         state.value = state.value.copy(isLoading = true, errorMessage = null)
         
         scope.launch {

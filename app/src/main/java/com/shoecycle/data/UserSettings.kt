@@ -27,6 +27,6 @@ data class UserSettingsData(
     val favorite4: Double = 0.0,
     val healthConnectEnabled: Boolean = false,
     val stravaEnabled: Boolean = false,
-    val selectedShoeId: Long? = null,
+    val selectedShoeId: String? = null,
     val graphAllShoes: Boolean = false
 )

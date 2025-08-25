@@ -45,18 +45,18 @@ class ShoeRepository(
         }
     }
 
-    override fun getShoeById(id: Long): Flow<Shoe?> {
+    override fun getShoeById(id: String): Flow<Shoe?> {
         return shoeDao.getShoeByIdFlow(id).map { entity ->
             entity?.let { Shoe.fromEntity(it) }
         }
     }
 
-    override suspend fun insertShoe(shoe: Shoe): Long {
+    override suspend fun insertShoe(shoe: Shoe): String {
         return try {
             val entity = shoe.toEntity()
-            val insertedId = shoeDao.insertShoe(entity)
-            Log.d(TAG, "Inserted shoe with ID: $insertedId")
-            insertedId
+            shoeDao.insertShoe(entity)
+            Log.d(TAG, "Inserted shoe with ID: ${entity.id}")
+            entity.id
         } catch (e: Exception) {
             Log.e(TAG, "Error inserting shoe: ${shoe.brand}", e)
             throw e
@@ -85,7 +85,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun getShoeByIdOnce(id: Long): Shoe? {
+    override suspend fun getShoeByIdOnce(id: String): Shoe? {
         return try {
             val entity = shoeDao.getShoeById(id)
             entity?.let { Shoe.fromEntity(it) }
@@ -95,7 +95,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun createShoe(brand: String, maxDistance: Double): Long {
+    override suspend fun createShoe(brand: String, maxDistance: Double): String {
         return try {
             val orderingValue = getNextOrderingValue()
             val newShoe = Shoe.createDefault(brand = brand, maxDistance = maxDistance)
@@ -107,7 +107,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun retireShoe(shoeId: Long) {
+    override suspend fun retireShoe(shoeId: String) {
         try {
             shoeDao.retireShoe(shoeId)
             Log.d(TAG, "Retired shoe with ID: $shoeId")
@@ -117,7 +117,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun reactivateShoe(shoeId: Long) {
+    override suspend fun reactivateShoe(shoeId: String) {
         try {
             shoeDao.reactivateShoe(shoeId)
             Log.d(TAG, "Reactivated shoe with ID: $shoeId")
@@ -127,7 +127,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun updateTotalDistance(shoeId: Long, totalDistance: Double) {
+    override suspend fun updateTotalDistance(shoeId: String, totalDistance: Double) {
         try {
             shoeDao.updateTotalDistance(shoeId, totalDistance)
             Log.d(TAG, "Updated total distance for shoe $shoeId: $totalDistance")
@@ -155,7 +155,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun updateShoeOrdering(shoeId: Long, newOrderingValue: Double) {
+    override suspend fun updateShoeOrdering(shoeId: String, newOrderingValue: Double) {
         try {
             val shoe = getShoeByIdOnce(shoeId)
             shoe?.let {
@@ -178,7 +178,7 @@ class ShoeRepository(
         }
     }
 
-    override suspend fun recalculateShoeTotal(shoeId: Long) {
+    override suspend fun recalculateShoeTotal(shoeId: String) {
         try {
             val totalDistance = historyDao.getTotalDistanceForShoe(shoeId) ?: 0.0
             val shoe = getShoeByIdOnce(shoeId)

@@ -42,8 +42,8 @@ fun ActiveShoesRowView(
     shoe: Shoe,
     distanceUnit: DistanceUnit,
     isSelected: Boolean = false,
-    onShoeSelected: (Long) -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onShoeSelected: (String) -> Unit = {},
+    onNavigateToDetail: (String) -> Unit = {}
 ) {
     // Animate the distance text position to make room for "Selected" text
     val distanceTextOffset by animateFloatAsState(

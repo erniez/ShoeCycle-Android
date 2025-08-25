@@ -22,13 +22,13 @@ interface ShoeDao {
     fun getRetiredShoes(): Flow<List<ShoeEntity>>
     
     @Query("SELECT * FROM shoes WHERE id = :id")
-    suspend fun getShoeById(id: Long): ShoeEntity?
+    suspend fun getShoeById(id: String): ShoeEntity?
     
     @Query("SELECT * FROM shoes WHERE id = :id")
-    fun getShoeByIdFlow(id: Long): Flow<ShoeEntity?>
+    fun getShoeByIdFlow(id: String): Flow<ShoeEntity?>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoe(shoe: ShoeEntity): Long
+    suspend fun insertShoe(shoe: ShoeEntity)
     
     @Update
     suspend fun updateShoe(shoe: ShoeEntity)
@@ -37,13 +37,13 @@ interface ShoeDao {
     suspend fun deleteShoe(shoe: ShoeEntity)
     
     @Query("UPDATE shoes SET totalDistance = :totalDistance WHERE id = :shoeId")
-    suspend fun updateTotalDistance(shoeId: Long, totalDistance: Double)
+    suspend fun updateTotalDistance(shoeId: String, totalDistance: Double)
     
     @Query("UPDATE shoes SET hallOfFame = 1 WHERE id = :shoeId")
-    suspend fun retireShoe(shoeId: Long)
+    suspend fun retireShoe(shoeId: String)
     
     @Query("UPDATE shoes SET hallOfFame = 0 WHERE id = :shoeId")
-    suspend fun reactivateShoe(shoeId: Long)
+    suspend fun reactivateShoe(shoeId: String)
     
     @Query("SELECT COUNT(*) FROM shoes WHERE hallOfFame = 0")
     suspend fun getActiveShoesCount(): Int

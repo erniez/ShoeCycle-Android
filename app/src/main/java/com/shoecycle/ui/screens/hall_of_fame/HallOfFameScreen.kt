@@ -18,7 +18,7 @@ import com.shoecycle.domain.DistanceUtility
 
 @Composable
 fun HallOfFameScreen(
-    onNavigateToShoeDetail: (Long) -> Unit = {}
+    onNavigateToShoeDetail: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val shoeRepository = remember { 
@@ -130,7 +130,7 @@ private fun EmptyStateScreen() {
 private fun HallOfFameContent(
     shoes: List<com.shoecycle.domain.models.Shoe>,
     distanceUnit: com.shoecycle.data.DistanceUnit,
-    onShoeClick: (Long) -> Unit
+    onShoeClick: (String) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp)

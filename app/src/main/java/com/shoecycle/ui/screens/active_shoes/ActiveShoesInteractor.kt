@@ -16,7 +16,7 @@ data class ActiveShoesState(
     val shoes: List<Shoe> = emptyList(),
     val isLoading: Boolean = true,
     val isGeneratingTestData: Boolean = false,
-    val selectedShoeId: Long? = null,
+    val selectedShoeId: String? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.MILES
 )
 
@@ -29,7 +29,7 @@ class ActiveShoesInteractor(
     sealed class Action {
         object ViewAppeared : Action()
         object GenerateTestData : Action()
-        data class ShoeSelected(val shoeId: Long) : Action()
+        data class ShoeSelected(val shoeId: String) : Action()
     }
     
     fun handle(state: MutableState<ActiveShoesState>, action: Action) {

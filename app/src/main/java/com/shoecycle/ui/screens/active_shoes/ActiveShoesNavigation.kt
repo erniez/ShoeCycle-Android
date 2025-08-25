@@ -15,7 +15,7 @@ import androidx.navigation.navArgument
 sealed class ActiveShoesRoute(val route: String) {
     object List : ActiveShoesRoute("active_shoes_list")
     object Detail : ActiveShoesRoute("shoe_detail/{shoeId}") {
-        fun createRoute(shoeId: Long) = "shoe_detail/$shoeId"
+        fun createRoute(shoeId: String) = "shoe_detail/$shoeId"
     }
 }
 
@@ -37,13 +37,13 @@ fun ActiveShoesNavigation(
         
         composable(
             route = ActiveShoesRoute.Detail.route,
-            arguments = listOf(navArgument("shoeId") { type = NavType.LongType }),
+            arguments = listOf(navArgument("shoeId") { type = NavType.StringType }),
             enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
             popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
         ) { backStackEntry ->
-            val shoeId = backStackEntry.arguments?.getLong("shoeId") ?: 0L
+            val shoeId = backStackEntry.arguments?.getString("shoeId") ?: ""
             ShoeDetailScreen(
                 shoeId = shoeId,
                 isCreateMode = false,

@@ -39,7 +39,7 @@ class MockShoeGenerator(
             ?: throw IllegalStateException("Failed to retrieve created shoe")
     }
     
-    private suspend fun addRunHistories(shoeId: Long) {
+    private suspend fun addRunHistories(shoeId: String) {
         val dates = generateRandomDates(fromPriorWeeks = totalWeeks)
         val runHistories = addRandomDistances(toDates = dates)
         

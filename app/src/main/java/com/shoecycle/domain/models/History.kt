@@ -8,7 +8,7 @@ import java.util.Locale
 
 data class History(
     val id: Long = 0,
-    val shoeId: Long,
+    val shoeId: String,
     val runDate: Date,
     val runDistance: Double
 ) {
@@ -47,7 +47,7 @@ data class History(
             )
         }
 
-        fun create(shoeId: Long, runDate: Date = Date(), runDistance: Double): History {
+        fun create(shoeId: String, runDate: Date = Date(), runDistance: Double): History {
             return History(
                 shoeId = shoeId,
                 runDate = runDate,

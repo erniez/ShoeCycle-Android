@@ -31,7 +31,7 @@ import com.shoecycle.ui.screens.active_shoes.components.ShoeDetailModal
 
 @Composable
 fun ActiveShoesListScreen(
-    onNavigateToShoeDetail: (Long) -> Unit = {}
+    onNavigateToShoeDetail: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val shoeRepository = remember { 

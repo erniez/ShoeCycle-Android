@@ -33,7 +33,7 @@ class HistoryRepository(
         }
     }
 
-    override fun getHistoryForShoe(shoeId: Long): Flow<List<History>> {
+    override fun getHistoryForShoe(shoeId: String): Flow<List<History>> {
         return historyDao.getHistoryForShoe(shoeId).map { entities ->
             entities.map { History.fromEntity(it) }
         }
@@ -46,7 +46,7 @@ class HistoryRepository(
     }
 
     override fun getHistoryForShoeInDateRange(
-        shoeId: Long,
+        shoeId: String,
         startDate: Date,
         endDate: Date
     ): Flow<List<History>> {
@@ -105,7 +105,7 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun deleteAllHistoryForShoe(shoeId: Long) {
+    override suspend fun deleteAllHistoryForShoe(shoeId: String) {
         try {
             historyDao.deleteAllHistoryForShoe(shoeId)
             
@@ -129,7 +129,7 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun addRun(shoeId: Long, runDate: Date, runDistance: Double): Long {
+    override suspend fun addRun(shoeId: String, runDate: Date, runDistance: Double): Long {
         return try {
             if (runDistance <= 0) {
                 throw IllegalArgumentException("Run distance must be positive")
@@ -147,11 +147,11 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun addRun(shoeId: Long, runDistance: Double): Long {
+    override suspend fun addRun(shoeId: String, runDistance: Double): Long {
         return addRun(shoeId, Date(), runDistance)
     }
 
-    override suspend fun getTotalDistanceForShoe(shoeId: Long): Double {
+    override suspend fun getTotalDistanceForShoe(shoeId: String): Double {
         return try {
             historyDao.getTotalDistanceForShoe(shoeId) ?: 0.0
         } catch (e: Exception) {
@@ -160,7 +160,7 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun getRunCountForShoe(shoeId: Long): Int {
+    override suspend fun getRunCountForShoe(shoeId: String): Int {
         return try {
             historyDao.getRunCountForShoe(shoeId)
         } catch (e: Exception) {
@@ -169,7 +169,7 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun getFirstRunForShoe(shoeId: Long): History? {
+    override suspend fun getFirstRunForShoe(shoeId: String): History? {
         return try {
             val entity = historyDao.getFirstRunForShoe(shoeId)
             entity?.let { History.fromEntity(it) }
@@ -179,7 +179,7 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun getLastRunForShoe(shoeId: Long): History? {
+    override suspend fun getLastRunForShoe(shoeId: String): History? {
         return try {
             val entity = historyDao.getLastRunForShoe(shoeId)
             entity?.let { History.fromEntity(it) }
@@ -189,7 +189,7 @@ class HistoryRepository(
         }
     }
 
-    override suspend fun getAverageDistanceForShoe(shoeId: Long): Double {
+    override suspend fun getAverageDistanceForShoe(shoeId: String): Double {
         return try {
             val totalDistance = getTotalDistanceForShoe(shoeId)
             val runCount = getRunCountForShoe(shoeId)

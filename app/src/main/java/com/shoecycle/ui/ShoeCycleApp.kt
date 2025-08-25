@@ -41,7 +41,7 @@ sealed class ShoeCycleDestination(val route: String, val titleRes: Int, val icon
 object AdditionalRoutes {
     const val SHOE_DETAIL = "shoe_detail/{shoeId}"
     
-    fun createShoeDetailRoute(shoeId: Long) = "shoe_detail/$shoeId"
+    fun createShoeDetailRoute(shoeId: String) = "shoe_detail/$shoeId"
 }
 
 val shoeCycleDestinations = listOf(
@@ -100,9 +100,9 @@ fun ShoeCycleApp() {
             }
             composable(
                 route = AdditionalRoutes.SHOE_DETAIL,
-                arguments = listOf(navArgument("shoeId") { type = NavType.LongType })
+                arguments = listOf(navArgument("shoeId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val shoeId = backStackEntry.arguments?.getLong("shoeId") ?: 0L
+                val shoeId = backStackEntry.arguments?.getString("shoeId") ?: ""
                 ShoeDetailScreen(
                     shoeId = shoeId,
                     isCreateMode = false,

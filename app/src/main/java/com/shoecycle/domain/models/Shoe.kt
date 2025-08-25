@@ -2,9 +2,10 @@ package com.shoecycle.domain.models
 
 import com.shoecycle.data.database.entities.ShoeEntity
 import java.util.Date
+import java.util.UUID
 
 data class Shoe(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val brand: String,
     val maxDistance: Double,
     val totalDistance: Double,

@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -24,7 +24,7 @@ class UserSettingsRepository(private val context: Context) {
         val FAVORITE_4 = doublePreferencesKey("favorite_4")
         val HEALTH_CONNECT_ENABLED = booleanPreferencesKey("health_connect_enabled")
         val STRAVA_ENABLED = booleanPreferencesKey("strava_enabled")
-        val SELECTED_SHOE_ID = longPreferencesKey("selected_shoe_id")
+        val SELECTED_SHOE_ID = stringPreferencesKey("selected_shoe_id")
     }
     
     val userSettingsFlow: Flow<UserSettingsData> = context.dataStore.data
@@ -133,7 +133,7 @@ class UserSettingsRepository(private val context: Context) {
         }
     }
     
-    suspend fun updateSelectedShoeId(shoeId: Long?) {
+    suspend fun updateSelectedShoeId(shoeId: String?) {
         try {
             context.dataStore.edit { preferences ->
                 if (shoeId != null) {

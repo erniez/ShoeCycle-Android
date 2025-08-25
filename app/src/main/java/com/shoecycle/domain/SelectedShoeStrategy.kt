@@ -51,7 +51,7 @@ class SelectedShoeStrategy(
         }
     }
 
-    suspend fun selectShoe(shoeId: Long) {
+    suspend fun selectShoe(shoeId: String) {
         val shoe = shoeRepository.getShoeByIdOnce(shoeId)
         if (shoe != null && shoe.isActive) {
             Log.d(TAG, "Manually selecting shoe: ${shoe.brand} (ID: $shoeId)")

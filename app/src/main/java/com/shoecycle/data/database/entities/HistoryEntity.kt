@@ -20,7 +20,7 @@ import androidx.room.PrimaryKey
 data class HistoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val shoeId: Long,
+    val shoeId: String,
     val runDate: Long,
     val runDistance: Double
 )

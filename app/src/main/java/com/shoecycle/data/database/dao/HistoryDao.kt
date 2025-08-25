@@ -16,7 +16,7 @@ interface HistoryDao {
     fun getAllHistory(): Flow<List<HistoryEntity>>
     
     @Query("SELECT * FROM history WHERE shoeId = :shoeId ORDER BY runDate DESC")
-    fun getHistoryForShoe(shoeId: Long): Flow<List<HistoryEntity>>
+    fun getHistoryForShoe(shoeId: String): Flow<List<HistoryEntity>>
     
     @Query("SELECT * FROM history WHERE id = :id")
     suspend fun getHistoryById(id: Long): HistoryEntity?
@@ -25,7 +25,7 @@ interface HistoryDao {
     fun getHistoryInDateRange(startDate: Long, endDate: Long): Flow<List<HistoryEntity>>
     
     @Query("SELECT * FROM history WHERE shoeId = :shoeId AND runDate BETWEEN :startDate AND :endDate ORDER BY runDate DESC")
-    fun getHistoryForShoeInDateRange(shoeId: Long, startDate: Long, endDate: Long): Flow<List<HistoryEntity>>
+    fun getHistoryForShoeInDateRange(shoeId: String, startDate: Long, endDate: Long): Flow<List<HistoryEntity>>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHistory(history: HistoryEntity): Long
@@ -37,17 +37,17 @@ interface HistoryDao {
     suspend fun deleteHistory(history: HistoryEntity)
     
     @Query("DELETE FROM history WHERE shoeId = :shoeId")
-    suspend fun deleteAllHistoryForShoe(shoeId: Long)
+    suspend fun deleteAllHistoryForShoe(shoeId: String)
     
     @Query("SELECT SUM(runDistance) FROM history WHERE shoeId = :shoeId")
-    suspend fun getTotalDistanceForShoe(shoeId: Long): Double?
+    suspend fun getTotalDistanceForShoe(shoeId: String): Double?
     
     @Query("SELECT COUNT(*) FROM history WHERE shoeId = :shoeId")
-    suspend fun getRunCountForShoe(shoeId: Long): Int
+    suspend fun getRunCountForShoe(shoeId: String): Int
     
     @Query("SELECT * FROM history WHERE shoeId = :shoeId ORDER BY runDate ASC LIMIT 1")
-    suspend fun getFirstRunForShoe(shoeId: Long): HistoryEntity?
+    suspend fun getFirstRunForShoe(shoeId: String): HistoryEntity?
     
     @Query("SELECT * FROM history WHERE shoeId = :shoeId ORDER BY runDate DESC LIMIT 1")
-    suspend fun getLastRunForShoe(shoeId: Long): HistoryEntity?
+    suspend fun getLastRunForShoe(shoeId: String): HistoryEntity?
 }
