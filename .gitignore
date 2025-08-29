@@ -63,3 +63,7 @@ tmp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# API Secrets
+# IMPORTANT: Never commit the actual secret deobfuscator
+app/src/main/java/com/shoecycle/data/strava/Secrets.kt
