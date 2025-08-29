@@ -99,6 +99,9 @@ dependencies {
     // Health Connect
     implementation("androidx.health.connect:connect-client:1.1.0-alpha08")
     
+    // Security - for EncryptedSharedPreferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
     // Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.8.0")
