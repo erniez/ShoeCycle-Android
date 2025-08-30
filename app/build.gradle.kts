@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -101,6 +102,13 @@ dependencies {
     
     // Security - for EncryptedSharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
+    // Networking
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     
     // Testing
     testImplementation("junit:junit:4.13.2")
