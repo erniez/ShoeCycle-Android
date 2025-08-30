@@ -5,42 +5,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.data.strava.StravaTokenKeeper
+import com.shoecycle.ui.settings.SettingsStravaView
 
 @Composable
 fun SettingsStravaSection(
+    @Suppress("UNUSED_PARAMETER")
     repository: UserSettingsRepository
 ) {
-    val state = remember { mutableStateOf(SettingsStravaState()) }
-    val interactor = remember { SettingsStravaInteractor(repository) }
+    val context = LocalContext.current
+    val tokenKeeper = remember { StravaTokenKeeper(context) }
     
-    // Initialize state when view appears
-    LaunchedEffect(Unit) {
-        interactor.handle(state, SettingsStravaInteractor.Action.ViewAppeared)
-    }
-    
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Strava",
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            Switch(
-                checked = state.value.enabled,
-                onCheckedChange = { enabled ->
-                    interactor.handle(state, SettingsStravaInteractor.Action.ToggleChanged(enabled))
-                }
-            )
-        }
-    }
+    // Use the new SettingsStravaView which handles OAuth flow
+    SettingsStravaView(
+        tokenKeeper = tokenKeeper
+    )
 }
