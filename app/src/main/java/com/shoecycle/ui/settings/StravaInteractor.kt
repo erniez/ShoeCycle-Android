@@ -239,14 +239,15 @@ class StravaInteractor(
         val nonExpiringTime = currentTime + (365 * 24 * 60 * 60) // 1 year from now
         
         return StravaToken(
+            tokenType = "Bearer",
             accessToken = "mock_access_token_debug",
             refreshToken = "mock_refresh_token_debug",
             expiresAt = nonExpiringTime,
+            expiresIn = 21600, // 6 hours
             athleteId = 12345,
-            athleteFullName = "Test Runner",
             athleteFirstName = "Test",
             athleteLastName = "Runner",
-            athleteProfileImageUrl = null
+            athleteProfilePicture = null
         )
     }
     

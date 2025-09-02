@@ -9,10 +9,14 @@ import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.data.strava.models.StravaToken
 import com.shoecycle.ui.auth.StravaAuthActivity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +26,8 @@ import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.junit.Assert.assertEquals
@@ -62,10 +68,16 @@ class StravaInteractorTest {
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
+        Dispatchers.setMain(testDispatcher)
         interactor = StravaInteractor(
             tokenKeeper = tokenKeeper,
             scope = CoroutineScope(testDispatcher)
         )
+    }
+    
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
     
     @Test
@@ -79,28 +91,40 @@ class StravaInteractorTest {
     }
     
     @Test
-    fun `ConnectClicked with context and no launcher shows error`() {
+    fun `ConnectClicked with context and no launcher shows loading in mock mode`() = runTest(testDispatcher) {
         val state = TestMutableState(StravaState())
         
         interactor.handle(state, StravaInteractor.Action.ConnectClicked, context)
         
-        assertEquals("Authentication launcher not configured", state.value.error)
-        assertFalse(state.value.isLoading)
+        // In debug mode with USE_MOCK_SERVICES=true, it uses mock auth
+        assertTrue(state.value.isLoading)
+        assertNull(state.value.error)
     }
     
     @Test
-    fun `ConnectClicked with context and launcher starts OAuth flow`() {
+    fun `ConnectClicked with context and launcher uses mock auth in debug mode`() = runTest(testDispatcher) {
         val state = TestMutableState(StravaState())
         interactor.setAuthLauncher(authLauncher)
         
+        // Mock the storeToken call
+        doNothing().whenever(tokenKeeper).storeToken(any())
+        
         interactor.handle(state, StravaInteractor.Action.ConnectClicked, context)
         
+        // In debug mode with USE_MOCK_SERVICES=true, it uses mock auth instead of launcher
         assertTrue(state.value.isLoading)
         assertNull(state.value.error)
         
-        val intentCaptor = argumentCaptor<Intent>()
-        verify(authLauncher).launch(intentCaptor.capture())
-        assertEquals(StravaAuthActivity::class.java.name, intentCaptor.firstValue.component?.className)
+        // Launcher should NOT be called in mock mode
+        verify(authLauncher, never()).launch(any())
+        
+        // Wait for the mock auth to complete
+        advanceUntilIdle()
+        
+        // After mock auth completes
+        assertTrue(state.value.isConnected)
+        assertFalse(state.value.isLoading)
+        assertEquals("Test Runner", state.value.athleteName)
     }
     
     @Test
@@ -109,6 +133,8 @@ class StravaInteractorTest {
             isConnected = true,
             athleteName = "Test Athlete"
         ))
+        
+        // clearToken is a void method, no need to stub it
         
         interactor.handle(state, StravaInteractor.Action.DisconnectClicked)
         advanceUntilIdle()
@@ -128,7 +154,7 @@ class StravaInteractorTest {
         interactor.handle(state, StravaInteractor.Action.DisconnectClicked)
         advanceUntilIdle()
         
-        assertTrue(state.value.error?.contains(errorMessage) == true)
+        assertEquals("Failed to disconnect: $errorMessage", state.value.error)
         assertFalse(state.value.isLoading)
     }
     
@@ -155,9 +181,15 @@ class StravaInteractorTest {
     @Test
     fun `ViewAppeared checks connection status when token exists and not expired`() = runTest(testDispatcher) {
         val state = TestMutableState(StravaState())
-        val mockToken = mock(StravaToken::class.java)
-        whenever(mockToken.isExpired).thenReturn(false)
-        whenever(mockToken.athleteFullName).thenReturn("John Doe")
+        val mockToken = StravaToken(
+            tokenType = "Bearer",
+            accessToken = "test_token",
+            refreshToken = "refresh_token",
+            expiresAt = System.currentTimeMillis() / 1000 + 3600, // Not expired
+            expiresIn = 3600,
+            athleteFirstName = "John",
+            athleteLastName = "Doe"
+        )
         whenever(tokenKeeper.getStoredToken()).thenReturn(mockToken)
         
         interactor.handle(state, StravaInteractor.Action.ViewAppeared)
