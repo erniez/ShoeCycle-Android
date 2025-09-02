@@ -6,6 +6,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.MutableState
+import com.shoecycle.BuildConfig
 import com.shoecycle.data.strava.SecretKeyFactory
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.data.strava.models.StravaToken
@@ -102,14 +103,39 @@ class StravaInteractor(
         
         state.value = state.value.copy(isLoading = true, error = null)
         
-        // Launch OAuth activity
-        val intent = Intent(context, StravaAuthActivity::class.java)
-        authLauncher?.launch(intent) ?: run {
-            Log.e(TAG, "Auth launcher not set")
-            state.value = state.value.copy(
-                isLoading = false,
-                error = "Authentication launcher not configured"
-            )
+        // Check if we're in debug mode and should use mock authentication
+        if (BuildConfig.DEBUG && BuildConfig.USE_MOCK_SERVICES) {
+            Log.d(TAG, "Debug mode: Using mock authentication")
+            // Simulate network delay and then mock successful authentication
+            scope.launch {
+                // Simulate network delay for realism
+                kotlinx.coroutines.delay(1500)
+                
+                // Create mock token with test athlete data
+                val mockToken = createMockToken()
+                
+                // Store the mock token
+                tokenKeeper.storeToken(mockToken)
+                
+                withContext(Dispatchers.Main) {
+                    state.value = state.value.copy(
+                        isConnected = true,
+                        isLoading = false,
+                        athleteName = mockToken.athleteFullName,
+                        error = null
+                    )
+                }
+            }
+        } else {
+            // Launch real OAuth activity
+            val intent = Intent(context, StravaAuthActivity::class.java)
+            authLauncher?.launch(intent) ?: run {
+                Log.e(TAG, "Auth launcher not set")
+                state.value = state.value.copy(
+                    isLoading = false,
+                    error = "Authentication launcher not configured"
+                )
+            }
         }
     }
     
@@ -178,7 +204,12 @@ class StravaInteractor(
     
     private suspend fun exchangeCodeForToken(code: String): String {
         return withContext(Dispatchers.IO) {
-            val clientSecret = SecretKeyFactory.STRAVA.getClearString()
+            // In debug mode with mock services, bypass the need for client secret
+            val clientSecret = if (BuildConfig.DEBUG && BuildConfig.USE_MOCK_SERVICES) {
+                "mock_client_secret"
+            } else {
+                SecretKeyFactory.STRAVA.getClearString()
+            }
             
             val formBody = FormBody.Builder()
                 .add("client_id", "4002")
@@ -200,6 +231,23 @@ class StravaInteractor(
             
             response.body?.string() ?: throw IOException("Empty response body")
         }
+    }
+    
+    private fun createMockToken(): StravaToken {
+        // Create a non-expiring mock token for debug mode
+        val currentTime = System.currentTimeMillis() / 1000
+        val nonExpiringTime = currentTime + (365 * 24 * 60 * 60) // 1 year from now
+        
+        return StravaToken(
+            accessToken = "mock_access_token_debug",
+            refreshToken = "mock_refresh_token_debug",
+            expiresAt = nonExpiringTime,
+            athleteId = 12345,
+            athleteFullName = "Test Runner",
+            athleteFirstName = "Test",
+            athleteLastName = "Runner",
+            athleteProfileImageUrl = null
+        )
     }
     
     private fun checkConnectionStatus(state: MutableState<StravaState>) {
