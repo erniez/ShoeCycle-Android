@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.MutableState
 import com.shoecycle.BuildConfig
+import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.strava.SecretKeyFactory
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.data.strava.models.StravaToken
@@ -45,6 +46,7 @@ data class StravaState(
 // Interactor
 class StravaInteractor(
     private val tokenKeeper: StravaTokenKeeper,
+    private val userSettingsRepository: UserSettingsRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     companion object {
@@ -117,6 +119,9 @@ class StravaInteractor(
                 // Store the mock token
                 tokenKeeper.storeToken(mockToken)
                 
+                // Update UserSettings to enable Strava
+                userSettingsRepository.updateStravaEnabled(true)
+                
                 withContext(Dispatchers.Main) {
                     state.value = state.value.copy(
                         isConnected = true,
@@ -145,6 +150,10 @@ class StravaInteractor(
         scope.launch {
             try {
                 tokenKeeper.clearToken()
+                
+                // Update UserSettings to disable Strava
+                userSettingsRepository.updateStravaEnabled(false)
+                
                 withContext(Dispatchers.Main) {
                     state.value = state.value.copy(
                         isConnected = false,
@@ -179,6 +188,9 @@ class StravaInteractor(
                 
                 // Save token using StravaTokenKeeper
                 tokenKeeper.storeToken(token)
+                
+                // Update UserSettings to enable Strava
+                userSettingsRepository.updateStravaEnabled(true)
                 
                 val athleteName = token.athleteFullName ?: "Connected Athlete"
                 
@@ -256,6 +268,9 @@ class StravaInteractor(
             try {
                 val token = tokenKeeper.getStoredToken()
                 val isConnected = token != null && !token.isExpired
+                
+                // Don't modify stravaEnabled here - only check the connection status
+                // The flag should only be modified by explicit user action
                 
                 withContext(Dispatchers.Main) {
                     state.value = state.value.copy(

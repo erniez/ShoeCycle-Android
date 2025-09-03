@@ -15,15 +15,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.ui.auth.StravaAuthActivity
 
 @Composable
 fun SettingsStravaView(
-    tokenKeeper: StravaTokenKeeper
+    tokenKeeper: StravaTokenKeeper,
+    userSettingsRepository: UserSettingsRepository
 ) {
     val state = remember { mutableStateOf(StravaState()) }
-    val interactor = remember { StravaInteractor(tokenKeeper) }
+    val interactor = remember { StravaInteractor(tokenKeeper, userSettingsRepository) }
     val context = LocalContext.current
     
     // Set up activity result launcher for OAuth

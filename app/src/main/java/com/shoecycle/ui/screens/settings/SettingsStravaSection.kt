@@ -13,7 +13,6 @@ import com.shoecycle.ui.settings.SettingsStravaView
 
 @Composable
 fun SettingsStravaSection(
-    @Suppress("UNUSED_PARAMETER")
     repository: UserSettingsRepository
 ) {
     val context = LocalContext.current
@@ -21,6 +20,7 @@ fun SettingsStravaSection(
     
     // Use the new SettingsStravaView which handles OAuth flow
     SettingsStravaView(
-        tokenKeeper = tokenKeeper
+        tokenKeeper = tokenKeeper,
+        userSettingsRepository = repository
     )
 }
