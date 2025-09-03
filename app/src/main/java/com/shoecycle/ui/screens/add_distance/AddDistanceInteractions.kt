@@ -1,10 +1,13 @@
 package com.shoecycle.ui.screens.add_distance
 
 import androidx.compose.runtime.MutableState
+import android.util.Log
 import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
+import com.shoecycle.data.strava.StravaService
+import com.shoecycle.data.strava.models.StravaActivity
 import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
@@ -25,14 +28,24 @@ data class AddDistanceState(
     val showHistoryModal: Boolean = false,
     val showFavoritesModal: Boolean = false,
     val lastAddedRunId: Long? = null,
-    val distanceUnit: DistanceUnit = DistanceUnit.MILES
+    val distanceUnit: DistanceUnit = DistanceUnit.MILES,
+    val stravaUploadState: StravaUploadState = StravaUploadState.Idle,
+    val stravaUploadError: String? = null
 )
+
+enum class StravaUploadState {
+    Idle,
+    Uploading,
+    Success,
+    Failed
+}
 
 class AddDistanceInteractor(
     private val shoeRepository: IShoeRepository,
     private val historyRepository: IHistoryRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val selectedShoeStrategy: SelectedShoeStrategy,
+    private val stravaService: StravaService? = null,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -49,6 +62,8 @@ class AddDistanceInteractor(
         object HideFavoritesModal : Action()
         data class FavoriteDistanceSelected(val distance: Double) : Action()
         object BounceRequested : Action()
+        data class UploadToStrava(val distance: Double, val date: Date, val shoeName: String) : Action()
+        object ClearStravaUploadState : Action()
     }
 
     fun handle(state: MutableState<AddDistanceState>, action: Action) {
@@ -121,6 +136,17 @@ class AddDistanceInteractor(
             
             is Action.BounceRequested -> {
                 // This will be handled by the UI layer for animation
+            }
+            
+            is Action.UploadToStrava -> {
+                uploadToStrava(state, action.distance, action.date, action.shoeName)
+            }
+            
+            is Action.ClearStravaUploadState -> {
+                state.value = state.value.copy(
+                    stravaUploadState = StravaUploadState.Idle,
+                    stravaUploadError = null
+                )
             }
         }
     }
@@ -215,6 +241,68 @@ class AddDistanceInteractor(
                 loadActiveShoes(state)
             } catch (e: Exception) {
                 state.value = state.value.copy(isAddingRun = false)
+            }
+        }
+    }
+    
+    private fun uploadToStrava(
+        state: MutableState<AddDistanceState>, 
+        distanceInMiles: Double, 
+        date: Date,
+        shoeName: String
+    ) {
+        if (stravaService == null) return
+        
+        state.value = state.value.copy(
+            stravaUploadState = StravaUploadState.Uploading,
+            stravaUploadError = null
+        )
+        
+        scope.launch {
+            try {
+                // Convert miles to meters for Strava API
+                val distanceInMeters = distanceInMiles * 1609.344
+                
+                // Create activity with shoe name as the activity name
+                val activity = StravaActivity.create(
+                    name = "ShoeCycle Run - $shoeName",
+                    distanceInMeters = distanceInMeters,
+                    startDate = date
+                )
+                
+                // Upload to Strava
+                stravaService.sendActivity(activity)
+                
+                Log.d("AddDistanceInteractor", "Successfully uploaded to Strava: $distanceInMeters meters")
+                
+                state.value = state.value.copy(
+                    stravaUploadState = StravaUploadState.Success
+                )
+                
+                // Brief delay to give UI time to react to the state change
+                kotlinx.coroutines.delay(100)
+                state.value = state.value.copy(
+                    stravaUploadState = StravaUploadState.Idle
+                )
+                
+            } catch (e: StravaService.DomainError.Unauthorized) {
+                Log.e("AddDistanceInteractor", "Strava upload failed: Unauthorized")
+                state.value = state.value.copy(
+                    stravaUploadState = StravaUploadState.Failed,
+                    stravaUploadError = "Strava authentication expired. Please reconnect in Settings."
+                )
+            } catch (e: StravaService.DomainError.Reachability) {
+                Log.e("AddDistanceInteractor", "Strava upload failed: Network error")
+                state.value = state.value.copy(
+                    stravaUploadState = StravaUploadState.Failed,
+                    stravaUploadError = "Network error. Please check your connection."
+                )
+            } catch (e: Exception) {
+                Log.e("AddDistanceInteractor", "Strava upload failed", e)
+                state.value = state.value.copy(
+                    stravaUploadState = StravaUploadState.Failed,
+                    stravaUploadError = "Failed to upload to Strava: ${e.message}"
+                )
             }
         }
     }

@@ -11,12 +11,12 @@ object StravaServiceFactory {
     
     /**
      * Creates the appropriate StravaService based on build configuration.
-     * In debug builds, returns a mock service with configurable behavior.
-     * In release builds, returns the real Strava API service.
+     * In debug builds with USE_MOCK_SERVICES enabled, returns a mock service.
+     * Otherwise returns the real Strava API service.
      */
     fun create(tokenKeeper: StravaTokenKeeper): StravaService {
-        return if (BuildConfig.DEBUG) {
-            // Use mock service in debug builds
+        return if (BuildConfig.DEBUG && BuildConfig.USE_MOCK_SERVICES) {
+            // Use mock service only when explicitly enabled
             MockStravaServiceImpl(
                 config = MockStravaServiceImpl.MockConfig(
                     networkDelayMs = 1500,
@@ -25,7 +25,7 @@ object StravaServiceFactory {
                 )
             )
         } else {
-            // Use real service in release builds
+            // Use real service in release builds or when mocks are disabled
             StravaServiceImpl(tokenKeeper)
         }
     }

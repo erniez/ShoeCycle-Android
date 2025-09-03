@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import android.widget.Toast
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +40,10 @@ import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDistanceProgres
 import com.shoecycle.ui.screens.add_distance.components.ShoeCycleDateProgressView
 import com.shoecycle.ui.screens.add_distance.components.DateProgressViewModel
 import com.shoecycle.domain.ServiceLocator
-import com.shoecycle.ui.screens.add_distance.services.MockStravaService
+import com.shoecycle.data.strava.StravaServiceFactory
+import com.shoecycle.data.strava.StravaTokenKeeper
+import com.shoecycle.data.strava.StravaService
+import com.shoecycle.data.strava.models.StravaActivity
 import com.shoecycle.ui.screens.add_distance.components.chart.RunHistoryChartView
 import com.shoecycle.ui.screens.add_distance.utils.HistoryCollation
 import com.shoecycle.ui.screens.add_distance.modals.HistoryListView
@@ -73,7 +77,8 @@ fun AddDistanceScreen() {
     }
     
     // Services - Health Connect is handled by DateDistanceEntryInteractor
-    val mockStravaService = remember { MockStravaService() }
+    val tokenKeeper = remember { StravaTokenKeeper(context) }
+    val stravaService = remember { StravaServiceFactory.create(tokenKeeper) }
     
     // Progress view model
     val progressViewModel = remember { DateProgressViewModel(context, scope) }
@@ -85,7 +90,8 @@ fun AddDistanceScreen() {
             shoeRepository = shoeRepository,
             historyRepository = historyRepository,
             userSettingsRepository = userSettingsRepository,
-            selectedShoeStrategy = selectedShoeStrategy
+            selectedShoeStrategy = selectedShoeStrategy,
+            stravaService = stravaService
         )
     }
     
@@ -100,6 +106,20 @@ fun AddDistanceScreen() {
     )
     val healthConnectEnabled = userSettings.healthConnectEnabled
     val stravaEnabled = userSettings.stravaEnabled
+    
+    // Show toast for Strava upload status
+    LaunchedEffect(state.value.stravaUploadState, state.value.stravaUploadError) {
+        when (state.value.stravaUploadState) {
+            StravaUploadState.Success -> {
+                Toast.makeText(context, "Activity uploaded to Strava!", Toast.LENGTH_SHORT).show()
+            }
+            StravaUploadState.Failed -> {
+                val errorMsg = state.value.stravaUploadError ?: "Failed to upload to Strava"
+                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+            }
+            else -> { /* No toast for Idle or Uploading states */ }
+        }
+    }
     
     Column(
         modifier = Modifier
@@ -139,17 +159,17 @@ fun AddDistanceScreen() {
                 scope.launch {
                     interactor.handle(state, AddDistanceInteractor.Action.AddRunClicked)
 
-                    // Strava sync still using mock service for now
-                    if (stravaEnabled) {
+                    // Upload to Strava if enabled
+                    if (stravaEnabled && state.value.selectedShoe != null) {
                         val distanceInMiles = DistanceUtility.distance(
                             state.value.runDistance, 
                             state.value.distanceUnit
                         )
-                        mockStravaService.uploadActivity(
-                            date = state.value.runDate,
+                        interactor.handle(state, AddDistanceInteractor.Action.UploadToStrava(
                             distance = distanceInMiles,
-                            shoeName = state.value.selectedShoe?.displayName,
-                        )
+                            date = state.value.runDate,
+                            shoeName = state.value.selectedShoe!!.displayName
+                        ))
                     }
                 }
             },

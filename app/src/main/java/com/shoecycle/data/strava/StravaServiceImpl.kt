@@ -36,6 +36,7 @@ class StravaServiceImpl(
     private val json = Json {
         ignoreUnknownKeys = true
         prettyPrint = true
+        encodeDefaults = true  // Always include fields with default values
     }
     
     override suspend fun sendActivity(activity: StravaActivity) {
@@ -80,7 +81,7 @@ class StravaServiceImpl(
         } catch (e: StravaService.DomainError) {
             throw e
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error: ${e.message}")
+            Log.e(TAG, "Unexpected error: ${e.message}", e)
             throw StravaService.DomainError.Unknown
         }
     }
