@@ -54,6 +54,10 @@ import com.shoecycle.ui.theme.shoeCycleOrange
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import java.util.Calendar
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import com.shoecycle.domain.FileProviderUtility
+import java.io.File
 
 @Composable
 fun HistoryListView(
@@ -64,6 +68,7 @@ fun HistoryListView(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val state = remember { mutableStateOf(HistoryListState()) }
     val snackbarHostState = remember { SnackbarHostState() }
     val interactor = remember {
@@ -138,10 +143,36 @@ fun HistoryListView(
                 interactor.handle(state, HistoryListInteractor.Action.DismissExport, shoe)
             },
             onExport = {
-                // Mock export implementation
-                interactor.handle(state, HistoryListInteractor.Action.DismissExport, shoe)
+                interactor.handle(state, HistoryListInteractor.Action.ExportToCSV(context), shoe)
             }
         )
+    }
+    
+    // Handle successful export - launch email intent
+    LaunchedEffect(state.value.exportFilePath) {
+        state.value.exportFilePath?.let { filePath ->
+            val csvFile = File(filePath)
+            if (csvFile.exists()) {
+                val fileProviderUtility = FileProviderUtility()
+                val emailIntent = fileProviderUtility.createEmailIntent(
+                    context = context,
+                    csvFile = csvFile,
+                    shoeBrand = shoe.brand.ifEmpty { "Unknown" }
+                )
+                context.startActivity(emailIntent)
+                interactor.handle(state, HistoryListInteractor.Action.DismissExport, shoe)
+            }
+        }
+    }
+    
+    // Handle export error
+    LaunchedEffect(state.value.exportError) {
+        state.value.exportError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = androidx.compose.material3.SnackbarDuration.Long
+            )
+        }
     }
 }
 
@@ -317,7 +348,7 @@ private fun ExportDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Export History") },
-        text = { Text("Export run history data as CSV file? (Mock implementation - not yet functional)") },
+        text = { Text("Export run history data as CSV file and send via email?") },
         confirmButton = {
             TextButton(onClick = onExport) {
                 Text("Export")
