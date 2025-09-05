@@ -64,6 +64,7 @@ class AddDistanceInteractor(
         object BounceRequested : Action()
         data class UploadToStrava(val distance: Double, val date: Date, val shoeName: String) : Action()
         object ClearStravaUploadState : Action()
+        data class UpdateShoeImage(val imageKey: String, val thumbnailData: ByteArray) : Action()
     }
 
     fun handle(state: MutableState<AddDistanceState>, action: Action) {
@@ -147,6 +148,10 @@ class AddDistanceInteractor(
                     stravaUploadState = StravaUploadState.Idle,
                     stravaUploadError = null
                 )
+            }
+            
+            is Action.UpdateShoeImage -> {
+                updateShoeImage(state, action.imageKey, action.thumbnailData)
             }
         }
     }
@@ -303,6 +308,37 @@ class AddDistanceInteractor(
                     stravaUploadState = StravaUploadState.Failed,
                     stravaUploadError = "Failed to upload to Strava: ${e.message}"
                 )
+            }
+        }
+    }
+    
+    private fun updateShoeImage(state: MutableState<AddDistanceState>, imageKey: String, thumbnailData: ByteArray) {
+        val shoe = state.value.selectedShoe ?: return
+        
+        scope.launch {
+            try {
+                // Update the shoe with the new image
+                val updatedShoe = shoe.copy(
+                    imageKey = imageKey,
+                    thumbnailData = thumbnailData
+                )
+                
+                // Save the updated shoe
+                shoeRepository.updateShoe(updatedShoe)
+                
+                // Update the state with the updated shoe
+                val updatedShoes = state.value.activeShoes.map { 
+                    if (it.id == shoe.id) updatedShoe else it 
+                }
+                
+                state.value = state.value.copy(
+                    activeShoes = updatedShoes,
+                    selectedShoe = updatedShoe
+                )
+                
+                Log.d("AddDistanceInteractor", "Shoe image updated successfully")
+            } catch (e: Exception) {
+                Log.e("AddDistanceInteractor", "Failed to update shoe image", e)
             }
         }
     }

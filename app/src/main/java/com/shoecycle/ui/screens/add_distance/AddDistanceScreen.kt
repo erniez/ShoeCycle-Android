@@ -136,6 +136,9 @@ fun AddDistanceScreen() {
             },
             onSwipeDown = {
                 interactor.handle(state, AddDistanceInteractor.Action.SwipeDown)
+            },
+            onImageUpdated = { imageKey, thumbnailData ->
+                interactor.handle(state, AddDistanceInteractor.Action.UpdateShoeImage(imageKey, thumbnailData))
             }
         )
         
@@ -269,6 +272,7 @@ private fun AddDistanceHeader(
     imageRepository: ImageRepository,
     onSwipeUp: () -> Unit,
     onSwipeDown: () -> Unit,
+    onImageUpdated: (String, ByteArray) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -305,6 +309,7 @@ private fun AddDistanceHeader(
                         imageRepository = imageRepository,
                         onSwipeUp = onSwipeUp,
                         onSwipeDown = onSwipeDown,
+                        onImageUpdated = onImageUpdated,
                         imageSize = HEADER_IMAGE_SIZE
                     )
                     
