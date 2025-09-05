@@ -61,6 +61,8 @@ class HistoryListInteractor(
             }
             
             is Action.ShowExport -> {
+                // TODO: Add analytics logging when analytics is implemented
+                // analytics.logEvent("email_shoe_tapped")
                 state.value = state.value.copy(showExportDialog = true)
             }
             
@@ -226,6 +228,9 @@ class HistoryListInteractor(
                 }
                 
                 Log.d("HistoryListInteractor", "CSV file created: ${csvFile.absolutePath}")
+                
+                // TODO: Add analytics logging when analytics is implemented
+                // analytics.logEvent("did_email_shoe")
                 
                 withContext(Dispatchers.Main) {
                     state.value = state.value.copy(

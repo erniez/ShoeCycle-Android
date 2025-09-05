@@ -154,12 +154,41 @@ fun HistoryListView(
             val csvFile = File(filePath)
             if (csvFile.exists()) {
                 val fileProviderUtility = FileProviderUtility()
-                val emailIntent = fileProviderUtility.createEmailIntent(
-                    context = context,
-                    csvFile = csvFile,
-                    shoeBrand = shoe.brand.ifEmpty { "Unknown" }
-                )
-                context.startActivity(emailIntent)
+                
+                // Check if email client is available
+                if (!fileProviderUtility.canSendEmail(context)) {
+                    // Fall back to general share intent
+                    try {
+                        val shareIntent = fileProviderUtility.createShareIntent(context, csvFile)
+                        context.startActivity(shareIntent)
+                    } catch (e: Exception) {
+                        snackbarHostState.showSnackbar(
+                            message = "No app available to share the CSV file",
+                            duration = androidx.compose.material3.SnackbarDuration.Long
+                        )
+                    }
+                } else {
+                    // Use email intent
+                    try {
+                        val emailIntent = fileProviderUtility.createEmailIntent(
+                            context = context,
+                            csvFile = csvFile,
+                            shoeBrand = shoe.brand.ifEmpty { "Unknown" }
+                        )
+                        context.startActivity(emailIntent)
+                    } catch (e: Exception) {
+                        // Fallback to general share if email fails
+                        try {
+                            val shareIntent = fileProviderUtility.createShareIntent(context, csvFile)
+                            context.startActivity(shareIntent)
+                        } catch (shareException: Exception) {
+                            snackbarHostState.showSnackbar(
+                                message = "Failed to share the CSV file",
+                                duration = androidx.compose.material3.SnackbarDuration.Long
+                            )
+                        }
+                    }
+                }
                 interactor.handle(state, HistoryListInteractor.Action.DismissExport, shoe)
             }
         }
