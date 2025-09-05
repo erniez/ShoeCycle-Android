@@ -2,6 +2,9 @@ package com.shoecycle.domain
 
 import android.content.Context
 import com.shoecycle.BuildConfig
+import com.shoecycle.domain.analytics.AnalyticsLogger
+import com.shoecycle.domain.analytics.ConsoleAnalyticsLogger
+import com.shoecycle.domain.analytics.MockAnalyticsLogger
 import com.shoecycle.domain.services.HealthService
 import com.shoecycle.domain.services.MockHealthService
 import com.shoecycle.domain.services.RealHealthConnectService
@@ -62,6 +65,7 @@ object ServiceLocator {
     fun resetServiceMode() {
         currentMode = null
         testHealthService = null
+        testAnalyticsLogger = null
     }
     
     // Test-specific health service override
@@ -73,6 +77,17 @@ object ServiceLocator {
      */
     fun setTestHealthService(service: HealthService) {
         testHealthService = service
+    }
+    
+    // Test-specific analytics logger override
+    private var testAnalyticsLogger: AnalyticsLogger? = null
+    
+    /**
+     * Sets a specific AnalyticsLogger for testing purposes.
+     * This overrides the normal service selection logic.
+     */
+    fun setTestAnalyticsLogger(logger: AnalyticsLogger) {
+        testAnalyticsLogger = logger
     }
     
     /**
@@ -91,6 +106,28 @@ object ServiceLocator {
             ServiceMode.PRODUCTION -> RealHealthConnectService(ctx)
             ServiceMode.MOCK -> MockHealthService()
             ServiceMode.TEST -> TestHealthService()
+        }
+    }
+    
+    /**
+     * Provides the appropriate AnalyticsLogger implementation based on current mode.
+     * @return AnalyticsLogger implementation
+     */
+    fun provideAnalyticsLogger(): AnalyticsLogger {
+        // Return test logger if set (for unit testing)
+        testAnalyticsLogger?.let { return it }
+        
+        return when (mode) {
+            ServiceMode.PRODUCTION -> {
+                if (BuildConfig.USE_MOCK_SERVICES) {
+                    ConsoleAnalyticsLogger()
+                } else {
+                    // TODO: Return FirebaseAnalyticsLogger() when implemented in Phase 3
+                    ConsoleAnalyticsLogger()
+                }
+            }
+            ServiceMode.MOCK -> ConsoleAnalyticsLogger()
+            ServiceMode.TEST -> MockAnalyticsLogger()
         }
     }
     

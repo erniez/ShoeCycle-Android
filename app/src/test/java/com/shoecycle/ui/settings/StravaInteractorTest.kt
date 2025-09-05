@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.data.strava.models.StravaToken
 import com.shoecycle.ui.auth.StravaAuthActivity
@@ -62,6 +63,9 @@ class StravaInteractorTest {
     @Mock
     private lateinit var authLauncher: ActivityResultLauncher<Intent>
     
+    @Mock
+    private lateinit var userSettingsRepository: UserSettingsRepository
+    
     private lateinit var interactor: StravaInteractor
     private val testDispatcher = StandardTestDispatcher()
     
@@ -71,6 +75,7 @@ class StravaInteractorTest {
         Dispatchers.setMain(testDispatcher)
         interactor = StravaInteractor(
             tokenKeeper = tokenKeeper,
+            userSettingsRepository = userSettingsRepository,
             scope = CoroutineScope(testDispatcher)
         )
     }

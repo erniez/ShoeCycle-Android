@@ -17,6 +17,9 @@ class MainActivity : ComponentActivity() {
         // Initialize services
         ServiceLocator.initialize(this)
         
+        // Initialize Analytics
+        ServiceLocator.provideAnalyticsLogger().initialize()
+        
         // Initialize Health Connect to register the app
         HealthConnectInitializer.initialize(this)
         
