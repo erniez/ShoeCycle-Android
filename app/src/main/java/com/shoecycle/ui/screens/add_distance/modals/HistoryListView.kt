@@ -105,8 +105,8 @@ fun HistoryListView(
                     interactor.handle(state, HistoryListInteractor.Action.UndoDelete, shoe)
                 }
                 SnackbarResult.Dismissed -> {
-                    // Actually delete the item
-                    interactor.performActualDelete(state, shoe)
+                    // Just dismiss the snackbar, deletion already happened
+                    interactor.handle(state, HistoryListInteractor.Action.DismissSnackbar, shoe)
                 }
             }
         }

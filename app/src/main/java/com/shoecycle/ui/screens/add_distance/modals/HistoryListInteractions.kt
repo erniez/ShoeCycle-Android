@@ -146,43 +146,13 @@ class HistoryListInteractor(
         
         val historyToDelete = section.histories[index]
         
-        // Store the deleted item and show snackbar
+        // Store the deleted item for potential undo
         state.value = state.value.copy(
             deletedHistory = historyToDelete,
             showUndoSnackbar = true
         )
         
-        // Remove from UI immediately
-        val updatedSections = state.value.sections.map { s ->
-            if (s == section) {
-                s.copy(
-                    histories = s.histories.filterIndexed { i, _ -> i != index },
-                    historyViewModels = s.historyViewModels.filterIndexed { i, _ -> i != index }
-                )
-            } else {
-                s
-            }
-        }
-        
-        state.value = state.value.copy(sections = updatedSections)
-        
-        // Actually delete after snackbar timeout (handled by dismissal)
-    }
-    
-    private fun undoDelete(state: MutableState<HistoryListState>, shoe: Shoe) {
-        state.value.deletedHistory?.let {
-            // Reload data to restore the item
-            loadHistoryData(state, shoe)
-        }
-        state.value = state.value.copy(
-            deletedHistory = null,
-            showUndoSnackbar = false
-        )
-    }
-    
-    fun performActualDelete(state: MutableState<HistoryListState>, shoe: Shoe) {
-        val historyToDelete = state.value.deletedHistory ?: return
-        
+        // Delete from database immediately
         scope.launch {
             try {
                 historyRepository.deleteHistory(historyToDelete)
@@ -193,7 +163,49 @@ class HistoryListInteractor(
                 val updatedShoe = shoe.copy(totalDistance = totalDistance)
                 shoeRepository.updateShoe(updatedShoe)
                 
-                // Reload data to reflect changes
+                Log.d("HistoryListInteractor", "Successfully deleted history item: ${historyToDelete.id}")
+                
+                // Reload the UI to reflect the deletion
+                withContext(Dispatchers.Main) {
+                    loadHistoryData(state, updatedShoe)
+                }
+            } catch (e: Exception) {
+                Log.e("HistoryListInteractor", "Error removing history", e)
+                // Reset state on error
+                withContext(Dispatchers.Main) {
+                    state.value = state.value.copy(
+                        deletedHistory = null,
+                        showUndoSnackbar = false
+                    )
+                }
+            }
+        }
+    }
+    
+    private fun undoDelete(state: MutableState<HistoryListState>, shoe: Shoe) {
+        val historyToRestore = state.value.deletedHistory
+        if (historyToRestore == null) {
+            state.value = state.value.copy(
+                deletedHistory = null,
+                showUndoSnackbar = false
+            )
+            return
+        }
+        
+        // Re-insert the deleted history item
+        scope.launch {
+            try {
+                historyRepository.insertHistory(historyToRestore)
+                
+                // Update shoe's total distance
+                val updatedHistories = historyRepository.getHistoryForShoe(shoe.id).firstOrNull() ?: emptyList()
+                val totalDistance = updatedHistories.sumOf { it.runDistance }
+                val updatedShoe = shoe.copy(totalDistance = totalDistance)
+                shoeRepository.updateShoe(updatedShoe)
+                
+                Log.d("HistoryListInteractor", "Successfully restored history item: ${historyToRestore.id}")
+                
+                // Reload the UI to show the restored item
                 withContext(Dispatchers.Main) {
                     loadHistoryData(state, updatedShoe)
                     state.value = state.value.copy(
@@ -202,10 +214,17 @@ class HistoryListInteractor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e("HistoryListInteractor", "Error removing history", e)
+                Log.e("HistoryListInteractor", "Error restoring history", e)
+                withContext(Dispatchers.Main) {
+                    state.value = state.value.copy(
+                        deletedHistory = null,
+                        showUndoSnackbar = false
+                    )
+                }
             }
         }
     }
+    
     
     private fun exportToCSV(state: MutableState<HistoryListState>, context: Context, shoe: Shoe) {
         scope.launch {
