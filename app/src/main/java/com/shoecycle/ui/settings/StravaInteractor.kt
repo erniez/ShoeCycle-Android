@@ -11,6 +11,9 @@ import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.strava.SecretKeyFactory
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.data.strava.models.StravaToken
+import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.ui.auth.StravaAuthActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +50,7 @@ data class StravaState(
 class StravaInteractor(
     private val tokenKeeper: StravaTokenKeeper,
     private val userSettingsRepository: UserSettingsRepository,
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     companion object {

@@ -4,6 +4,9 @@ import androidx.compose.runtime.MutableState
 import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.domain.DistanceUtility
+import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -20,6 +23,7 @@ data class FavoriteDistancesState(
 
 class FavoriteDistancesInteractor(
     private val userSettingsRepository: UserSettingsRepository,
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -36,6 +40,12 @@ class FavoriteDistancesInteractor(
             
             is Action.DistanceSelected -> {
                 state.value = state.value.copy(distanceToAdd = action.distance)
+                
+                // Log favorite distance used
+                analytics.logEvent(AnalyticsKeys.Event.SHOW_FAVORITE_DISTANCES, mapOf(
+                    "distance" to action.distance,
+                    "unit" to state.value.distanceUnit.name
+                ))
             }
             
             is Action.CancelPressed -> {

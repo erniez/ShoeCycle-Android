@@ -10,6 +10,9 @@ import com.shoecycle.data.strava.StravaService
 import com.shoecycle.data.strava.models.StravaActivity
 import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.SelectedShoeStrategy
+import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +49,7 @@ class AddDistanceInteractor(
     private val userSettingsRepository: UserSettingsRepository,
     private val selectedShoeStrategy: SelectedShoeStrategy,
     private val stravaService: StravaService? = null,
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -236,6 +240,13 @@ class AddDistanceInteractor(
                 
                 shoeRepository.recalculateShoeTotal(shoe.id)
                 
+                // Log distance added event
+                analytics.logEvent(AnalyticsKeys.Event.LOG_MILEAGE, mapOf(
+                    AnalyticsKeys.Param.MILEAGE to distanceInMiles,
+                    AnalyticsKeys.Param.DISTANCE_UNIT to state.value.distanceUnit.name,
+                    AnalyticsKeys.Param.TOTAL_MILEAGE to (shoe.totalDistance + distanceInMiles)
+                ))
+                
                 state.value = state.value.copy(
                     isAddingRun = false,
                     runDistance = "",
@@ -279,6 +290,11 @@ class AddDistanceInteractor(
                 stravaService.sendActivity(activity)
                 
                 Log.d("AddDistanceInteractor", "Successfully uploaded to Strava: $distanceInMeters meters")
+                
+                // Log Strava mileage event (equivalent to iOS stravaEvent)
+                analytics.logEvent(AnalyticsKeys.Event.STRAVA_EVENT, mapOf(
+                    AnalyticsKeys.Param.MILEAGE to distanceInMiles
+                ))
                 
                 state.value = state.value.copy(
                     stravaUploadState = StravaUploadState.Success

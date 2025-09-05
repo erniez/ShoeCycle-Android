@@ -6,6 +6,8 @@ import androidx.compose.runtime.MutableState
 import androidx.health.connect.client.HealthConnectClient
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -29,6 +31,7 @@ data class SettingsHealthConnectState(
 class SettingsHealthConnectInteractor(
     private val context: Context,
     private val repository: UserSettingsRepository,
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     companion object {

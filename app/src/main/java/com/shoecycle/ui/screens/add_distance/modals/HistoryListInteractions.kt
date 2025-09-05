@@ -7,6 +7,9 @@ import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.CSVUtility
 import com.shoecycle.domain.HistoryCalculations
+import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +40,7 @@ class HistoryListInteractor(
     private val historyRepository: IHistoryRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val historyCalculations: HistoryCalculations = HistoryCalculations(userSettingsRepository),
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -54,6 +58,9 @@ class HistoryListInteractor(
         when (action) {
             is Action.ViewAppeared -> {
                 loadHistoryData(state, shoe)
+                
+                // Log history view event
+                analytics.logEvent(AnalyticsKeys.Event.SHOW_HISTORY)
             }
             
             is Action.RemoveHistory -> {
@@ -61,8 +68,7 @@ class HistoryListInteractor(
             }
             
             is Action.ShowExport -> {
-                // TODO: Add analytics logging when analytics is implemented
-                // analytics.logEvent("email_shoe_tapped")
+                analytics.logEvent(AnalyticsKeys.Event.EMAIL_SHOE_TAPPED)
                 state.value = state.value.copy(showExportDialog = true)
             }
             
@@ -248,8 +254,8 @@ class HistoryListInteractor(
                 
                 Log.d("HistoryListInteractor", "CSV file created: ${csvFile.absolutePath}")
                 
-                // TODO: Add analytics logging when analytics is implemented
-                // analytics.logEvent("did_email_shoe")
+                // Log successful email export
+                analytics.logEvent(AnalyticsKeys.Event.DID_EMAIL_SHOE)
                 
                 withContext(Dispatchers.Main) {
                     state.value = state.value.copy(

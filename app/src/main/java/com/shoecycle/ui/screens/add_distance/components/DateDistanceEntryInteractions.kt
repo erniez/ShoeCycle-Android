@@ -3,8 +3,11 @@ package com.shoecycle.ui.screens.add_distance.components
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.services.HealthService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +37,7 @@ data class DateDistanceEntryState(
 class DateDistanceEntryInteractor(
     private val context: Context,
     private val healthService: HealthService = ServiceLocator.provideHealthService(context),
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
     private val currentShoeId: (() -> String?)? = null
 ) {
@@ -196,6 +200,12 @@ class DateDistanceEntryInteractor(
                 state.value = state.value.copy(
                     healthConnectSyncStatus = if (result.isSuccess) {
                         Log.d(TAG, "Successfully synced to Health Connect: ${result.getOrNull()?.workoutId}")
+                        
+                        // Log Health Connect distance sync event (equivalent to iOS healthKitEvent)
+                        analytics.logEvent(AnalyticsKeys.Event.HEALTH_CONNECT_EVENT, mapOf(
+                            AnalyticsKeys.Param.MILEAGE to distance
+                        ))
+                        
                         DateDistanceEntryState.SyncStatus.Success
                     } else {
                         Log.e(TAG, "Failed to sync to Health Connect", result.exceptionOrNull())
