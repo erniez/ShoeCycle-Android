@@ -342,6 +342,11 @@ class AddDistanceInteractor(
                 // Save the updated shoe
                 shoeRepository.updateShoe(updatedShoe)
                 
+                // Log SHOE_PICTURE_ADDED event
+                analytics.logEvent(AnalyticsKeys.Event.SHOE_PICTURE_ADDED, mapOf(
+                    AnalyticsKeys.Param.SHOE_BRAND to updatedShoe.brand
+                ))
+                
                 // Update the state with the updated shoe
                 val updatedShoes = state.value.activeShoes.map { 
                     if (it.id == shoe.id) updatedShoe else it 

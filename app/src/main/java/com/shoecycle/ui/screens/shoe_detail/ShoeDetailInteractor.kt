@@ -8,6 +8,9 @@ import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
+import com.shoecycle.domain.ServiceLocator
+import com.shoecycle.domain.analytics.AnalyticsKeys
+import com.shoecycle.domain.analytics.AnalyticsLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +33,7 @@ class ShoeDetailInteractor(
     private val shoeRepository: IShoeRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val selectedShoeStrategy: SelectedShoeStrategy,
+    private val analytics: AnalyticsLogger = ServiceLocator.provideAnalyticsLogger(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -148,6 +152,12 @@ class ShoeDetailInteractor(
                             val insertedId = shoeRepository.insertShoe(editedShoe)
                             Log.d("ShoeDetailInteractor", "Successfully created shoe with ID: $insertedId")
                             
+                            // Log ADD_SHOE event
+                            analytics.logEvent(AnalyticsKeys.Event.ADD_SHOE, mapOf(
+                                AnalyticsKeys.Param.SHOE_BRAND to editedShoe.brand,
+                                AnalyticsKeys.Param.START_MILEAGE to editedShoe.startDistance
+                            ))
+                            
                             // Call the saved callback if provided
                             state.value.onShoeSaved?.invoke()
                             
@@ -164,6 +174,11 @@ class ShoeDetailInteractor(
                             
                             // Get the updated shoe with recalculated total
                             val updatedShoe = shoeRepository.getShoeByIdOnce(editedShoe.id)
+                            
+                            // Log DID_EDIT_SHOE event
+                            analytics.logEvent(AnalyticsKeys.Event.DID_EDIT_SHOE, mapOf(
+                                AnalyticsKeys.Param.SHOE_BRAND to updatedShoe.brand
+                            ))
                             
                             state.value = state.value.copy(
                                 shoe = updatedShoe,
@@ -272,6 +287,12 @@ class ShoeDetailInteractor(
                     imageKey = action.imageKey,
                     thumbnailData = action.thumbnailData
                 )
+                
+                // Log SHOE_PICTURE_ADDED event
+                analytics.logEvent(AnalyticsKeys.Event.SHOE_PICTURE_ADDED, mapOf(
+                    AnalyticsKeys.Param.SHOE_BRAND to updatedShoe.brand
+                ))
+                
                 state.value = state.value.copy(
                     editedShoe = updatedShoe,
                     hasUnsavedChanges = updatedShoe != state.value.shoe
@@ -292,6 +313,16 @@ class ShoeDetailInteractor(
                         
                         // Update selected shoe strategy in case this affects the selected shoe
                         selectedShoeStrategy.updateSelectedShoe()
+                        
+                        // Log ADD_TO_HOF or REMOVE_FROM_HOF event
+                        val eventName = if (action.isInHallOfFame) {
+                            AnalyticsKeys.Event.ADD_TO_HOF
+                        } else {
+                            AnalyticsKeys.Event.REMOVE_FROM_HOF
+                        }
+                        analytics.logEvent(eventName, mapOf(
+                            AnalyticsKeys.Param.SHOE_BRAND to updatedShoe.brand
+                        ))
                         
                         // Update the original shoe reference to reflect the change
                         state.value = state.value.copy(
@@ -328,6 +359,13 @@ class ShoeDetailInteractor(
             try {
                 shoeRepository.getShoeById(shoeId).collect { shoe ->
                     if (shoe != null) {
+                        // Log VIEW_SHOE_DETAIL event only on first load
+                        if (state.value.shoe == null) {
+                            analytics.logEvent(AnalyticsKeys.Event.VIEW_SHOE_DETAIL, mapOf(
+                                AnalyticsKeys.Param.SHOE_BRAND to shoe.brand
+                            ))
+                        }
+                        
                         state.value = state.value.copy(
                             shoe = shoe,
                             editedShoe = shoe,
