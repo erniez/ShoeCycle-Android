@@ -33,5 +33,7 @@ object AnalyticsKeys {
         const val TOTAL_MILEAGE = "total_mileage"
         const val NUMBER_OF_FAVORITES = "number_of_favorites"
         const val DISTANCE_UNIT = "distance_unit"
+        const val SHOE_BRAND = "shoe_brand"
+        const val START_MILEAGE = "start_mileage"
     }
 }

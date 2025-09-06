@@ -176,9 +176,11 @@ class ShoeDetailInteractor(
                             val updatedShoe = shoeRepository.getShoeByIdOnce(editedShoe.id)
                             
                             // Log DID_EDIT_SHOE event
-                            analytics.logEvent(AnalyticsKeys.Event.DID_EDIT_SHOE, mapOf(
-                                AnalyticsKeys.Param.SHOE_BRAND to updatedShoe.brand
-                            ))
+                            updatedShoe?.let {
+                                analytics.logEvent(AnalyticsKeys.Event.DID_EDIT_SHOE, mapOf(
+                                    AnalyticsKeys.Param.SHOE_BRAND to it.brand
+                                ))
+                            }
                             
                             state.value = state.value.copy(
                                 shoe = updatedShoe,
