@@ -4,6 +4,7 @@ import android.content.Context
 import com.shoecycle.BuildConfig
 import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.analytics.ConsoleAnalyticsLogger
+import com.shoecycle.domain.analytics.FirebaseAnalyticsLogger
 import com.shoecycle.domain.analytics.MockAnalyticsLogger
 import com.shoecycle.domain.services.HealthService
 import com.shoecycle.domain.services.MockHealthService
@@ -120,10 +121,13 @@ object ServiceLocator {
         return when (mode) {
             ServiceMode.PRODUCTION -> {
                 if (BuildConfig.USE_MOCK_SERVICES) {
+                    // Use console logger when mocks are enabled
                     ConsoleAnalyticsLogger()
                 } else {
-                    // TODO: Return FirebaseAnalyticsLogger() when implemented in Phase 3
-                    ConsoleAnalyticsLogger()
+                    // Use Firebase when mocks are disabled (both debug and release)
+                    val ctx = applicationContext
+                        ?: throw IllegalStateException("ServiceLocator not initialized. Call initialize() first.")
+                    FirebaseAnalyticsLogger(ctx)
                 }
             }
             ServiceMode.MOCK -> ConsoleAnalyticsLogger()
