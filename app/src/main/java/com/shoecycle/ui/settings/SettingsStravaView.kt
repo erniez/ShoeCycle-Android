@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -12,12 +13,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.ui.auth.StravaAuthActivity
+import com.shoecycle.ui.theme.shoeCycleOrange
 
 @Composable
 fun SettingsStravaView(
@@ -70,7 +76,10 @@ fun SettingsStravaView(
     }
     
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(shoeCycleOrange)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -78,44 +87,21 @@ fun SettingsStravaView(
                 .padding(16.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(45.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Strava",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    if (state.value.isConnected) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Connected",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = state.value.athleteName ?: "Connected",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Not connected",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.ic_strava_name_logo),
+                    contentDescription = "Strava",
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentScale = ContentScale.FillHeight,
+                    alignment = Alignment.CenterStart
+                )
                 
                 if (state.value.isLoading) {
                     CircularProgressIndicator(

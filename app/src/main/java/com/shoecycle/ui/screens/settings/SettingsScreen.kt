@@ -84,20 +84,11 @@ fun AboutSection() {
     var showAboutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     
-    Card(
+    Button(
+        onClick = { showAboutDialog = true },
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Button(
-                onClick = { showAboutDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("About")
-            }
-        }
+        Text("About")
     }
     
     if (showAboutDialog) {

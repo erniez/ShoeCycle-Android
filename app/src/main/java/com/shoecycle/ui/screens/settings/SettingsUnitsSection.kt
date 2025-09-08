@@ -1,12 +1,17 @@
 package com.shoecycle.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.ui.theme.shoeCycleOrange
 
 @Composable
 fun SettingsUnitsSection(
@@ -21,16 +26,30 @@ fun SettingsUnitsSection(
     }
     
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(shoeCycleOrange)
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = "Units",
-                style = MaterialTheme.typography.titleMedium,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 8.dp)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null,
+                    tint = shoeCycleOrange,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Units",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
             
             Row(
                 modifier = Modifier.fillMaxWidth(),

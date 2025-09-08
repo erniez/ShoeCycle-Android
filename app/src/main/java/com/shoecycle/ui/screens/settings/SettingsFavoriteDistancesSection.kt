@@ -3,14 +3,19 @@ package com.shoecycle.ui.screens.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.ui.theme.shoeCycleGreen
 import java.text.DecimalFormat
 
 @Composable
@@ -25,16 +30,30 @@ fun SettingsFavoriteDistancesSection(
         interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.ViewAppeared)
     }
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(shoeCycleGreen)
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = "Favorite Distances",
-                style = MaterialTheme.typography.titleMedium,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 8.dp)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FavoriteBorder,
+                    contentDescription = null,
+                    tint = shoeCycleGreen,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Favorite Distances",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
             
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -1,12 +1,17 @@
 package com.shoecycle.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import com.shoecycle.data.FirstDayOfWeek
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.ui.theme.shoeCycleBlue
 
 @Composable
 fun SettingsFirstDaySection(
@@ -21,16 +26,30 @@ fun SettingsFirstDaySection(
     }
     
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(shoeCycleBlue)
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = "First Day of Week",
-                style = MaterialTheme.typography.titleMedium,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 8.dp)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = null,
+                    tint = shoeCycleBlue,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "First Day of Week",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
