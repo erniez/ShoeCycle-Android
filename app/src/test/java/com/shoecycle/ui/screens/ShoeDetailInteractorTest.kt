@@ -22,6 +22,8 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.robolectric.RobolectricTestRunner
 import java.util.Date
+import com.shoecycle.domain.analytics.AnalyticsLogger
+import kotlinx.coroutines.test.TestScope
 
 @RunWith(RobolectricTestRunner::class)
 class ShoeDetailInteractorTest {
@@ -29,6 +31,7 @@ class ShoeDetailInteractorTest {
     private val mockShoeRepository = mock<IShoeRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
     private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
+    private val mockAnalyticsLogger = mock<AnalyticsLogger>()
 
     private val testShoe = Shoe(
         id = "test-shoe-1",
@@ -67,6 +70,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -95,6 +99,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -120,6 +125,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -144,6 +150,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -173,6 +180,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val state = mutableStateOf(ShoeDetailState())
@@ -200,6 +208,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val state = mutableStateOf(ShoeDetailState(shoe = testShoe))
@@ -223,6 +232,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -249,6 +259,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(editedShoe = null)
@@ -270,6 +281,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -296,6 +308,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -322,6 +335,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -348,6 +362,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -374,6 +389,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -400,6 +416,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -428,6 +445,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val mockCallback = mock<() -> Unit>()
@@ -459,6 +477,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val invalidShoe = testShoe.copy(brand = "")
@@ -485,6 +504,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -520,6 +540,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val validShoe = testShoe.copy(brand = "Valid Brand")
@@ -547,6 +568,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -576,6 +598,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -609,6 +632,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -635,6 +659,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -662,6 +687,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val editedShoe = testShoe.copy(brand = "Updated Brand")
@@ -692,6 +718,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -717,6 +744,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -742,6 +770,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -770,6 +799,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -798,6 +828,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -828,6 +859,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -856,6 +888,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -891,6 +924,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -925,6 +959,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -955,6 +990,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
@@ -989,6 +1025,7 @@ class ShoeDetailInteractorTest {
             mockShoeRepository,
             mockUserSettingsRepository,
             mockSelectedShoeStrategy,
+            mockAnalyticsLogger,
             this
         )
         val initialState = ShoeDetailState(
