@@ -74,7 +74,7 @@ fun DateDistanceEntryView(
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val dateFormatter = remember { SimpleDateFormat("MM/dd/yy", Locale.getDefault()) }
+    val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     
     // Local state for the child component
     val state = remember { mutableStateOf(DateDistanceEntryState()) }
@@ -124,7 +124,7 @@ fun DateDistanceEntryView(
             ) {
                 // Date column
                 Column(
-                    modifier = Modifier.wrapContentWidth()
+                    modifier = Modifier.width(IntrinsicSize.Max)
                 ) {
 
                     Text(
@@ -135,8 +135,7 @@ fun DateDistanceEntryView(
                     Spacer(modifier = Modifier.height(LABEL_BOTTOM_SPACING))
                     Surface(
                         modifier = Modifier
-                            .wrapContentWidth()
-                            .widthIn(min = 80.dp)
+                            .fillMaxWidth()
                             .height(INPUT_FIELD_HEIGHT)
                             .clickable {
                                 interactor.handle(
@@ -166,6 +165,7 @@ fun DateDistanceEntryView(
                     Spacer(modifier = Modifier.height(BUTTON_TOP_PADDING))
                     Button(
                         onClick = onShowHistory,
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = shoeCycleTertiaryBackground
                         ),
@@ -185,7 +185,7 @@ fun DateDistanceEntryView(
                 
                 // Distance column
                 Column(
-                    modifier = Modifier.width(DISTANCE_COLUMN_WIDTH)
+                    modifier = Modifier.width(IntrinsicSize.Max)
                 ) {
 
                     Text(
@@ -237,6 +237,7 @@ fun DateDistanceEntryView(
                     Spacer(modifier = Modifier.height(BUTTON_TOP_PADDING))
                     Button(
                         onClick = onShowFavorites,
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = shoeCycleTertiaryBackground
                         ),
