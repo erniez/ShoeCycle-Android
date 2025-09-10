@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.shoecycle.data.DistanceUnit
 import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.domain.models.Shoe
@@ -47,7 +48,7 @@ private val SERVICE_INDICATOR_ICON_SIZE = 16.dp
 private val SERVICE_INDICATOR_SPACING = 12.dp
 private val DISTANCE_FIELD_MIN_WIDTH = 100.dp
 private val DISTANCE_FIELD_MAX_WIDTH = 110.dp
-private val DATE_COLUMN_WIDTH = 120.dp
+private val DATE_COLUMN_WIDTH = 90.dp
 private val DISTANCE_COLUMN_WIDTH = 130.dp
 private val BUTTON_CONTENT_PADDING = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
 private val INPUT_FIELD_HEIGHT = 56.dp
@@ -73,7 +74,7 @@ fun DateDistanceEntryView(
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val dateFormatter = remember { SimpleDateFormat("MM/dd/yy", Locale.getDefault()) }
     
     // Local state for the child component
     val state = remember { mutableStateOf(DateDistanceEntryState()) }
@@ -123,7 +124,7 @@ fun DateDistanceEntryView(
             ) {
                 // Date column
                 Column(
-                    modifier = Modifier.width(DATE_COLUMN_WIDTH)
+                    modifier = Modifier.wrapContentWidth()
                 ) {
 
                     Text(
@@ -134,7 +135,8 @@ fun DateDistanceEntryView(
                     Spacer(modifier = Modifier.height(LABEL_BOTTOM_SPACING))
                     Surface(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .wrapContentWidth()
+                            .widthIn(min = 80.dp)
                             .height(INPUT_FIELD_HEIGHT)
                             .clickable {
                                 interactor.handle(
@@ -145,12 +147,19 @@ fun DateDistanceEntryView(
                         shape = RoundedCornerShape(SURFACE_CORNER_RADIUS),
                         color = shoeCycleBackground
                     ) {
-                        Text(
-                            text = dateFormatter.format(state.value.runDate),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White,
-                            modifier = Modifier.padding(CONTAINER_CORNER_RADIUS)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = dateFormatter.format(state.value.runDate),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                     
                     // History button in Date column
