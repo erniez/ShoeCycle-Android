@@ -121,26 +121,43 @@ fun AddDistanceScreen() {
         }
     }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Header with logo, shoe image, and scroll indicators
-        AddDistanceHeader(
-            selectedShoe = state.value.selectedShoe,
-            hasMultipleShoes = state.value.activeShoes.size > 1,
-            imageRepository = imageRepository,
-            onSwipeUp = { 
-                interactor.handle(state, AddDistanceInteractor.Action.SwipeUp)
-            },
-            onSwipeDown = {
-                interactor.handle(state, AddDistanceInteractor.Action.SwipeDown)
-            },
-            onImageUpdated = { imageKey, thumbnailData ->
-                interactor.handle(state, AddDistanceInteractor.Action.UpdateShoeImage(imageKey, thumbnailData))
-            }
-        )
+    // Check if there are no active shoes - show placeholder message (matching iOS behavior)
+    if (state.value.activeShoes.isEmpty() && !state.value.isLoadingShoes) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(48.dp),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Please add a shoe in the Active Shoes tab",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Header with logo, shoe image, and scroll indicators
+            AddDistanceHeader(
+                selectedShoe = state.value.selectedShoe,
+                hasMultipleShoes = state.value.activeShoes.size > 1,
+                imageRepository = imageRepository,
+                onSwipeUp = { 
+                    interactor.handle(state, AddDistanceInteractor.Action.SwipeUp)
+                },
+                onSwipeDown = {
+                    interactor.handle(state, AddDistanceInteractor.Action.SwipeDown)
+                },
+                onImageUpdated = { imageKey, thumbnailData ->
+                    interactor.handle(state, AddDistanceInteractor.Action.UpdateShoeImage(imageKey, thumbnailData))
+                }
+            )
         
         // Date-Distance Entry Component
         DateDistanceEntryView(
@@ -237,6 +254,7 @@ fun AddDistanceScreen() {
             )
         }
     }
+    } // End of else block for zero shoes check
     
     // Show History Modal
     if (state.value.showHistoryModal && state.value.selectedShoe != null) {

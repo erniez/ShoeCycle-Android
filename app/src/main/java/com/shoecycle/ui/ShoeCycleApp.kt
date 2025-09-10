@@ -13,7 +13,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -24,6 +26,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.shoecycle.R
+import com.shoecycle.ui.navigation.InitialTabStrategy
 import com.shoecycle.ui.screens.add_distance.AddDistanceScreen
 import com.shoecycle.ui.screens.active_shoes.ActiveShoesScreen
 import com.shoecycle.ui.screens.hall_of_fame.HallOfFameScreen
@@ -54,6 +57,17 @@ val shoeCycleDestinations = listOf(
 @Composable
 fun ShoeCycleApp() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    
+    // Determine initial tab based on shoe count (like iOS InitialTabStrategy)
+    val initialDestination = remember {
+        val database = com.shoecycle.data.database.ShoeCycleDatabase.getDatabase(context)
+        val shoeRepository = com.shoecycle.data.repository.ShoeRepository(
+            database.shoeDao(),
+            database.historyDao()
+        )
+        InitialTabStrategy(shoeRepository).initialTab()
+    }
     
     Scaffold(
         bottomBar = {
@@ -82,7 +96,7 @@ fun ShoeCycleApp() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = ShoeCycleDestination.AddDistance.route,
+            startDestination = initialDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(ShoeCycleDestination.AddDistance.route) {

@@ -24,7 +24,7 @@ data class AddDistanceState(
     val activeShoes: List<Shoe> = emptyList(),
     val selectedShoeIndex: Int = 0,
     val selectedShoe: Shoe? = null,
-    val isLoadingShoes: Boolean = false,
+    val isLoadingShoes: Boolean = true,  // Start as true to prevent placeholder flash
     val runDate: Date = Date(),
     val runDistance: String = "",
     val isAddingRun: Boolean = false,
