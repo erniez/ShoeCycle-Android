@@ -8,6 +8,7 @@ plugins {
 // Apply Google Services plugin only if google-services.json exists
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {
@@ -128,6 +129,7 @@ dependencies {
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
     
     // Testing
     testImplementation("junit:junit:4.13.2")
