@@ -21,7 +21,7 @@ class FTUHintManager {
         ),
         HOF_FEATURE(
             "ShoeCycleFTUHOFFeature",
-            "You can now add shoes to the Hall of Fame section, so they don't crowd your active sneakers."
+            "You can add shoes to the Hall of Fame section, so they don't crowd your active sneakers."
         ),
         GRAPH_ALL_SHOES_FEATURE(
             "ShoeCycleFTUGraphAllShoesFeature",

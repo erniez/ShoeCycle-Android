@@ -65,17 +65,8 @@ class FTUInteractor(
                 if (currentHint != null) {
                     scope.launch {
                         ftuRepository.completeHint(currentHint)
-                        // Check for next hint
-                        val nextHint = ftuRepository.nextHintFlow.first()
-                        state.value = if (nextHint != null) {
-                            FTUState(
-                                currentHint = nextHint,
-                                hintMessage = hintManager.getHintMessage(nextHint),
-                                showHint = false
-                            )
-                        } else {
-                            FTUState() // No more hints
-                        }
+                        // Clear the current hint - don't automatically show the next one
+                        state.value = FTUState()
                     }
                 }
             }

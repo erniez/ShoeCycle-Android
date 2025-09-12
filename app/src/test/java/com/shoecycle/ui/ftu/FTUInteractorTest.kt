@@ -106,41 +106,35 @@ class FTUInteractorTest {
         assertFalse(state.value.showHint)
     }
     
-    // Given: Current hint exists and more hints available
+    // Given: Current hint exists
     // When: Completing hint
-    // Then: Should complete current and load next
+    // Then: Should complete current and clear state (not load next)
     @Test
-    fun testCompleteHint_withNextHint_loadsNextHint() = runTest(testDispatcher) {
+    fun testCompleteHint_clearsStateWithoutLoadingNext() = runTest(testDispatcher) {
         state.value = FTUState(
             currentHint = FTUHintManager.HintKey.SWIPE_FEATURE,
             hintMessage = "Swipe message",
             showHint = true
         )
         
-        whenever(mockRepository.nextHintFlow).thenReturn(
-            flowOf(FTUHintManager.HintKey.STRAVA_FEATURE)
-        )
-        
         interactor.handle(state, FTUInteractor.Action.CompleteHint)
         advanceUntilIdle()
         
         verify(mockRepository).completeHint(FTUHintManager.HintKey.SWIPE_FEATURE)
-        assertEquals(FTUHintManager.HintKey.STRAVA_FEATURE, state.value.currentHint)
-        assertEquals(FTUHintManager.HintKey.STRAVA_FEATURE.message, state.value.hintMessage)
-        assertFalse(state.value.showHint) // New hint should not show automatically
+        assertNull(state.value.currentHint)
+        assertEquals("", state.value.hintMessage)
+        assertFalse(state.value.showHint)
     }
     
-    // Given: Current hint exists and no more hints
+    // Given: Current hint is the last hint
     // When: Completing hint
     // Then: Should clear state
     @Test
-    fun testCompleteHint_noMoreHints_clearsState() = runTest(testDispatcher) {
+    fun testCompleteHint_lastHint_clearsState() = runTest(testDispatcher) {
         state.value = FTUState(
             currentHint = FTUHintManager.HintKey.YEARLY_HISTORY_FEATURE,
             showHint = true
         )
-        
-        whenever(mockRepository.nextHintFlow).thenReturn(flowOf(null))
         
         interactor.handle(state, FTUInteractor.Action.CompleteHint)
         advanceUntilIdle()
