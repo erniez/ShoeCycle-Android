@@ -6,13 +6,18 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,12 +31,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.shoecycle.R
+import com.shoecycle.data.repository.FTURepository
+import com.shoecycle.ui.ftu.FTUInteractor
+import com.shoecycle.ui.ftu.FTUState
 import com.shoecycle.ui.navigation.InitialTabStrategy
 import com.shoecycle.ui.screens.add_distance.AddDistanceScreen
 import com.shoecycle.ui.screens.active_shoes.ActiveShoesScreen
 import com.shoecycle.ui.screens.hall_of_fame.HallOfFameScreen
 import com.shoecycle.ui.screens.settings.SettingsScreen
 import com.shoecycle.ui.screens.shoe_detail.ShoeDetailScreen
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 sealed class ShoeCycleDestination(val route: String, val titleRes: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object AddDistance : ShoeCycleDestination("add_distance", R.string.add_distance, Icons.Filled.Add)
@@ -59,14 +69,40 @@ fun ShoeCycleApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
     
-    // Determine initial tab based on shoe count (like iOS InitialTabStrategy)
-    val initialDestination = remember {
-        val database = com.shoecycle.data.database.ShoeCycleDatabase.getDatabase(context)
-        val shoeRepository = com.shoecycle.data.repository.ShoeRepository(
+    // Initialize repositories
+    val database = remember { com.shoecycle.data.database.ShoeCycleDatabase.getDatabase(context) }
+    val shoeRepository = remember { 
+        com.shoecycle.data.repository.ShoeRepository(
             database.shoeDao(),
             database.historyDao()
         )
+    }
+    val ftuRepository = remember { FTURepository(context) }
+    
+    // Determine initial tab based on shoe count (like iOS InitialTabStrategy)
+    val initialDestination = remember {
         InitialTabStrategy(shoeRepository).initialTab()
+    }
+    
+    // FTU hint system
+    val ftuState = remember { mutableStateOf(FTUState()) }
+    val ftuInteractor = remember { FTUInteractor(ftuRepository) }
+    
+    // Check for active shoes count to determine if hints should be shown
+    val activeShoes by shoeRepository.getActiveShoes().collectAsState(initial = emptyList())
+    
+    // Check for hints when we have 2+ active shoes (matching iOS behavior)
+    LaunchedEffect(activeShoes) {
+        if (activeShoes.size >= 2) {
+            ftuInteractor.handle(ftuState, FTUInteractor.Action.CheckForHints)
+        }
+    }
+    
+    // Show hint when one becomes available
+    LaunchedEffect(ftuState.value.currentHint) {
+        if (ftuState.value.currentHint != null && !ftuState.value.showHint) {
+            ftuInteractor.handle(ftuState, FTUInteractor.Action.ShowNextHint)
+        }
     }
     
     Scaffold(
@@ -129,5 +165,30 @@ fun ShoeCycleApp() {
                 SettingsScreen()
             }
         }
+    }
+    
+    // FTU Hint Dialog (matching iOS alert presentation)
+    if (ftuState.value.showHint) {
+        AlertDialog(
+            onDismissRequest = {
+                ftuInteractor.handle(ftuState, FTUInteractor.Action.DismissHint)
+            },
+            title = { Text("Hint") },
+            text = { Text(ftuState.value.hintMessage) },
+            confirmButton = {
+                TextButton(onClick = {
+                    ftuInteractor.handle(ftuState, FTUInteractor.Action.DismissHint)
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    ftuInteractor.handle(ftuState, FTUInteractor.Action.CompleteHint)
+                }) {
+                    Text("Don't show again")
+                }
+            }
+        )
     }
 }
