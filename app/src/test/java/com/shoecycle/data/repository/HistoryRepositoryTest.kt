@@ -563,4 +563,109 @@ class HistoryRepositoryTest {
         // Then
         assertEquals("Run count should be 0 for no history", 0, runCount)
     }
+
+    // Graph All Shoes Feature Tests
+
+    @Test
+    fun getHistoriesForShoes_withMultipleShoes_returnsAllHistories() = runTest {
+        // Given
+        val shoe1 = TestDataFactory.createTestShoe()
+        val shoe2 = TestDataFactory.createTestShoe()
+        val shoeId1 = shoeRepository.insertShoe(shoe1)
+        val shoeId2 = shoeRepository.insertShoe(shoe2)
+
+        val histories1 = TestDataFactory.createMultipleTestHistories(shoeId1, 2, distanceRange = 3.0)
+        val histories2 = TestDataFactory.createMultipleTestHistories(shoeId2, 3, distanceRange = 5.0)
+
+        // When
+        histories1.forEach { historyRepository.insertHistory(it) }
+        histories2.forEach { historyRepository.insertHistory(it) }
+
+        historyRepository.getHistoriesForShoes(listOf(shoeId1, shoeId2)).test {
+            val result = awaitItem()
+
+            // Then
+            assertEquals("Should return all 5 histories", 5, result.size)
+            val shoeIds = result.map { it.shoeId }.toSet()
+            assertTrue("Should contain histories from both shoes", shoeIds.containsAll(listOf(shoeId1, shoeId2)))
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun getHistoriesForShoes_withEmptyList_returnsEmptyList() = runTest {
+        // Given
+        val shoe = TestDataFactory.createTestShoe()
+        val shoeId = shoeRepository.insertShoe(shoe)
+        val histories = TestDataFactory.createMultipleTestHistories(shoeId, 3, distanceRange = 5.0)
+        histories.forEach { historyRepository.insertHistory(it) }
+
+        // When
+        historyRepository.getHistoriesForShoes(emptyList()).test {
+            val result = awaitItem()
+
+            // Then
+            assertTrue("Should return empty list for empty shoe IDs", result.isEmpty())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun getAllActiveShoeHistories_returnsOnlyActiveShoeHistories() = runTest {
+        // Given
+        val activeShoe1 = TestDataFactory.createTestShoe(hallOfFame = false)
+        val activeShoe2 = TestDataFactory.createTestShoe(hallOfFame = false)
+        val retiredShoe = TestDataFactory.createTestShoe(hallOfFame = true)
+
+        val activeId1 = shoeRepository.insertShoe(activeShoe1)
+        val activeId2 = shoeRepository.insertShoe(activeShoe2)
+        val retiredId = shoeRepository.insertShoe(retiredShoe)
+
+        // Add histories for all shoes
+        val activeHistories1 = TestDataFactory.createMultipleTestHistories(activeId1, 2, distanceRange = 3.0)
+        val activeHistories2 = TestDataFactory.createMultipleTestHistories(activeId2, 2, distanceRange = 5.0)
+        val retiredHistories = TestDataFactory.createMultipleTestHistories(retiredId, 3, distanceRange = 7.0)
+
+        activeHistories1.forEach { historyRepository.insertHistory(it) }
+        activeHistories2.forEach { historyRepository.insertHistory(it) }
+        retiredHistories.forEach { historyRepository.insertHistory(it) }
+
+        // When
+        historyRepository.getAllActiveShoeHistories().test {
+            val result = awaitItem()
+
+            // Then
+            assertEquals("Should return only active shoe histories (4 total)", 4, result.size)
+            val shoeIds = result.map { it.shoeId }.toSet()
+            assertTrue("Should contain active shoe IDs", shoeIds.containsAll(listOf(activeId1, activeId2)))
+            assertFalse("Should not contain retired shoe ID", shoeIds.contains(retiredId))
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun getAllActiveShoeHistories_withNoActiveShoes_returnsEmptyList() = runTest {
+        // Given - only retired shoes
+        val retiredShoe1 = TestDataFactory.createTestShoe(hallOfFame = true)
+        val retiredShoe2 = TestDataFactory.createTestShoe(hallOfFame = true)
+
+        val retiredId1 = shoeRepository.insertShoe(retiredShoe1)
+        val retiredId2 = shoeRepository.insertShoe(retiredShoe2)
+
+        val histories = TestDataFactory.createMultipleTestHistories(retiredId1, 3, distanceRange = 5.0)
+        histories.forEach { historyRepository.insertHistory(it) }
+
+        // When
+        historyRepository.getAllActiveShoeHistories().test {
+            val result = awaitItem()
+
+            // Then
+            assertTrue("Should return empty list when no active shoes", result.isEmpty())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }
