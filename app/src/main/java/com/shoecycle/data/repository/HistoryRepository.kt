@@ -6,8 +6,12 @@ import com.shoecycle.data.database.ShoeCycleDatabase
 import com.shoecycle.data.database.dao.HistoryDao
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.domain.models.History
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import java.util.Date
 
 class HistoryRepository(
@@ -226,6 +230,29 @@ class HistoryRepository(
         } catch (e: Exception) {
             Log.e(TAG, "Error getting run count in date range", e)
             0
+        }
+    }
+
+    override fun getHistoriesForShoes(shoeIds: List<String>): Flow<List<History>> {
+        return if (shoeIds.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            historyDao.getHistoriesForShoes(shoeIds).map { entities ->
+                entities.map { History.fromEntity(it) }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getAllActiveShoeHistories(): Flow<List<History>> {
+        return shoeRepository.getActiveShoeIds().flatMapLatest { activeShoeIds ->
+            if (activeShoeIds.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                historyDao.getHistoriesForShoes(activeShoeIds).map { entities ->
+                    entities.map { History.fromEntity(it) }
+                }
+            }
         }
     }
 }

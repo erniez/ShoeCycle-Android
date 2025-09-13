@@ -33,4 +33,7 @@ interface IShoeRepository {
     
     // Total distance recalculation
     suspend fun recalculateShoeTotal(shoeId: String)
+
+    // Helper methods for graph all shoes feature
+    fun getActiveShoeIds(): Flow<List<String>>
 }

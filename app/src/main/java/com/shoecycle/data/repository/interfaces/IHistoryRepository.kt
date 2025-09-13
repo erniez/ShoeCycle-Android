@@ -37,4 +37,8 @@ interface IHistoryRepository {
     // Date range statistics
     suspend fun getTotalDistanceInDateRange(startDate: Date, endDate: Date): Double
     suspend fun getRunCountInDateRange(startDate: Date, endDate: Date): Int
+
+    // Graph all shoes feature
+    fun getHistoriesForShoes(shoeIds: List<String>): Flow<List<History>>
+    fun getAllActiveShoeHistories(): Flow<List<History>>
 }

@@ -191,4 +191,10 @@ class ShoeRepository(
             throw e
         }
     }
+
+    override fun getActiveShoeIds(): Flow<List<String>> {
+        return shoeDao.getActiveShoes().map { entities ->
+            entities.map { it.id }
+        }
+    }
 }

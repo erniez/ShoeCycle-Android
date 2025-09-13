@@ -17,7 +17,10 @@ interface HistoryDao {
     
     @Query("SELECT * FROM history WHERE shoeId = :shoeId ORDER BY runDate DESC")
     fun getHistoryForShoe(shoeId: String): Flow<List<HistoryEntity>>
-    
+
+    @Query("SELECT * FROM history WHERE shoeId IN (:shoeIds) ORDER BY runDate DESC")
+    fun getHistoriesForShoes(shoeIds: List<String>): Flow<List<HistoryEntity>>
+
     @Query("SELECT * FROM history WHERE id = :id")
     suspend fun getHistoryById(id: Long): HistoryEntity?
     
