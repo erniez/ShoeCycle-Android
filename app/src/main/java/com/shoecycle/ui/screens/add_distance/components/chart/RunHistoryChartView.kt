@@ -49,6 +49,8 @@ private val Y_AXIS_LABEL_WIDTH = 24.dp
 fun RunHistoryChartView(
     chartData: List<WeeklyCollatedNew>,
     distanceUnit: DistanceUnit,
+    graphAllShoes: Boolean = false,
+    onToggleGraphAllShoes: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // VSI pattern state management
@@ -117,6 +119,47 @@ fun RunHistoryChartView(
                             state = newState
                         }
                     )
+                }
+            }
+
+            // Toggle button for graph all shoes
+            if (onToggleGraphAllShoes != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Chart legend
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(shoeCycleOrange, RoundedCornerShape(2.dp))
+                        )
+                        Text(
+                            text = "Weekly Distance",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+
+                    // Toggle button
+                    TextButton(
+                        onClick = onToggleGraphAllShoes,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = shoeCycleBlue
+                        )
+                    ) {
+                        Text(
+                            text = if (graphAllShoes) "Graph Current Shoe" else "Graph All Active Shoes",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
         }

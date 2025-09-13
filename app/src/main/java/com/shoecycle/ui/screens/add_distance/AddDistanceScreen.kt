@@ -231,24 +231,35 @@ fun AddDistanceScreen() {
         state.value.selectedShoe?.let { shoe ->
             val histories by produceState(
                 initialValue = emptyList<com.shoecycle.domain.models.History>(),
-                key1 = shoe.id  // Re-fetch when shoe changes
+                key1 = shoe.id,  // Re-fetch when shoe changes
+                key2 = state.value.graphAllShoes  // Re-fetch when toggle changes
             ) {
-                historyRepository.getHistoryForShoe(shoe.id).collect { 
-                    value = it 
+                if (state.value.graphAllShoes) {
+                    historyRepository.getAllActiveShoeHistories().collect {
+                        value = it
+                    }
+                } else {
+                    historyRepository.getHistoryForShoe(shoe.id).collect {
+                        value = it
+                    }
                 }
             }
-            
-            val weeklyData = remember(histories) {
+
+            val weeklyData = remember(histories, state.value.graphAllShoes) {
                 HistoryCollation.collateHistories(
                     histories = histories.toSet(),
                     ascending = true,
                     firstDayOfWeek = userSettings.firstDayOfWeek
                 )
             }
-            
+
             RunHistoryChartView(
                 chartData = weeklyData,
                 distanceUnit = state.value.distanceUnit,
+                graphAllShoes = state.value.graphAllShoes,
+                onToggleGraphAllShoes = {
+                    interactor.handle(state, AddDistanceInteractor.Action.GraphAllShoesToggled(!state.value.graphAllShoes))
+                },
                 modifier = Modifier
                     .padding(vertical = 8.dp)
             )
