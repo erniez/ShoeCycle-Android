@@ -9,6 +9,7 @@ import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -19,6 +20,7 @@ import org.mockito.kotlin.*
 import org.robolectric.RobolectricTestRunner
 import java.util.Date
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class AddDistanceInteractorTest {
 
@@ -380,4 +382,57 @@ class AddDistanceInteractorTest {
         // Then - Should be converted to km for display (5 miles = 8.05 km)
         assertEquals("8.05", state.value.runDistance)
     }
+
+    // Graph All Shoes Feature Tests
+
+    @Test
+    fun graphAllShoesToggled_updatesStateImmediately() = runTest {
+        // Given
+        val interactor = AddDistanceInteractor(
+            mockShoeRepository,
+            mockHistoryRepository,
+            mockUserSettingsRepository,
+            mockSelectedShoeStrategy
+        )
+        val state = mutableStateOf(AddDistanceState(graphAllShoes = false))
+
+        // When - Toggle to true
+        interactor.handle(state, AddDistanceInteractor.Action.GraphAllShoesToggled(true))
+
+        // Then
+        assertTrue("Graph all shoes should be enabled", state.value.graphAllShoes)
+
+        // When - Toggle to false
+        interactor.handle(state, AddDistanceInteractor.Action.GraphAllShoesToggled(false))
+
+        // Then
+        assertFalse("Graph all shoes should be disabled", state.value.graphAllShoes)
+    }
+
+    @Test
+    fun graphAllShoesToggled_persistsToUserSettings() = runTest {
+        // Given
+        val interactor = AddDistanceInteractor(
+            mockShoeRepository,
+            mockHistoryRepository,
+            mockUserSettingsRepository,
+            mockSelectedShoeStrategy
+        )
+        val state = mutableStateOf(AddDistanceState(graphAllShoes = false))
+
+        // When
+        interactor.handle(state, AddDistanceInteractor.Action.GraphAllShoesToggled(true))
+
+        // Then - verify the repository method was called
+        advanceUntilIdle()
+        verify(mockUserSettingsRepository).updateGraphAllShoes(true)
+
+        // When - Toggle back
+        interactor.handle(state, AddDistanceInteractor.Action.GraphAllShoesToggled(false))
+
+        // Then
+        advanceUntilIdle()
+        verify(mockUserSettingsRepository).updateGraphAllShoes(false)
+    }
+
 }

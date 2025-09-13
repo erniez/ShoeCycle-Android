@@ -23,6 +23,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -153,7 +157,15 @@ fun RunHistoryChartView(
                         onClick = onToggleGraphAllShoes,
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = shoeCycleBlue
-                        )
+                        ),
+                        modifier = Modifier.semantics {
+                            contentDescription = if (graphAllShoes) {
+                                "Switch to graph current shoe only"
+                            } else {
+                                "Switch to graph all active shoes"
+                            }
+                            role = Role.Button
+                        }
                     ) {
                         Text(
                             text = if (graphAllShoes) "Graph Current Shoe" else "Graph All Active Shoes",
