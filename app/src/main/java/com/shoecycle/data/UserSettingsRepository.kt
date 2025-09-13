@@ -25,6 +25,7 @@ class UserSettingsRepository(private val context: Context) {
         val HEALTH_CONNECT_ENABLED = booleanPreferencesKey("health_connect_enabled")
         val STRAVA_ENABLED = booleanPreferencesKey("strava_enabled")
         val SELECTED_SHOE_ID = stringPreferencesKey("selected_shoe_id")
+        val GRAPH_ALL_SHOES = booleanPreferencesKey("graph_all_shoes")
     }
     
     val userSettingsFlow: Flow<UserSettingsData> = context.dataStore.data
@@ -49,7 +50,8 @@ class UserSettingsRepository(private val context: Context) {
                 favorite4 = preferences[PreferenceKeys.FAVORITE_4] ?: 0.0,
                 healthConnectEnabled = preferences[PreferenceKeys.HEALTH_CONNECT_ENABLED] ?: false,
                 stravaEnabled = preferences[PreferenceKeys.STRAVA_ENABLED] ?: false,
-                selectedShoeId = preferences[PreferenceKeys.SELECTED_SHOE_ID]
+                selectedShoeId = preferences[PreferenceKeys.SELECTED_SHOE_ID],
+                graphAllShoes = preferences[PreferenceKeys.GRAPH_ALL_SHOES] ?: false
             )
         }
     
@@ -144,6 +146,16 @@ class UserSettingsRepository(private val context: Context) {
             }
         } catch (exception: IOException) {
             Log.e("UserSettingsRepository", "Error updating selected shoe ID", exception)
+        }
+    }
+
+    suspend fun updateGraphAllShoes(enabled: Boolean) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[PreferenceKeys.GRAPH_ALL_SHOES] = enabled
+            }
+        } catch (exception: IOException) {
+            Log.e("UserSettingsRepository", "Error updating graph all shoes", exception)
         }
     }
 }

@@ -33,7 +33,8 @@ data class AddDistanceState(
     val lastAddedRunId: Long? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.MILES,
     val stravaUploadState: StravaUploadState = StravaUploadState.Idle,
-    val stravaUploadError: String? = null
+    val stravaUploadError: String? = null,
+    val graphAllShoes: Boolean = false
 )
 
 enum class StravaUploadState {
@@ -69,6 +70,7 @@ class AddDistanceInteractor(
         data class UploadToStrava(val distance: Double, val date: Date, val shoeName: String) : Action()
         object ClearStravaUploadState : Action()
         data class UpdateShoeImage(val imageKey: String, val thumbnailData: ByteArray) : Action()
+        data class GraphAllShoesToggled(val enabled: Boolean) : Action()
     }
 
     fun handle(state: MutableState<AddDistanceState>, action: Action) {
@@ -157,15 +159,25 @@ class AddDistanceInteractor(
             is Action.UpdateShoeImage -> {
                 updateShoeImage(state, action.imageKey, action.thumbnailData)
             }
+
+            is Action.GraphAllShoesToggled -> {
+                state.value = state.value.copy(graphAllShoes = action.enabled)
+
+                // Persist to settings
+                scope.launch {
+                    userSettingsRepository.updateGraphAllShoes(action.enabled)
+                }
+            }
         }
     }
 
     private fun observeSettings(state: MutableState<AddDistanceState>) {
         scope.launch {
             userSettingsRepository.userSettingsFlow.collect { settings ->
-                settings?.let {
-                    state.value = state.value.copy(distanceUnit = it.distanceUnit)
-                }
+                state.value = state.value.copy(
+                    distanceUnit = settings.distanceUnit,
+                    graphAllShoes = settings.graphAllShoes
+                )
             }
         }
     }
