@@ -29,8 +29,8 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ShoeCycleTheme(
-    darkTheme: Boolean = true,  // Always use dark theme
-    dynamicColor: Boolean = false,  // Disable dynamic colors for consistent branding
+    _darkTheme: Boolean = true,  // Always use dark theme
+    _dynamicColor: Boolean = false,  // Disable dynamic colors for consistent branding
     content: @Composable () -> Unit
 ) {
     // Always use dark color scheme for consistent iOS-like appearance

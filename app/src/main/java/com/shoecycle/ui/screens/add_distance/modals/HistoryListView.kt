@@ -209,7 +209,7 @@ fun HistoryListView(
 @Composable
 private fun HistoryListContent(
     state: HistoryListState,
-    shoe: Shoe,
+    _shoe: Shoe,
     distanceUnit: DistanceUnit,
     snackbarHostState: SnackbarHostState,
     onAction: (HistoryListInteractor.Action) -> Unit,

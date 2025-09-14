@@ -16,7 +16,6 @@ import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Date

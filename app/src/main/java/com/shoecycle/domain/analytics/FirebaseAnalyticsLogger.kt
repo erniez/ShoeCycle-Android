@@ -52,7 +52,7 @@ class FirebaseAnalyticsLogger(private val context: Context) : AnalyticsLogger {
     override fun logEvent(name: String, parameters: Map<String, Any>?) {
         try {
             // First verify Firebase is initialized
-            val firebaseApp = try {
+            try {
                 FirebaseApp.getInstance()
             } catch (e: IllegalStateException) {
                 Log.e(TAG, "Cannot log event '$name' - Firebase not initialized!", e)

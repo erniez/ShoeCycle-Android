@@ -39,17 +39,18 @@ class CSVUtility {
         
         return stringBuilder.toString()
     }
-    
+
     /**
      * Creates CSV data string from a shoe's history
-     * @param shoe The shoe being exported (for metadata)
+     * @param shoe The shoe being exported (unused but kept for API compatibility)
      * @param histories The list of history entries for this shoe
      * @return CSV formatted string
      */
+    @Suppress("UNUSED_PARAMETER")
     fun createCSVData(shoe: Shoe, histories: List<History>): String {
         return createCSVData(histories)
     }
-    
+
     /**
      * Creates CSV data string from multiple shoes' histories
      * Useful for exporting all shoes data

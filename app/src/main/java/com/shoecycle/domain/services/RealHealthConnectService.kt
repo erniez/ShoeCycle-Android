@@ -61,7 +61,8 @@ class RealHealthConnectService(
                 }
                 
                 // Convert distance from miles to meters using DistanceUtility
-                val distanceInMeters = DistanceUtility.milesToMeters(distance)
+                // TODO: Use this in future Health Connect distance record implementation
+                val _distanceInMeters = DistanceUtility.milesToMeters(distance)
                 
                 // Create timestamps
                 val startTime = date.toInstant()

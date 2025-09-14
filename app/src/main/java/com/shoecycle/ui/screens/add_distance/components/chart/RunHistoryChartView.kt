@@ -229,7 +229,6 @@ private fun ScrollableChartCanvas(
     onStateChange: (RunHistoryChartState) -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     
     // Auto-scroll to end when data loads
@@ -551,7 +550,7 @@ private fun DrawScope.drawMaxDistanceLine(
     paddingLeft: Float,
     paddingTop: Float,
     chartWidth: Float,
-    chartHeight: Float,
+    _chartHeight: Float,
     textMeasurer: androidx.compose.ui.text.TextMeasurer
 ) {
     val y = paddingTop // Max is at the top
@@ -622,7 +621,7 @@ private fun DrawScope.drawXAxisLabels(
     data: List<WeeklyCollatedNew>,
     paddingLeft: Float,
     paddingTop: Float,
-    paddingBottom: Float,
+    _paddingBottom: Float,
     chartWidth: Float,
     chartHeight: Float,
     dateFormatter: SimpleDateFormat,
