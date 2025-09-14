@@ -235,28 +235,53 @@ class HistoryListInteractor(
     private fun exportToCSV(state: MutableState<HistoryListState>, context: Context, shoe: Shoe) {
         scope.launch {
             try {
-                // Get histories for the shoe
-                val histories = historyRepository.getHistoryForShoe(shoe.id).firstOrNull() ?: emptyList()
-                
-                // Create CSV data
+                // Check if we should export all shoes or just one
+                val userSettings = userSettingsRepository.userSettingsFlow.firstOrNull()
+                val graphAllShoes = userSettings?.graphAllShoes ?: false
+
                 val csvUtility = CSVUtility()
-                val csvData = csvUtility.createCSVData(shoe, histories)
-                val fileName = csvUtility.generateFileName(shoe)
-                
+                val csvData: String
+                val fileName: String
+
+                if (graphAllShoes) {
+                    // Get all shoes and their histories
+                    val allShoes = shoeRepository.getAllShoes().firstOrNull() ?: emptyList()
+                    val shoesWithHistories = mutableListOf<Pair<Shoe, List<History>>>()
+
+                    for (currentShoe in allShoes) {
+                        val histories = historyRepository.getHistoryForShoe(currentShoe.id).firstOrNull() ?: emptyList()
+                        if (histories.isNotEmpty()) {
+                            shoesWithHistories.add(currentShoe to histories)
+                        }
+                    }
+
+                    csvData = csvUtility.createCSVData(shoesWithHistories)
+                    fileName = csvUtility.generateFileName(null) // Use generic filename for all shoes
+
+                    Log.d("HistoryListInteractor", "Exporting data for ${shoesWithHistories.size} shoes with histories")
+                } else {
+                    // Get histories for the single shoe
+                    val histories = historyRepository.getHistoryForShoe(shoe.id).firstOrNull() ?: emptyList()
+                    csvData = csvUtility.createCSVData(shoe, histories)
+                    fileName = csvUtility.generateFileName(shoe)
+
+                    Log.d("HistoryListInteractor", "Exporting data for single shoe: ${shoe.displayName}")
+                }
+
                 // Create file in cache directory
                 val cacheDir = context.cacheDir
                 val csvFile = File(cacheDir, fileName)
-                
+
                 // Write CSV data to file
                 FileWriter(csvFile).use { writer ->
                     writer.write(csvData)
                 }
-                
+
                 Log.d("HistoryListInteractor", "CSV file created: ${csvFile.absolutePath}")
-                
+
                 // Log successful email export
                 analytics.logEvent(AnalyticsKeys.Event.DID_EMAIL_SHOE)
-                
+
                 withContext(Dispatchers.Main) {
                     state.value = state.value.copy(
                         exportFilePath = csvFile.absolutePath,

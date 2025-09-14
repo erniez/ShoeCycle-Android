@@ -126,7 +126,6 @@ fun HistoryListView(
         ) {
             HistoryListContent(
                 state = state.value,
-                shoe = shoe,
                 distanceUnit = distanceUnit,
                 snackbarHostState = snackbarHostState,
                 onAction = { action ->
@@ -209,7 +208,6 @@ fun HistoryListView(
 @Composable
 private fun HistoryListContent(
     state: HistoryListState,
-    shoe: Shoe,
     distanceUnit: DistanceUnit,
     snackbarHostState: SnackbarHostState,
     onAction: (HistoryListInteractor.Action) -> Unit,
