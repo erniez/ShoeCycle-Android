@@ -65,7 +65,7 @@ class ShoeBusinessLogic(
         }
     }
 
-    suspend fun logDistance(shoeId: String, distance: Double, date: Date = Date(), notes: String? = null) {
+    suspend fun logDistance(shoeId: String, distance: Double, date: Date = Date(), _notes: String? = null) {
         try {
             val historyId = historyRepository.insertHistory(
                 History(

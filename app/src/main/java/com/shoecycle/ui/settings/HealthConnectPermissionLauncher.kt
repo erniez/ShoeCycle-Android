@@ -112,7 +112,7 @@ fun rememberHealthConnectLauncher(
 ): () -> Unit {
     val context = LocalContext.current
     
-    val launcher = rememberLauncherForActivityResult(
+    val _launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
         // When returning from Health Connect, check permissions again

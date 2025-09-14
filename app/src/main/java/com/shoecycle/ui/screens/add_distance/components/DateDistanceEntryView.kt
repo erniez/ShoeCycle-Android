@@ -392,7 +392,7 @@ fun DateDistanceEntryView(
 
 @Composable
 private fun ServiceIndicator(
-    isActive: Boolean,
+    _isActive: Boolean,
     syncStatus: DateDistanceEntryState.SyncStatus,
     icon: @Composable () -> Unit,
     modifier: Modifier = Modifier

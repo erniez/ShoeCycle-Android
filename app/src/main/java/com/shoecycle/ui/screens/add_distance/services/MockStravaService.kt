@@ -38,7 +38,7 @@ class MockStravaService {
         date: Date,
         distance: Double,
         shoeName: String? = null,
-        notes: String? = null
+        _notes: String? = null
     ): Result<ActivityResult> {
         Log.d(TAG, "Mock: Uploading activity to Strava - Date: $date, Distance: $distance mi, Shoe: $shoeName")
         

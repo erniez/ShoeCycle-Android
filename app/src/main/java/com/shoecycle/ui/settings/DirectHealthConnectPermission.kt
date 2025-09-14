@@ -29,7 +29,7 @@ fun rememberDirectHealthPermissionLauncher(
     // Create a more explicit launcher
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    ) { _result ->
         // Check permissions after returning from settings
         scope.launch {
             try {
