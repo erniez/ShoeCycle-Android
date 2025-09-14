@@ -16,6 +16,7 @@ import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -186,28 +187,30 @@ class AddDistanceInteractor(
         state.value = state.value.copy(isLoadingShoes = true)
         scope.launch {
             try {
-                val activeShoes = shoeRepository.getActiveShoes().first()
-                val selectedShoeId = userSettingsRepository.userSettingsFlow.first().selectedShoeId
-                
-                var selectedIndex = 0
-                var selectedShoe: Shoe? = null
-                
-                if (selectedShoeId != null) {
-                    val index = activeShoes.indexOfFirst { it.id == selectedShoeId }
-                    if (index >= 0) {
-                        selectedIndex = index
-                        selectedShoe = activeShoes[index]
+                // Observe active shoes continuously to react to changes from other screens
+                shoeRepository.getActiveShoes().collect { activeShoes ->
+                    val selectedShoeId = userSettingsRepository.userSettingsFlow.first().selectedShoeId
+
+                    var selectedIndex = 0
+                    var selectedShoe: Shoe? = null
+
+                    if (selectedShoeId != null) {
+                        val index = activeShoes.indexOfFirst { it.id == selectedShoeId }
+                        if (index >= 0) {
+                            selectedIndex = index
+                            selectedShoe = activeShoes[index]
+                        }
+                    } else if (activeShoes.isNotEmpty()) {
+                        selectedShoe = activeShoes[0]
                     }
-                } else if (activeShoes.isNotEmpty()) {
-                    selectedShoe = activeShoes[0]
+
+                    state.value = state.value.copy(
+                        activeShoes = activeShoes,
+                        selectedShoeIndex = selectedIndex,
+                        selectedShoe = selectedShoe,
+                        isLoadingShoes = false
+                    )
                 }
-                
-                state.value = state.value.copy(
-                    activeShoes = activeShoes,
-                    selectedShoeIndex = selectedIndex,
-                    selectedShoe = selectedShoe,
-                    isLoadingShoes = false
-                )
             } catch (e: Exception) {
                 state.value = state.value.copy(isLoadingShoes = false)
             }
