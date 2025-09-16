@@ -24,7 +24,7 @@ class FTUInteractor(
     private val ftuRepository: FTURepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
-    
+
     sealed class Action {
         object CheckForHints : Action()
         object ShowNextHint : Action()
@@ -32,20 +32,25 @@ class FTUInteractor(
         object CompleteHint : Action()
         data class ShowSpecificHint(val hintKey: FTUHintManager.HintKey) : Action()
     }
-    
+
     private val hintManager = FTUHintManager()
-    
+    private var hasCheckedHintsThisSession = false
+
     fun handle(state: MutableState<FTUState>, action: Action) {
         when (action) {
             is Action.CheckForHints -> {
-                scope.launch {
-                    val nextHint = ftuRepository.nextHintFlow.first()
-                    if (nextHint != null) {
-                        state.value = state.value.copy(
-                            currentHint = nextHint,
-                            hintMessage = hintManager.getHintMessage(nextHint),
-                            showHint = false // Don't show automatically, wait for ShowNextHint
-                        )
+                // Only check for hints once per app session
+                if (!hasCheckedHintsThisSession) {
+                    hasCheckedHintsThisSession = true
+                    scope.launch {
+                        val nextHint = ftuRepository.nextHintFlow.first()
+                        if (nextHint != null) {
+                            state.value = state.value.copy(
+                                currentHint = nextHint,
+                                hintMessage = hintManager.getHintMessage(nextHint),
+                                showHint = false // Don't show automatically, wait for ShowNextHint
+                            )
+                        }
                     }
                 }
             }
