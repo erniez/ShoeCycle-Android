@@ -1,5 +1,6 @@
 package com.shoecycle.ui.settings
 
+import android.app.Activity
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.*
@@ -12,7 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
@@ -37,6 +42,14 @@ fun SettingsHealthConnectView(
             interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
         }
     }
+
+    // App settings launcher for when permissions are permanently denied
+    val appSettingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        // Check permissions again when returning from settings
+        interactor.handle(state, SettingsHealthConnectInteractor.Action.ViewAppeared)
+    }
     
     // Permission launcher
     val permissions = remember {
@@ -49,19 +62,11 @@ fun SettingsHealthConnectView(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        // If granted is empty, the dialog never showed (Health Connect not installed or other issue)
-        if (granted.isEmpty()) {
-            // Try opening Health Connect directly
-            val activity = context as? Activity
-            if (activity != null) {
-                HealthConnectPermissionLauncher.openHealthConnectApp(activity)
-            }
-            interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
-        } else if (granted.containsAll(permissions)) {
+        // Check if all permissions were granted
+        if (granted.containsAll(permissions)) {
             interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionGranted)
         } else {
-            // Open Health Connect settings to grant the missing permissions
-            directPermissionLauncher()
+            // Some or all permissions were denied
             interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
         }
     }
@@ -70,13 +75,25 @@ fun SettingsHealthConnectView(
     LaunchedEffect(Unit) {
         interactor.handle(state, SettingsHealthConnectInteractor.Action.ViewAppeared)
     }
+
+    // Open app settings when requested
+    LaunchedEffect(state.value.showAppSettings) {
+        if (state.value.showAppSettings) {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+            appSettingsLauncher.launch(intent)
+            // Reset the flag
+            state.value = state.value.copy(showAppSettings = false)
+        }
+    }
     
     // Launch permission request when needed
     LaunchedEffect(state.value.showPermissionDialog) {
         if (state.value.showPermissionDialog) {
             // Check if we're in mock mode
             val isMockMode = ServiceLocator.mode == ServiceLocator.ServiceMode.MOCK
-            
+
             if (isMockMode) {
                 // In mock mode, simulate permission request with the mock service
                 val healthService = ServiceLocator.provideHealthService(context)
@@ -91,7 +108,9 @@ fun SettingsHealthConnectView(
                 try {
                     permissionLauncher.launch(permissions)
                 } catch (e: Exception) {
-                    interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
+                    Log.e("SettingsHealthConnect", "Failed to launch permission dialog", e)
+                    // If we can't launch the permission dialog, try the direct approach
+                    directPermissionLauncher()
                 }
             }
         }
@@ -123,19 +142,26 @@ fun SettingsHealthConnectView(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
-                    // Show permission status
-                    when (state.value.permissionStatus) {
-                        SettingsHealthConnectState.PermissionStatus.Granted -> {
-                            Text(
-                                text = "✓ Connected",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
+                    // Show status based on switch state
+                    if (state.value.isEnabled) {
+                        Text(
+                            text = "✓ Connected",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    } else when (state.value.permissionStatus) {
                         SettingsHealthConnectState.PermissionStatus.Denied -> {
                             Text(
                                 text = "⚠ Permission required",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        SettingsHealthConnectState.PermissionStatus.PermanentlyDenied -> {
+                            Text(
+                                text = "⚠ Permissions denied - check settings",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -203,29 +229,34 @@ fun SettingsHealthConnectView(
                         )
                         
                         // Retry button for permission denied
-                        if (state.value.permissionStatus == 
-                            SettingsHealthConnectState.PermissionStatus.Denied) {
-                            Row(modifier = Modifier.padding(top = 4.dp)) {
+                        when (state.value.permissionStatus) {
+                            SettingsHealthConnectState.PermissionStatus.Denied -> {
                                 TextButton(
                                     onClick = {
                                         interactor.handle(
                                             state,
                                             SettingsHealthConnectInteractor.Action.RetryPermission
                                         )
-                                    }
+                                    },
+                                    modifier = Modifier.padding(top = 4.dp)
                                 ) {
                                     Text("Grant Permission")
                                 }
-
+                            }
+                            SettingsHealthConnectState.PermissionStatus.PermanentlyDenied -> {
                                 TextButton(
                                     onClick = {
-                                        // Use direct permission launcher
-                                        directPermissionLauncher()
-                                    }
+                                        interactor.handle(
+                                            state,
+                                            SettingsHealthConnectInteractor.Action.OpenAppSettings
+                                        )
+                                    },
+                                    modifier = Modifier.padding(top = 4.dp)
                                 ) {
-                                    Text("Open Settings")
+                                    Text("Open App Settings")
                                 }
                             }
+                            else -> {}
                         }
                     }
                     

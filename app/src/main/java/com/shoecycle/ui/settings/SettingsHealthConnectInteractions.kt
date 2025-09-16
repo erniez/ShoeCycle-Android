@@ -18,12 +18,14 @@ data class SettingsHealthConnectState(
     val isCheckingPermissions: Boolean = false,
     val permissionStatus: PermissionStatus = PermissionStatus.Unknown,
     val showPermissionDialog: Boolean = false,
+    val showAppSettings: Boolean = false,
     val errorMessage: String? = null
 ) {
     enum class PermissionStatus {
         Unknown,
         Granted,
         Denied,
+        PermanentlyDenied,
         NotAvailable
     }
 }
@@ -45,7 +47,10 @@ class SettingsHealthConnectInteractor(
         object PermissionDenied : Action()
         object DismissError : Action()
         object RetryPermission : Action()
+        object OpenAppSettings : Action()
     }
+
+    private var denialCount = 0
     
     fun handle(state: MutableState<SettingsHealthConnectState>, action: Action) {
         when (action) {
@@ -71,6 +76,8 @@ class SettingsHealthConnectInteractor(
             
             is Action.PermissionGranted -> {
                 Log.d(TAG, "Health Connect permissions granted")
+                denialCount = 0  // Reset denial count on success
+
                 state.value = state.value.copy(
                     isEnabled = true,
                     isCheckingPermissions = false,
@@ -85,12 +92,25 @@ class SettingsHealthConnectInteractor(
             
             is Action.PermissionDenied -> {
                 Log.d(TAG, "Health Connect permissions denied")
+                denialCount++
+
+                // After 2 denials, assume permissions are permanently denied
+                val isPermanentlyDenied = denialCount >= 2
+
                 state.value = state.value.copy(
                     isEnabled = false,
                     isCheckingPermissions = false,
-                    permissionStatus = SettingsHealthConnectState.PermissionStatus.Denied,
+                    permissionStatus = if (isPermanentlyDenied) {
+                        SettingsHealthConnectState.PermissionStatus.PermanentlyDenied
+                    } else {
+                        SettingsHealthConnectState.PermissionStatus.Denied
+                    },
                     showPermissionDialog = false,
-                    errorMessage = "Health Connect permissions are required to sync your runs. You can grant permissions in Settings."
+                    errorMessage = if (isPermanentlyDenied) {
+                        "Health Connect permissions have been denied. Please grant permissions in your device settings."
+                    } else {
+                        "Health Connect permissions are required to sync your runs."
+                    }
                 )
                 scope.launch {
                     repository.updateHealthConnectEnabled(false)
@@ -103,6 +123,10 @@ class SettingsHealthConnectInteractor(
             
             is Action.RetryPermission -> {
                 checkAndRequestPermissions(state)
+            }
+
+            is Action.OpenAppSettings -> {
+                state.value = state.value.copy(showAppSettings = true)
             }
         }
     }
@@ -143,9 +167,12 @@ class SettingsHealthConnectInteractor(
                 // Get current enabled state from repository
                 val currentSettings = repository.userSettingsFlow.first()
                 val currentEnabled = currentSettings.healthConnectEnabled
-                
+
+                // Switch should only be on if BOTH enabled in settings AND authorized
+                val switchOn = currentEnabled && isAuthorized
+
                 state.value = state.value.copy(
-                    isEnabled = currentEnabled && isAuthorized,
+                    isEnabled = switchOn,
                     isCheckingPermissions = false,
                     permissionStatus = if (isAuthorized) {
                         SettingsHealthConnectState.PermissionStatus.Granted
@@ -153,7 +180,7 @@ class SettingsHealthConnectInteractor(
                         SettingsHealthConnectState.PermissionStatus.Unknown
                     }
                 )
-                
+
                 // If setting is enabled but permissions were revoked, disable it
                 if (currentEnabled && !isAuthorized) {
                     repository.updateHealthConnectEnabled(false)
