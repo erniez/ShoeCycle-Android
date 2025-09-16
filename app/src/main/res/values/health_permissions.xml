@@ -2,6 +2,7 @@
 <resources>
     <array name="health_permissions">
         <item>android.permission.health.WRITE_EXERCISE</item>
+        <item>android.permission.health.WRITE_DISTANCE</item>
     </array>
     
     <!-- Declare the app name for Health Connect -->

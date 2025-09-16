@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.metadata.Metadata
 import com.shoecycle.domain.DistanceUtility
@@ -34,7 +35,8 @@ class RealHealthConnectService(
     }
     
     private val requiredPermissions = setOf(
-        HealthPermission.getWritePermission(ExerciseSessionRecord::class)
+        HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+        HealthPermission.getWritePermission(DistanceRecord::class)
     )
     
     /**
@@ -87,10 +89,20 @@ class RealHealthConnectService(
                     notes = shoeId?.let { "Shoe ID: $it\nDistance: $distance miles" },
                     metadata = metadata
                 )
-                
-                // Insert record into Health Connect
+
+                // Create distance record with the converted meters value
+                val distanceRecord = DistanceRecord(
+                    startTime = startTime,
+                    startZoneOffset = zoneOffset,
+                    endTime = endTime,
+                    endZoneOffset = zoneOffset,
+                    distance = androidx.health.connect.client.units.Length.meters(distanceInMeters),
+                    metadata = metadata
+                )
+
+                // Insert both records into Health Connect
                 val insertedRecords = healthConnectClient.insertRecords(
-                    listOf(exerciseSession)
+                    listOf(exerciseSession, distanceRecord)
                 )
                 
                 // Get the workout ID from the inserted session record

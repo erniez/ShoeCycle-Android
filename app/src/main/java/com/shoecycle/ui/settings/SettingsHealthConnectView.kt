@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import android.app.Activity
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.domain.ServiceLocator
@@ -40,19 +41,16 @@ fun SettingsHealthConnectView(
     // Permission launcher
     val permissions = remember {
         setOf(
-            HealthPermission.getWritePermission(ExerciseSessionRecord::class)
+            HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+            HealthPermission.getWritePermission(DistanceRecord::class)
         )
     }
     
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        Log.d("SettingsHealthConnect", "Permission result received: $granted")
-        Log.d("SettingsHealthConnect", "Required permissions: $permissions")
-        
         // If granted is empty, the dialog never showed (Health Connect not installed or other issue)
         if (granted.isEmpty()) {
-            Log.e("SettingsHealthConnect", "Permission dialog did not show - Health Connect may not be installed")
             // Try opening Health Connect directly
             val activity = context as? Activity
             if (activity != null) {
@@ -60,10 +58,10 @@ fun SettingsHealthConnectView(
             }
             interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
         } else if (granted.containsAll(permissions)) {
-            Log.d("SettingsHealthConnect", "All permissions granted")
             interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionGranted)
         } else {
-            Log.d("SettingsHealthConnect", "Permissions denied. Granted: $granted, Required: $permissions")
+            // Open Health Connect settings to grant the missing permissions
+            directPermissionLauncher()
             interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
         }
     }
@@ -81,7 +79,6 @@ fun SettingsHealthConnectView(
             
             if (isMockMode) {
                 // In mock mode, simulate permission request with the mock service
-                Log.d("SettingsHealthConnect", "Mock mode: Simulating permission request")
                 val healthService = ServiceLocator.provideHealthService(context)
                 val result = healthService.requestAuthorization()
                 if (result.isSuccess && result.getOrNull() == true) {
@@ -91,11 +88,9 @@ fun SettingsHealthConnectView(
                 }
             } else {
                 // Real mode: Launch actual permission dialog
-                Log.d("SettingsHealthConnect", "Launching permission request with permissions: $permissions")
                 try {
                     permissionLauncher.launch(permissions)
                 } catch (e: Exception) {
-                    Log.e("SettingsHealthConnect", "Failed to launch permission request", e)
                     interactor.handle(state, SettingsHealthConnectInteractor.Action.PermissionDenied)
                 }
             }
@@ -221,7 +216,7 @@ fun SettingsHealthConnectView(
                                 ) {
                                     Text("Grant Permission")
                                 }
-                                
+
                                 TextButton(
                                     onClick = {
                                         // Use direct permission launcher

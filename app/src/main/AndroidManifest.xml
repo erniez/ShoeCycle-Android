@@ -12,7 +12,8 @@
     <!-- Health Connect permissions -->
     <!-- Phase 1: Write-only permission for one-way sync -->
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
-    
+    <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
+
     <!-- Required for Android 14+ where Health Connect is in system settings -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />

@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import kotlinx.coroutines.launch
 
@@ -35,10 +36,12 @@ fun rememberDirectHealthPermissionLauncher(
             try {
                 val client = HealthConnectClient.getOrCreate(context)
                 val granted = client.permissionController.getGrantedPermissions()
-                val hasPermission = granted.contains(
-                    HealthPermission.getWritePermission(ExerciseSessionRecord::class)
+                val requiredPermissions = setOf(
+                    HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+                    HealthPermission.getWritePermission(DistanceRecord::class)
                 )
-                onResult(hasPermission)
+                val hasAllPermissions = granted.containsAll(requiredPermissions)
+                onResult(hasAllPermissions)
             } catch (e: Exception) {
                 Log.e("DirectHealthPermission", "Error checking permissions", e)
                 onResult(false)
@@ -52,32 +55,38 @@ fun rememberDirectHealthPermissionLauncher(
                 try {
                     // First, check if Health Connect is available
                     val sdkStatus = HealthConnectClient.getSdkStatus(context)
-                    Log.d("DirectHealthPermission", "SDK Status: $sdkStatus")
-                    
+
                     if (sdkStatus == HealthConnectClient.SDK_AVAILABLE) {
                         // Try the direct permission request first
                         val client = HealthConnectClient.getOrCreate(context)
                         val permissions = setOf(
-                            HealthPermission.getWritePermission(ExerciseSessionRecord::class)
+                            HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+                            HealthPermission.getWritePermission(DistanceRecord::class)
                         )
                         
                         // Check if we already have permissions
                         val granted = client.permissionController.getGrantedPermissions()
+
                         if (!granted.containsAll(permissions)) {
-                            Log.d("DirectHealthPermission", "Requesting permissions directly")
-                            
-                            // Create the permission intent
-                            val permissionContract = PermissionController.createRequestPermissionResultContract()
-                            val intent = permissionContract.createIntent(context, permissions)
-                            
-                            // Launch the intent
-                            launcher.launch(intent)
+                            // If we're missing WRITE_DISTANCE specifically, open settings directly
+                            // because Health Connect doesn't always show the dialog for additional permissions
+                            val missingDistance = !granted.contains(
+                                HealthPermission.getWritePermission(DistanceRecord::class)
+                            )
+
+                            if (missingDistance && granted.isNotEmpty()) {
+                                openHealthConnectSettingsDirect(activity)
+                            } else {
+                                // Try the permission intent for first-time permissions
+                                val permissionContract = PermissionController.createRequestPermissionResultContract()
+                                val intent = permissionContract.createIntent(context, permissions)
+                                // Launch the intent
+                                launcher.launch(intent)
+                            }
                         } else {
-                            Log.d("DirectHealthPermission", "Permissions already granted")
                             onResult(true)
                         }
                     } else {
-                        Log.e("DirectHealthPermission", "Health Connect not available: $sdkStatus")
                         // Open settings as fallback
                         openHealthConnectSettingsDirect(activity)
                     }

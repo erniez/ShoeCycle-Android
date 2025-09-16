@@ -73,6 +73,7 @@ class SettingsHealthConnectInteractor(
                 Log.d(TAG, "Health Connect permissions granted")
                 state.value = state.value.copy(
                     isEnabled = true,
+                    isCheckingPermissions = false,
                     permissionStatus = SettingsHealthConnectState.PermissionStatus.Granted,
                     showPermissionDialog = false,
                     errorMessage = null
@@ -86,6 +87,7 @@ class SettingsHealthConnectInteractor(
                 Log.d(TAG, "Health Connect permissions denied")
                 state.value = state.value.copy(
                     isEnabled = false,
+                    isCheckingPermissions = false,
                     permissionStatus = SettingsHealthConnectState.PermissionStatus.Denied,
                     showPermissionDialog = false,
                     errorMessage = "Health Connect permissions are required to sync your runs. You can grant permissions in Settings."

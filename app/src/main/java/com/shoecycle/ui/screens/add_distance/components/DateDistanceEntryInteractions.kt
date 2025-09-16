@@ -164,8 +164,6 @@ class DateDistanceEntryInteractor(
         distance: Double
     ) {
         scope.launch {
-            Log.d(TAG, "Starting Health Connect sync for distance: $distance mi on date: $date")
-            
             // Update UI to show syncing
             state.value = state.value.copy(
                 healthConnectSyncStatus = DateDistanceEntryState.SyncStatus.Syncing
