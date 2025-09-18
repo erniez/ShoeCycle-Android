@@ -13,13 +13,13 @@ if (file("google-services.json").exists()) {
 
 android {
     namespace = "com.shoecycle"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.shoecycle"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
+        targetSdk = 35
+        versionCode = 4
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -78,6 +78,43 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+// Task to remove AD_ID permissions from merged manifest
+tasks.register("stripAdIdPermissions") {
+    doLast {
+        val manifestFiles = fileTree("${buildDir}/intermediates/merged_manifests/") {
+            include("**/AndroidManifest.xml")
+        }
+
+        manifestFiles.forEach { file ->
+            val content = file.readText()
+            val modifiedContent = content
+                .replace("""<uses-permission android:name="com.google.android.gms.permission.AD_ID" />""", "<!-- AD_ID permission removed -->")
+                .replace("""<uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" />""", "<!-- ACCESS_ADSERVICES_AD_ID permission removed -->")
+                .replace("""<uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" />""", "<!-- ACCESS_ADSERVICES_ATTRIBUTION permission removed -->")
+
+            if (content != modifiedContent) {
+                file.writeText(modifiedContent)
+                println("Removed AD_ID permissions from: ${file.path}")
+            }
+        }
+    }
+}
+
+// Hook the strip task to run after manifest merging
+afterEvaluate {
+    tasks.named("processReleaseManifest") {
+        finalizedBy("stripAdIdPermissions")
+    }
+    tasks.named("processDebugManifest") {
+        finalizedBy("stripAdIdPermissions")
+    }
+
+    // Also hook it to bundle tasks for Play Store uploads
+    tasks.matching { it.name.contains("bundle", ignoreCase = true) }.configureEach {
+        dependsOn("stripAdIdPermissions")
     }
 }
 
