@@ -309,14 +309,17 @@ fun DateDistanceEntryView(
                                     syncStatus = state.value.healthConnectSyncStatus,
                                     icon = {
                                         Icon(
-                                            imageVector = Icons.Default.Favorite,
+                                            imageVector = when (state.value.healthConnectSyncStatus) {
+                                                DateDistanceEntryState.SyncStatus.Failed -> Icons.Default.FavoriteBorder
+                                                else -> Icons.Default.Favorite
+                                            },
                                             contentDescription = "Health Connect",
                                             modifier = Modifier.size(SERVICE_INDICATOR_ICON_SIZE),
                                             tint = when (state.value.healthConnectSyncStatus) {
                                                 DateDistanceEntryState.SyncStatus.Success -> Color.Green
                                                 DateDistanceEntryState.SyncStatus.Failed -> shoeCycleRed
                                                 DateDistanceEntryState.SyncStatus.Syncing -> shoeCycleBlue
-                                                else -> Color.White
+                                                else -> Color.Red
                                             }
                                         )
                                     }
@@ -333,16 +336,10 @@ fun DateDistanceEntryView(
                                     isActive = true,
                                     syncStatus = state.value.stravaSyncStatus,
                                     icon = {
-                                        Icon(
-                                            imageVector = Icons.Default.PlayArrow,
+                                        Image(
+                                            painter = painterResource(id = com.shoecycle.R.drawable.ic_strava_logo),
                                             contentDescription = "Strava",
-                                            modifier = Modifier.size(SERVICE_INDICATOR_ICON_SIZE),
-                                            tint = when (state.value.stravaSyncStatus) {
-                                                DateDistanceEntryState.SyncStatus.Success -> Color.Green
-                                                DateDistanceEntryState.SyncStatus.Failed -> shoeCycleRed
-                                                DateDistanceEntryState.SyncStatus.Syncing -> shoeCycleBlue
-                                                else -> Color.White
-                                            }
+                                            modifier = Modifier.size(SERVICE_INDICATOR_ICON_SIZE)
                                         )
                                     }
                                 )
