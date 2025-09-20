@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.shoecycle.BuildConfig
 import com.shoecycle.data.UserSettingsRepository
 
 @Composable
@@ -111,13 +112,14 @@ fun AboutDialog(
     }
     
     val versionName = packageInfo?.versionName ?: "Unknown"
-    
+    val buildNumber = BuildConfig.VERSION_CODE
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("About") },
         text = {
             Text(
-                text = "ShoeCycle is programmed by Ernie Zappacosta.\n\nCurrent version is $versionName",
+                text = "ShoeCycle is programmed by Ernie Zappacosta.\n\nVersion: $versionName (Build $buildNumber)",
                 textAlign = TextAlign.Center
             )
         },
