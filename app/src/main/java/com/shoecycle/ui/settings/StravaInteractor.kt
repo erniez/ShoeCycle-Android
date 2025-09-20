@@ -22,21 +22,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import java.io.IOException
-
-// Extension function to convert JSONObject to Map
-private fun JSONObject.toMap(): Map<String, Any> {
-    val map = mutableMapOf<String, Any>()
-    keys().forEach { key ->
-        val value = get(key)
-        map[key] = when (value) {
-            is JSONObject -> value.toMap()
-            else -> value
-        }
-    }
-    return map
-}
 
 // State
 data class StravaState(
@@ -184,11 +170,9 @@ class StravaInteractor(
             try {
                 // Exchange authorization code for access token
                 val tokenResponse = exchangeCodeForToken(code)
-                
-                // Parse response and create token
-                val jsonResponse = JSONObject(tokenResponse)
-                val jsonMap = jsonResponse.toMap()
-                val token = StravaToken.fromJson(jsonMap)
+
+                // Parse response and create token directly from JSON string
+                val token = StravaToken.fromJson(tokenResponse)
                 
                 // Save token using StravaTokenKeeper
                 tokenKeeper.storeToken(token)

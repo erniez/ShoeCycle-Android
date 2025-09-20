@@ -129,22 +129,24 @@ class StravaTokenKeeperTest {
     
     @Test
     fun `test token fromJson`() {
-        val json = mapOf(
-            "token_type" to "Bearer",
-            "expires_at" to 1234567890L,
-            "expires_in" to 3600L,
-            "refresh_token" to "refresh_token_value",
-            "access_token" to "access_token_value",
-            "athlete" to mapOf(
-                "id" to 123456L,
-                "username" to "johndoe",
-                "firstname" to "John",
-                "lastname" to "Doe",
-                "profile" to "https://example.com/profile.jpg"
-            )
-        )
-        
-        val token = StravaToken.fromJson(json)
+        val jsonString = """
+            {
+                "token_type": "Bearer",
+                "expires_at": 1234567890,
+                "expires_in": 3600,
+                "refresh_token": "refresh_token_value",
+                "access_token": "access_token_value",
+                "athlete": {
+                    "id": 123456,
+                    "username": "johndoe",
+                    "firstname": "John",
+                    "lastname": "Doe",
+                    "profile": "https://example.com/profile.jpg"
+                }
+            }
+        """.trimIndent()
+
+        val token = StravaToken.fromJson(jsonString)
         
         assertEquals("Bearer", token.tokenType)
         assertEquals(1234567890L, token.expiresAt)

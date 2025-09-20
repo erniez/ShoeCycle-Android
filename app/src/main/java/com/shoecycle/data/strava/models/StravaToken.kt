@@ -1,6 +1,33 @@
 package com.shoecycle.data.strava.models
 
-import java.util.Date
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+/**
+ * Represents athlete information from Strava OAuth response.
+ */
+@Serializable
+data class StravaAthlete(
+    val id: Long? = null,
+    val username: String? = null,
+    val firstname: String? = null,
+    val lastname: String? = null,
+    val profile: String? = null
+)
+
+/**
+ * Represents the OAuth response from Strava API.
+ */
+@Serializable
+data class StravaOAuthResponse(
+    @SerialName("token_type") val tokenType: String = "Bearer",
+    @SerialName("expires_at") val expiresAt: Long = 0L,
+    @SerialName("expires_in") val expiresIn: Long = 0L,
+    @SerialName("refresh_token") val refreshToken: String = "",
+    @SerialName("access_token") val accessToken: String = "",
+    val athlete: StravaAthlete? = null
+)
 
 /**
  * Represents a Strava authentication token with expiration checking.
@@ -28,7 +55,7 @@ data class StravaToken(
             val bufferTime = 60 // 1 minute buffer before actual expiration
             return currentTime >= (expiresAt - bufferTime)
         }
-    
+
     /**
      * Returns the athlete's full name if available.
      */
@@ -39,25 +66,29 @@ data class StravaToken(
             athleteLastName != null -> athleteLastName
             else -> null
         }
-    
+
     companion object {
+        private val json = Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
+
         /**
-         * Creates a StravaToken from the OAuth response JSON.
+         * Creates a StravaToken from the OAuth response JSON string.
          */
-        fun fromJson(json: Map<String, Any>): StravaToken {
-            val athlete = json["athlete"] as? Map<String, Any>
-            
+        fun fromJson(jsonString: String): StravaToken {
+            val response = json.decodeFromString<StravaOAuthResponse>(jsonString)
             return StravaToken(
-                tokenType = json["token_type"] as? String ?: "Bearer",
-                expiresAt = (json["expires_at"] as? Number)?.toLong() ?: 0L,
-                expiresIn = (json["expires_in"] as? Number)?.toLong() ?: 0L,
-                refreshToken = json["refresh_token"] as? String ?: "",
-                accessToken = json["access_token"] as? String ?: "",
-                athleteId = athlete?.get("id") as? Long,
-                athleteUsername = athlete?.get("username") as? String,
-                athleteFirstName = athlete?.get("firstname") as? String,
-                athleteLastName = athlete?.get("lastname") as? String,
-                athleteProfilePicture = athlete?.get("profile") as? String
+                tokenType = response.tokenType,
+                expiresAt = response.expiresAt,
+                expiresIn = response.expiresIn,
+                refreshToken = response.refreshToken,
+                accessToken = response.accessToken,
+                athleteId = response.athlete?.id,
+                athleteUsername = response.athlete?.username,
+                athleteFirstName = response.athlete?.firstname,
+                athleteLastName = response.athlete?.lastname,
+                athleteProfilePicture = response.athlete?.profile
             )
         }
     }
