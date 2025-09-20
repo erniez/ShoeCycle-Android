@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -14,8 +15,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.shoecycle.data.DistanceUnit
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.ui.theme.shoeCycleGreen
+import kotlinx.coroutines.flow.first
 import java.text.DecimalFormat
 
 @Composable
@@ -24,7 +28,9 @@ fun SettingsFavoriteDistancesSection(
 ) {
     val state = remember { mutableStateOf(SettingsFavoriteDistancesState()) }
     val interactor = remember { SettingsFavoriteDistancesInteractor(repository) }
-    
+    val userSettings by repository.userSettingsFlow.collectAsState(initial = null)
+    val currentUnit = userSettings?.distanceUnit ?: DistanceUnit.MILES
+
     // Initialize state when view appears
     LaunchedEffect(Unit) {
         interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.ViewAppeared)
@@ -50,7 +56,7 @@ fun SettingsFavoriteDistancesSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Favorite Distances",
+                    text = "Favorite Distances (${DistanceUtility.getUnitLabel(currentUnit)})",
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -65,6 +71,7 @@ fun SettingsFavoriteDistancesSection(
                         interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(1, distance))
                     },
                     label = "Favorite 1",
+                    unit = currentUnit,
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -74,6 +81,7 @@ fun SettingsFavoriteDistancesSection(
                         interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(2, distance))
                     },
                     label = "Favorite 2",
+                    unit = currentUnit,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -90,6 +98,7 @@ fun SettingsFavoriteDistancesSection(
                         interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(3, distance))
                     },
                     label = "Favorite 3",
+                    unit = currentUnit,
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -99,6 +108,7 @@ fun SettingsFavoriteDistancesSection(
                         interactor.handle(state, SettingsFavoriteDistancesInteractor.Action.FavoriteChanged(4, distance))
                     },
                     label = "Favorite 4",
+                    unit = currentUnit,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -108,13 +118,16 @@ fun SettingsFavoriteDistancesSection(
 
 @Composable
 private fun FavoriteDistanceTextField(
-    value: Double,
-    onValueChange: (Double) -> Unit,
+    value: Double, // Value in miles from storage
+    onValueChange: (Double) -> Unit, // Expects miles to save
     label: String,
+    unit: DistanceUnit,
     modifier: Modifier = Modifier
 ) {
-    var textValue by remember(value) { 
-        mutableStateOf(if (value > 0.0) formatDecimal(value) else "") 
+    // Convert miles to display unit
+    val displayValue = DistanceUtility.convertFromMiles(value, unit)
+    var textValue by remember(displayValue, unit) {
+        mutableStateOf(if (displayValue > 0.0) formatDecimal(displayValue) else "")
     }
     val keyboardController = LocalSoftwareKeyboardController.current
     
@@ -133,7 +146,9 @@ private fun FavoriteDistanceTextField(
                 textValue = newText
                 newText.toDoubleOrNull()?.let { doubleValue ->
                     if (doubleValue >= 0.0) {
-                        onValueChange(doubleValue)
+                        // Convert from display unit to miles for storage
+                        val milesValue = DistanceUtility.convertToMiles(doubleValue, unit)
+                        onValueChange(milesValue)
                     }
                 }
             }
