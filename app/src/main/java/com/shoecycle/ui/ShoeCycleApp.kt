@@ -87,13 +87,20 @@ fun ShoeCycleApp() {
     // FTU hint system
     val ftuState = remember { mutableStateOf(FTUState()) }
     val ftuInteractor = remember { FTUInteractor(ftuRepository) }
-    
+
     // Check for active shoes count to determine if hints should be shown
     val activeShoes by shoeRepository.getActiveShoes().collectAsState(initial = emptyList())
-    
-    // Check for hints when we have 2+ active shoes (matching iOS behavior)
-    LaunchedEffect(activeShoes) {
-        if (activeShoes.size >= 2) {
+
+    // Track if we've already checked for hints on app launch
+    val hasCheckedForHints = remember { mutableStateOf(false) }
+
+    // Only check for hints once on app launch when we have 2+ active shoes
+    // This prevents hints from showing when a user creates their second shoe
+    LaunchedEffect(Unit) {
+        // Get initial shoe count
+        val initialShoes = shoeRepository.getActiveShoes().first()
+        if (initialShoes.size >= 2 && !hasCheckedForHints.value) {
+            hasCheckedForHints.value = true
             ftuInteractor.handle(ftuState, FTUInteractor.Action.CheckForHints)
         }
     }
