@@ -86,6 +86,7 @@ class DateProgressViewModel(
                     vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     // API 26-30 - Use Vibrator with VibrationEffect
+                    @Suppress("DEPRECATION")
                     val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
                     vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
                 } else {
