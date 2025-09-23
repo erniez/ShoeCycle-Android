@@ -88,9 +88,6 @@ fun ShoeCycleApp() {
     val ftuState = remember { mutableStateOf(FTUState()) }
     val ftuInteractor = remember { FTUInteractor(ftuRepository) }
 
-    // Check for active shoes count to determine if hints should be shown
-    val activeShoes by shoeRepository.getActiveShoes().collectAsState(initial = emptyList())
-
     // Track if we've already checked for hints on app launch
     val hasCheckedForHints = remember { mutableStateOf(false) }
 

@@ -37,11 +37,7 @@ import com.shoecycle.data.UserSettingsRepository
 fun SettingsScreen() {
     val context = LocalContext.current
     val repository = remember { UserSettingsRepository(context) }
-    val userSettings by repository.userSettingsFlow.collectAsState(
-        initial = com.shoecycle.data.UserSettingsData()
-    )
-    
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()

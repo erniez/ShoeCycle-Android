@@ -222,8 +222,6 @@ fun AddDistanceScreen() {
         // Date Progress View
         ShoeCycleDateProgressView(
             shoe = state.value.selectedShoe,
-            distanceUnit = state.value.distanceUnit,
-            bounceRequested = bounceRequested,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
         

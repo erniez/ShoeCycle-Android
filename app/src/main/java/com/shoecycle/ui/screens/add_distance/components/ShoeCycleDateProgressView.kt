@@ -19,8 +19,6 @@ import java.util.*
 @Composable
 fun ShoeCycleDateProgressView(
     shoe: Shoe?,
-    distanceUnit: DistanceUnit, // Added for consistency, not used in date view
-    bounceRequested: Boolean, // Kept for interface compatibility but not used
     modifier: Modifier = Modifier
 ) {
     // Calculate days left until expiration

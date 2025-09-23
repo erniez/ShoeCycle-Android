@@ -305,7 +305,6 @@ fun DateDistanceEntryView(
                             // Health Connect indicator
                             if (state.value.healthConnectEnabled) {
                                 ServiceIndicator(
-                                    isActive = true,
                                     syncStatus = state.value.healthConnectSyncStatus,
                                     icon = {
                                         Icon(
@@ -333,7 +332,6 @@ fun DateDistanceEntryView(
                             // Strava indicator
                             if (state.value.stravaEnabled) {
                                 ServiceIndicator(
-                                    isActive = true,
                                     syncStatus = state.value.stravaSyncStatus,
                                     icon = {
                                         Image(
@@ -389,7 +387,6 @@ fun DateDistanceEntryView(
 
 @Composable
 private fun ServiceIndicator(
-    isActive: Boolean,
     syncStatus: DateDistanceEntryState.SyncStatus,
     icon: @Composable () -> Unit,
     modifier: Modifier = Modifier
