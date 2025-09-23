@@ -1,9 +1,7 @@
 package com.shoecycle.ui.screens.add_distance.components.chart
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -13,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -37,11 +34,8 @@ import com.shoecycle.data.DistanceUnit
 import com.shoecycle.domain.DistanceUtility
 import com.shoecycle.ui.screens.add_distance.utils.WeeklyCollatedNew
 import com.shoecycle.ui.theme.*
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 private val Y_AXIS_LABEL_WIDTH = 24.dp
 
@@ -118,7 +112,7 @@ fun RunHistoryChartView(
                         animationController = animationController,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(horizontal = 16.dp, vertical = 0.dp),
                         onStateChange = { newState ->
                             state = newState
                         }
@@ -229,7 +223,6 @@ private fun ScrollableChartCanvas(
     onStateChange: (RunHistoryChartState) -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     
     // Auto-scroll to end when data loads
@@ -306,14 +299,15 @@ private fun YAxisLabels(
     
     Canvas(modifier = modifier) {
         val canvasHeight = size.height
-        val padding = 16.dp.toPx()
-        val chartHeight = canvasHeight - (padding * 2)
-        
+        val paddingTop = 16.dp.toPx()
+        val paddingBottom = 0.dp.toPx()
+        val chartHeight = canvasHeight - paddingTop - paddingBottom
+
         // Draw Y-axis line on the right edge (where it meets the chart)
         drawLine(
             color = Color.Gray,
-            start = Offset(size.width, padding),
-            end = Offset(size.width, padding + chartHeight),
+            start = Offset(size.width, paddingTop),
+            end = Offset(size.width, paddingTop + chartHeight),
             strokeWidth = 2f
         )
         
@@ -327,7 +321,7 @@ private fun YAxisLabels(
         
         for (i in 0..labelCount) {
             val valueInMiles = maxDistance * (labelCount - i) / labelCount
-            val y = padding + (chartHeight * i / labelCount)
+            val y = paddingTop + (chartHeight * i / labelCount)
             
             // Use DistanceUtility to convert and format
             val text = DistanceUtility.displayString(valueInMiles, distanceUnit).substringBefore(".")
@@ -410,7 +404,7 @@ private fun ChartCanvas(
         val canvasWidth = size.width
         val canvasHeight = size.height
         val paddingTop = 16.dp.toPx()
-        val paddingBottom = 32.dp.toPx() // More space for X-axis labels
+        val paddingBottom = 0.dp.toPx() // Minimal space for X-axis labels
         val paddingLeft = 0f
         val paddingRight = 16.dp.toPx()
         
@@ -443,7 +437,6 @@ private fun ChartCanvas(
                 paddingLeft = paddingLeft,
                 paddingTop = paddingTop,
                 chartWidth = chartWidth,
-                chartHeight = chartHeight,
                 textMeasurer = textMeasurer
             )
         }
@@ -465,7 +458,6 @@ private fun ChartCanvas(
             data = data,
             paddingLeft = paddingLeft,
             paddingTop = paddingTop,
-            paddingBottom = paddingBottom,
             chartWidth = chartWidth,
             chartHeight = chartHeight,
             dateFormatter = dateFormatter,
@@ -551,7 +543,6 @@ private fun DrawScope.drawMaxDistanceLine(
     paddingLeft: Float,
     paddingTop: Float,
     chartWidth: Float,
-    chartHeight: Float,
     textMeasurer: androidx.compose.ui.text.TextMeasurer
 ) {
     val y = paddingTop // Max is at the top
@@ -622,7 +613,6 @@ private fun DrawScope.drawXAxisLabels(
     data: List<WeeklyCollatedNew>,
     paddingLeft: Float,
     paddingTop: Float,
-    paddingBottom: Float,
     chartWidth: Float,
     chartHeight: Float,
     dateFormatter: SimpleDateFormat,
@@ -635,17 +625,13 @@ private fun DrawScope.drawXAxisLabels(
         fontSize = 9.sp
     )
     
-    // Show fewer labels if many data points
-    val labelInterval = when {
-        data.size <= 6 -> 1
-        data.size <= 12 -> 2
-        else -> 3
-    }
-    
+    // Show every other week
+    val labelInterval = 2
+
     data.forEachIndexed { index, point ->
         if (index % labelInterval == 0) {
             val x = paddingLeft + (chartWidth * index / (data.size - 1).coerceAtLeast(1))
-            val y = paddingTop + chartHeight + 8f
+            val y = paddingTop + chartHeight + 2f
             
             val text = dateFormatter.format(point.date)
             val textResult = textMeasurer.measure(text, textStyle)
