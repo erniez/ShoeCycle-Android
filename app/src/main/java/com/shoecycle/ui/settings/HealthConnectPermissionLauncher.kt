@@ -102,26 +102,3 @@ object HealthConnectPermissionLauncher {
         }
     }
 }
-
-/**
- * Composable that provides a manual way to open Health Connect for permissions
- */
-@Composable
-fun rememberHealthConnectLauncher(
-    onResult: () -> Unit
-): () -> Unit {
-    val context = LocalContext.current
-    
-    return remember {
-        {
-            val activity = context as? Activity
-            if (activity != null) {
-                if (HealthConnectPermissionLauncher.isHealthConnectInstalled(activity)) {
-                    HealthConnectPermissionLauncher.openHealthConnectSettings(activity)
-                } else {
-                    HealthConnectPermissionLauncher.openHealthConnectApp(activity)
-                }
-            }
-        }
-    }
-}
