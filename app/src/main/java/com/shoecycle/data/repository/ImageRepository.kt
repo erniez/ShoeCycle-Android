@@ -14,11 +14,11 @@ class ImageRepository(
 ) {
     companion object {
         const val IMAGE_DIRECTORY = "shoe_images"
-        const val THUMBNAIL_WIDTH = 143
-        const val THUMBNAIL_HEIGHT = 96
-        const val DISPLAY_WIDTH = 210
-        const val DISPLAY_HEIGHT = 140
-        const val JPEG_QUALITY = 50 // 0.5 compression
+        const val THUMBNAIL_WIDTH = 300
+        const val THUMBNAIL_HEIGHT = 200
+        const val DISPLAY_WIDTH = 1200
+        const val DISPLAY_HEIGHT = 800
+        const val JPEG_QUALITY = 85 // Higher quality
         
         // Memory cache size: 1/8 of available memory
         private val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
@@ -98,7 +98,58 @@ class ImageRepository(
     }
     
     private fun resizeBitmap(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
-        return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+        val sourceWidth = bitmap.width
+        val sourceHeight = bitmap.height
+        val isLandscape = sourceWidth > sourceHeight
+
+        if (isLandscape) {
+            // Landscape: Use aspect fill (center crop)
+            val widthScale = targetWidth.toFloat() / sourceWidth
+            val heightScale = targetHeight.toFloat() / sourceHeight
+            val scale = maxOf(widthScale, heightScale)
+
+            // Calculate the actual dimensions after scaling
+            val scaledWidth = (sourceWidth * scale).toInt()
+            val scaledHeight = (sourceHeight * scale).toInt()
+
+            // Scale the bitmap maintaining aspect ratio
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+
+            // Calculate crop position to center the image
+            val xOffset = (scaledWidth - targetWidth) / 2
+            val yOffset = (scaledHeight - targetHeight) / 2
+
+            // Crop to target dimensions
+            return Bitmap.createBitmap(scaledBitmap, xOffset, yOffset, targetWidth, targetHeight)
+        } else {
+            // Portrait: Use aspect fit (letterbox)
+            val widthScale = targetWidth.toFloat() / sourceWidth
+            val heightScale = targetHeight.toFloat() / sourceHeight
+            val scale = minOf(widthScale, heightScale)
+
+            // Calculate the actual dimensions after scaling
+            val scaledWidth = (sourceWidth * scale).toInt()
+            val scaledHeight = (sourceHeight * scale).toInt()
+
+            // Scale the bitmap maintaining aspect ratio
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+
+            // Create a bitmap with the target dimensions and center the scaled image
+            val finalBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(finalBitmap)
+
+            // Fill with black background
+            canvas.drawColor(android.graphics.Color.BLACK)
+
+            // Calculate position to center the image
+            val left = (targetWidth - scaledWidth) / 2f
+            val top = (targetHeight - scaledHeight) / 2f
+
+            // Draw the scaled bitmap centered
+            canvas.drawBitmap(scaledBitmap, left, top, null)
+
+            return finalBitmap
+        }
     }
     
     private fun saveImageToFile(imageKey: String, bitmap: Bitmap) {
