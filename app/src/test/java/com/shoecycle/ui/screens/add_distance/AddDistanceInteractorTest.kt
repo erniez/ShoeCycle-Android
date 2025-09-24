@@ -416,7 +416,10 @@ class AddDistanceInteractorTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
-            mockSelectedShoeStrategy
+            mockSelectedShoeStrategy,
+            stravaService = null,
+            analytics = com.shoecycle.domain.analytics.MockAnalyticsLogger(),
+            scope = this
         )
         val state = mutableStateOf(AddDistanceState(graphAllShoes = false))
 
