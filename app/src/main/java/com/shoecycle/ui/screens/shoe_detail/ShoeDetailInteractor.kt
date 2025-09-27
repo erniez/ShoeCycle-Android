@@ -151,16 +151,19 @@ class ShoeDetailInteractor(
                             // Create new shoe
                             val insertedId = shoeRepository.insertShoe(editedShoe)
                             Log.d("ShoeDetailInteractor", "Successfully created shoe with ID: $insertedId")
-                            
+
                             // Log ADD_SHOE event
                             analytics.logEvent(AnalyticsKeys.Event.ADD_SHOE, mapOf(
                                 AnalyticsKeys.Param.SHOE_BRAND to editedShoe.brand,
                                 AnalyticsKeys.Param.START_MILEAGE to editedShoe.startDistance
                             ))
-                            
+
+                            // Update selected shoe strategy to potentially select this shoe if no others exist
+                            selectedShoeStrategy.updateSelectedShoe()
+
                             // Call the saved callback if provided
                             state.value.onShoeSaved?.invoke()
-                            
+
                             state.value = state.value.copy(
                                 isSaving = false,
                                 shouldNavigateBack = true

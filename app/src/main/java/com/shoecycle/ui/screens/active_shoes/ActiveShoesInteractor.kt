@@ -6,6 +6,7 @@ import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.MockShoeGenerator
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class ActiveShoesInteractor(
     private val shoeRepository: IShoeRepository,
     private val historyRepository: IHistoryRepository,
     private val userSettingsRepository: UserSettingsRepository,
+    private val selectedShoeStrategy: SelectedShoeStrategy,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     sealed class Action {
@@ -60,6 +62,10 @@ class ActiveShoesInteractor(
                         state.value = state.value.copy(isGeneratingTestData = true)
                         val mockGenerator = MockShoeGenerator(shoeRepository, historyRepository)
                         mockGenerator.generateNewShoeWithData()
+
+                        // Update selected shoe strategy to potentially select this shoe if no others exist
+                        selectedShoeStrategy.updateSelectedShoe()
+
                         state.value = state.value.copy(isGeneratingTestData = false)
                     } catch (e: Exception) {
                         state.value = state.value.copy(isGeneratingTestData = false)

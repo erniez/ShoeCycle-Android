@@ -31,7 +31,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.shoecycle.R
+import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.FTURepository
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.ui.ftu.FTUInteractor
 import com.shoecycle.ui.ftu.FTUState
 import com.shoecycle.ui.navigation.InitialTabStrategy
@@ -71,14 +73,18 @@ fun ShoeCycleApp() {
     
     // Initialize repositories
     val database = remember { com.shoecycle.data.database.ShoeCycleDatabase.getDatabase(context) }
-    val shoeRepository = remember { 
+    val shoeRepository = remember {
         com.shoecycle.data.repository.ShoeRepository(
             database.shoeDao(),
             database.historyDao()
         )
     }
     val ftuRepository = remember { FTURepository(context) }
-    
+    val userSettingsRepository = remember { UserSettingsRepository(context) }
+    val selectedShoeStrategy = remember {
+        SelectedShoeStrategy(shoeRepository, userSettingsRepository)
+    }
+
     // Determine initial tab based on shoe count (like iOS InitialTabStrategy)
     val initialDestination = remember {
         InitialTabStrategy(shoeRepository).initialTab()
@@ -100,6 +106,9 @@ fun ShoeCycleApp() {
             hasCheckedForHints.value = true
             ftuInteractor.handle(ftuState, FTUInteractor.Action.CheckForHints)
         }
+
+        // Update selected shoe strategy on app startup
+        selectedShoeStrategy.updateSelectedShoe()
     }
     
     // Show hint when one becomes available

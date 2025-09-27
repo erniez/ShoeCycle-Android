@@ -26,6 +26,7 @@ import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.Shoe
 import com.shoecycle.ui.screens.active_shoes.components.ShoeDetailModal
 
@@ -34,7 +35,7 @@ fun ActiveShoesListScreen(
     onNavigateToShoeDetail: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val shoeRepository = remember { 
+    val shoeRepository = remember {
         // TODO: Use dependency injection
         com.shoecycle.data.repository.ShoeRepository.create(context)
     }
@@ -42,7 +43,10 @@ fun ActiveShoesListScreen(
     val historyRepository = remember {
         com.shoecycle.data.repository.HistoryRepository.create(context, shoeRepository)
     }
-    val interactor = remember { ActiveShoesInteractor(shoeRepository, historyRepository, userSettingsRepository) }
+    val selectedShoeStrategy = remember {
+        SelectedShoeStrategy(shoeRepository, userSettingsRepository)
+    }
+    val interactor = remember { ActiveShoesInteractor(shoeRepository, historyRepository, userSettingsRepository, selectedShoeStrategy) }
     val state = remember { mutableStateOf(ActiveShoesState()) }
     
     // Modal state
