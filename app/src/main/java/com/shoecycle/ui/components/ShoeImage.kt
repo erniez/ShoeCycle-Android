@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.media.ExifInterface
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,31 +76,6 @@ fun ShoeImage(
         )
     }
 
-    // Fix image orientation based on EXIF data
-    fun fixImageOrientation(bitmap: Bitmap, uri: Uri): Bitmap {
-        val inputStream = context.contentResolver.openInputStream(uri)
-        inputStream?.use { stream ->
-            val exif = ExifInterface(stream)
-            val orientation = exif.getAttributeInt(
-                ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_NORMAL
-            )
-
-            val matrix = Matrix()
-            when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-                ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-                ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
-                ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
-            }
-
-            if (orientation != ExifInterface.ORIENTATION_NORMAL) {
-                return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-            }
-        }
-        return bitmap
-    }
     
     // Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -115,9 +88,10 @@ fun ShoeImage(
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
                         val bitmap = BitmapFactory.decodeStream(inputStream)
                         bitmap?.let {
-                            val correctedBitmap = fixImageOrientation(it, uri)
-                            val (imageKey, thumbnailData) = imageRepository.saveImage(correctedBitmap)
-                            displayBitmap = correctedBitmap
+                            // Repository now handles EXIF rotation
+                            val (imageKey, thumbnailData) = imageRepository.saveImage(it, uri)
+                            // Load the properly rotated display image
+                            displayBitmap = imageRepository.loadImage(imageKey)
                             onImageUpdated(imageKey, thumbnailData)
                         }
                     }
@@ -137,9 +111,10 @@ fun ShoeImage(
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val bitmap = BitmapFactory.decodeStream(inputStream)
                     bitmap?.let {
-                        val correctedBitmap = fixImageOrientation(it, uri)
-                        val (imageKey, thumbnailData) = imageRepository.saveImage(correctedBitmap)
-                        displayBitmap = correctedBitmap
+                        // Repository now handles EXIF rotation
+                        val (imageKey, thumbnailData) = imageRepository.saveImage(it, uri)
+                        // Load the properly rotated display image
+                        displayBitmap = imageRepository.loadImage(imageKey)
                         onImageUpdated(imageKey, thumbnailData)
                     }
                 }

@@ -3,6 +3,9 @@ package com.shoecycle.data.repository
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
+import android.net.Uri
 import android.util.LruCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,40 +42,54 @@ class ImageRepository(
     }
     
     /**
-     * Saves an image and returns the image key and thumbnail data
+     * Saves an image and returns the image key and thumbnail data.
+     * Applies EXIF rotation to thumbnails but saves original display image.
      */
-    suspend fun saveImage(bitmap: Bitmap): Pair<String, ByteArray> = withContext(Dispatchers.IO) {
+    suspend fun saveImage(bitmap: Bitmap, uri: Uri): Pair<String, ByteArray> = withContext(Dispatchers.IO) {
         val imageKey = UUID.randomUUID().toString()
-        
-        // Create display image
+
+        // Get EXIF orientation
+        val orientation = getExifOrientation(uri)
+
+        // Create display image (original, unrotated)
         val displayBitmap = resizeBitmap(bitmap, DISPLAY_WIDTH, DISPLAY_HEIGHT)
         saveImageToFile(imageKey, displayBitmap)
-        
-        // Cache display image
-        memoryCache.put(imageKey, displayBitmap)
-        
-        // Create thumbnail
+
+        // Save EXIF orientation metadata separately
+        saveExifOrientation(imageKey, orientation)
+
+        // Cache display image with rotation applied
+        val rotatedDisplay = applyExifRotation(displayBitmap, orientation)
+        memoryCache.put(imageKey, rotatedDisplay)
+
+        // Create thumbnail with rotation applied
         val thumbnailBitmap = resizeBitmap(bitmap, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
-        val thumbnailData = bitmapToByteArray(thumbnailBitmap)
-        
+        val rotatedThumbnail = applyExifRotation(thumbnailBitmap, orientation)
+        val thumbnailData = bitmapToByteArray(rotatedThumbnail)
+
         return@withContext Pair(imageKey, thumbnailData)
     }
     
     /**
-     * Loads a display image from cache or file
+     * Loads a display image from cache or file, applying EXIF rotation
      */
     suspend fun loadImage(imageKey: String): Bitmap? = withContext(Dispatchers.IO) {
         // Check memory cache first
         memoryCache.get(imageKey)?.let { return@withContext it }
-        
+
         // Load from file
         val file = File(imageDirectory, "$imageKey.jpg")
         if (file.exists()) {
             val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-            bitmap?.let { memoryCache.put(imageKey, it) }
-            return@withContext bitmap
+            if (bitmap != null) {
+                // Apply EXIF rotation from saved metadata
+                val orientation = loadExifOrientation(imageKey)
+                val rotatedBitmap = applyExifRotation(bitmap, orientation)
+                memoryCache.put(imageKey, rotatedBitmap)
+                return@withContext rotatedBitmap
+            }
         }
-        
+
         return@withContext null
     }
     
@@ -82,11 +99,17 @@ class ImageRepository(
     suspend fun deleteImage(imageKey: String) = withContext(Dispatchers.IO) {
         // Remove from cache
         memoryCache.remove(imageKey)
-        
-        // Delete file
+
+        // Delete image file
         val file = File(imageDirectory, "$imageKey.jpg")
         if (file.exists()) {
             file.delete()
+        }
+
+        // Delete EXIF metadata file
+        val exifFile = File(imageDirectory, "$imageKey.exif")
+        if (exifFile.exists()) {
+            exifFile.delete()
         }
     }
     
@@ -163,5 +186,63 @@ class ImageRepository(
         val outputStream = java.io.ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, outputStream)
         return outputStream.toByteArray()
+    }
+
+    /**
+     * Reads EXIF orientation from a URI
+     */
+    private fun getExifOrientation(uri: Uri): Int {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                val exif = ExifInterface(stream)
+                exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            } ?: ExifInterface.ORIENTATION_NORMAL
+        } catch (e: Exception) {
+            ExifInterface.ORIENTATION_NORMAL
+        }
+    }
+
+    /**
+     * Saves EXIF orientation metadata to a file
+     */
+    private fun saveExifOrientation(imageKey: String, orientation: Int) {
+        val exifFile = File(imageDirectory, "$imageKey.exif")
+        exifFile.writeText(orientation.toString())
+    }
+
+    /**
+     * Loads EXIF orientation metadata from a file
+     */
+    private fun loadExifOrientation(imageKey: String): Int {
+        val exifFile = File(imageDirectory, "$imageKey.exif")
+        return if (exifFile.exists()) {
+            try {
+                exifFile.readText().toInt()
+            } catch (e: Exception) {
+                ExifInterface.ORIENTATION_NORMAL
+            }
+        } else {
+            ExifInterface.ORIENTATION_NORMAL
+        }
+    }
+
+    /**
+     * Applies EXIF rotation to a bitmap
+     */
+    private fun applyExifRotation(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            else -> return bitmap // No rotation needed
+        }
+
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }

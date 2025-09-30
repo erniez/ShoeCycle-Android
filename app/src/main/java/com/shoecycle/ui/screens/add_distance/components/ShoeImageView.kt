@@ -96,8 +96,8 @@ fun ShoeImageView(
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
                         val bitmap = BitmapFactory.decodeStream(inputStream)
                         bitmap?.let {
-                            val (imageKey, thumbnailData) = imageRepository.saveImage(it)
-                            displayBitmap = it
+                            val (imageKey, thumbnailData) = imageRepository.saveImage(it, uri)
+                            displayBitmap = imageRepository.loadImage(imageKey)
                             onImageUpdated?.invoke(imageKey, thumbnailData)
                         }
                     }
@@ -117,8 +117,8 @@ fun ShoeImageView(
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val bitmap = BitmapFactory.decodeStream(inputStream)
                     bitmap?.let {
-                        val (imageKey, thumbnailData) = imageRepository.saveImage(it)
-                        displayBitmap = it
+                        val (imageKey, thumbnailData) = imageRepository.saveImage(it, uri)
+                        displayBitmap = imageRepository.loadImage(imageKey)
                         onImageUpdated?.invoke(imageKey, thumbnailData)
                     }
                 }
