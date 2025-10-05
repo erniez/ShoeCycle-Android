@@ -127,7 +127,12 @@ fun ShoeCycleApp() {
                 shoeCycleDestinations.forEach { destination ->
                     NavigationBarItem(
                         icon = { Icon(destination.icon, contentDescription = null) },
-                        label = { Text(stringResource(destination.titleRes)) },
+                        label = {
+                            Text(
+                                text = stringResource(destination.titleRes),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        },
                         selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                         onClick = {
                             navController.navigate(destination.route) {

@@ -207,11 +207,11 @@ fun DateDistanceEntryView(
                         modifier = Modifier
                             .widthIn(max = DISTANCE_FIELD_MAX_WIDTH)
                             .height(INPUT_FIELD_HEIGHT),
-                        placeholder = { 
+                        placeholder = {
                             Text(
-                                "Distance", 
+                                "0.0",
                                 color = Color.Gray
-                            ) 
+                            )
                         },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Black,
