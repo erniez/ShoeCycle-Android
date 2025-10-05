@@ -43,6 +43,8 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 
+private const val SHOE_IMAGE_ASPECT_RATIO = 1.5f
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ShoeImageView(
@@ -129,7 +131,8 @@ fun ShoeImageView(
     
     Card(
         modifier = modifier
-            .size(imageSize)
+            .width(imageSize * SHOE_IMAGE_ASPECT_RATIO)
+            .height(imageSize)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
