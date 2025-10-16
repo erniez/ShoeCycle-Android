@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.shoecycle.BuildConfig
 import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
@@ -125,7 +126,7 @@ fun ActiveShoesListScreen(
                             }
                             
                             // Debug-only test data generation button for empty state
-                            if (true) { // Always show for now, can be changed to BuildConfig.DEBUG
+                            if (BuildConfig.DEBUG) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 OutlinedButton(
                                     onClick = {
@@ -174,7 +175,7 @@ fun ActiveShoesListScreen(
                         }
                         
                         // Debug-only test data generation button
-                        if (true) { // Always show for now, can be changed to BuildConfig.DEBUG
+                        if (BuildConfig.DEBUG) {
                             item {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 OutlinedButton(
