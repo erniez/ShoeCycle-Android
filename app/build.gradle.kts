@@ -19,7 +19,7 @@ android {
         applicationId = "com.shoecycle"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
+        versionCode = 14
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -158,7 +158,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
     
     // Health Connect
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha08")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
     
     // Security - for EncryptedSharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")

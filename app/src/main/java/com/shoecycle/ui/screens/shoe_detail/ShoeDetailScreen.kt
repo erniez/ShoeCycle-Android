@@ -1,5 +1,6 @@
 package com.shoecycle.ui.screens.shoe_detail
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -339,7 +344,7 @@ private fun ShoeInformationSection(
     ShoeCycleSectionCard(
         title = "Shoe",
         color = Color(0xFFFF9800), // Orange color like iOS
-        icon = Icons.Default.Build // Placeholder - will use shoe icon later
+        painter = painterResource(id = R.drawable.ic_shoe)
     ) {
         Column(
             modifier = Modifier
@@ -377,7 +382,7 @@ private fun DistanceInformationSection(
     ShoeCycleSectionCard(
         title = "Distance",
         color = Color(0xFF4CAF50), // Green color like iOS
-        icon = Icons.Default.Build // Placeholder - will use steps icon later
+        painter = painterResource(id = R.drawable.ic_steps)
     ) {
         Row(
             modifier = Modifier
@@ -442,11 +447,11 @@ private fun WearTimeInformationSection(
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
-    
+
     ShoeCycleSectionCard(
         title = "Wear Time",
         color = Color(0xFF2196F3), // Blue color like iOS
-        icon = Icons.Default.Build // Placeholder - will use clock icon later
+        painter = painterResource(id = R.drawable.ic_clock)
     ) {
         Column(
             modifier = Modifier
@@ -589,7 +594,8 @@ private fun ShoeImageSection(
 private fun ShoeCycleSectionCard(
     title: String,
     color: Color,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    painter: Painter? = null,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -608,12 +614,31 @@ private fun ShoeCycleSectionCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    modifier = Modifier.size(40.dp),
-                    tint = color
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        icon != null -> {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = title,
+                                modifier = Modifier.fillMaxSize(),
+                                tint = color
+                            )
+                        }
+                        painter != null -> {
+                            Image(
+                                painter = painter,
+                                contentDescription = title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit,
+                                colorFilter = ColorFilter.tint(color)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = title,
@@ -623,7 +648,7 @@ private fun ShoeCycleSectionCard(
                     fontWeight = FontWeight.Medium
                 )
             }
-            
+
             // Vertical divider
             Box(
                 modifier = Modifier
@@ -645,7 +670,7 @@ private fun ShoeCycleSectionCard(
                     )
                 }
             }
-            
+
             // Content area
             Box(
                 modifier = Modifier.weight(1f)
