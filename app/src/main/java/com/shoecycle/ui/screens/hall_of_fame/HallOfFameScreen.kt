@@ -14,26 +14,46 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
+import com.shoecycle.data.dataStore
+import com.shoecycle.data.featureflags.FeatureFlagRepository
 import com.shoecycle.domain.DistanceUtility
+import com.shoecycle.ui.featureflags.FeatureFlagKeys
+import com.shoecycle.ui.featureflags.FeatureFlagsInteractor
+import com.shoecycle.ui.featureflags.FeatureFlagsState
+import com.shoecycle.ui.theme.shoeCycleGreen
 
 @Composable
 fun HallOfFameScreen(
     onNavigateToShoeDetail: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val shoeRepository = remember { 
+    val shoeRepository = remember {
         com.shoecycle.data.repository.ShoeRepository.create(context)
     }
     val userSettingsRepository = remember { UserSettingsRepository(context) }
-    val interactor = remember { 
-        HallOfFameInteractor(shoeRepository, userSettingsRepository) 
+    val interactor = remember {
+        HallOfFameInteractor(shoeRepository, userSettingsRepository)
     }
     val state = remember { mutableStateOf(HallOfFameState()) }
-    
+
+    // Feature flags (VSI): the interactor owns fetch + evaluation; this view only observes the
+    // resolved boolean below and never touches the repository directly (Android Rule 4).
+    val featureFlagsInteractor = remember {
+        FeatureFlagsInteractor(FeatureFlagRepository(context.dataStore))
+    }
+    val featureFlagsState = remember { mutableStateOf(FeatureFlagsState()) }
+
     LaunchedEffect(Unit) {
         interactor.handle(state, HallOfFameInteractor.Action.ViewAppeared)
+        featureFlagsInteractor.handle(
+            featureFlagsState,
+            FeatureFlagsInteractor.Action.ViewAppeared
+        )
     }
-    
+
+    // Demo gate: a trivial, reversible subtitle shown only when the demo flag resolves ON.
+    val showNewHallOfFameBadge = featureFlagsState.value.isEnabled(FeatureFlagKeys.NEW_HALL_OF_FAME)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -44,8 +64,16 @@ fun HallOfFameScreen(
             text = stringResource(R.string.hall_of_fame),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = if (showNewHallOfFameBadge) 4.dp else 16.dp)
         )
+        if (showNewHallOfFameBadge) {
+            Text(
+                text = stringResource(R.string.hall_of_fame_new_badge),
+                style = MaterialTheme.typography.bodyMedium,
+                color = shoeCycleGreen,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
         
         when {
             state.value.isLoading -> {
