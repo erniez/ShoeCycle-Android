@@ -2,9 +2,12 @@ package com.shoecycle.ui.screens.add_distance.components
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
+import com.shoecycle.domain.ServiceLocator
 import com.shoecycle.domain.services.HealthService
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -18,7 +21,17 @@ class DateDistanceEntryInteractorTest {
 
     private val mockHealthService = mock<HealthService>()
     private val context: Context = RuntimeEnvironment.getApplication()
-    
+
+    @Before
+    fun setup() {
+        ServiceLocator.setServiceMode(ServiceLocator.ServiceMode.TEST)
+    }
+
+    @After
+    fun tearDown() {
+        ServiceLocator.resetServiceMode()
+    }
+
     @Test
     fun `DateChanged action should update date in state`() {
         // Given
