@@ -9,6 +9,7 @@ import com.shoecycle.data.UserSettingsData
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
+import com.shoecycle.domain.SelectedShoeStrategy
 import com.shoecycle.domain.models.History
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ class ActiveShoesIntegrationTest {
     private val mockShoeRepository = mock<IShoeRepository>()
     private val mockHistoryRepository = mock<IHistoryRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
+    private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
 
     private val testShoe = Shoe(
         id = "test-shoe-1",
@@ -55,6 +57,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
@@ -81,6 +84,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
@@ -113,6 +117,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
@@ -144,6 +149,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
@@ -184,6 +190,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
@@ -212,6 +219,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
@@ -238,6 +246,7 @@ class ActiveShoesIntegrationTest {
             mockShoeRepository,
             mockHistoryRepository,
             mockUserSettingsRepository,
+            mockSelectedShoeStrategy,
             this
         )
         val state = mutableStateOf(ActiveShoesState())
