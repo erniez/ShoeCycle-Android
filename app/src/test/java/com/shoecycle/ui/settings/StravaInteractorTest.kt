@@ -8,6 +8,7 @@ import androidx.compose.runtime.MutableState
 import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.strava.StravaTokenKeeper
 import com.shoecycle.data.strava.models.StravaToken
+import com.shoecycle.domain.ServiceLocator
 import com.shoecycle.ui.auth.StravaAuthActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -73,16 +74,18 @@ class StravaInteractorTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
+        ServiceLocator.setServiceMode(ServiceLocator.ServiceMode.TEST)
         interactor = StravaInteractor(
             tokenKeeper = tokenKeeper,
             userSettingsRepository = userSettingsRepository,
             scope = CoroutineScope(testDispatcher)
         )
     }
-    
+
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        ServiceLocator.resetServiceMode()
     }
     
     @Test

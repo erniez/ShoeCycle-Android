@@ -7,11 +7,14 @@ import com.shoecycle.data.UserSettingsRepository
 import com.shoecycle.data.repository.interfaces.IHistoryRepository
 import com.shoecycle.data.repository.interfaces.IShoeRepository
 import com.shoecycle.domain.SelectedShoeStrategy
+import com.shoecycle.domain.ServiceLocator
 import com.shoecycle.domain.models.Shoe
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -28,7 +31,17 @@ class AddDistanceInteractorTest {
     private val mockHistoryRepository = mock<IHistoryRepository>()
     private val mockUserSettingsRepository = mock<UserSettingsRepository>()
     private val mockSelectedShoeStrategy = mock<SelectedShoeStrategy>()
-    
+
+    @Before
+    fun setup() {
+        ServiceLocator.setServiceMode(ServiceLocator.ServiceMode.TEST)
+    }
+
+    @After
+    fun tearDown() {
+        ServiceLocator.resetServiceMode()
+    }
+
     private fun createTestShoe(id: String = "test-shoe-1", brand: String = "Test Shoe"): Shoe {
         return Shoe(
             id = id,
