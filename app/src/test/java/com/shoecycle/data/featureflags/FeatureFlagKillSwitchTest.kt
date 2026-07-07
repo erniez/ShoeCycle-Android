@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -118,16 +119,96 @@ class FeatureFlagKillSwitchTest {
     }
 
     @Test
-    fun `rolloutPercentage handling is not weakened by the enabled fix`() {
-        // A malformed rolloutPercentage still fails safe to OFF (regression guard for AC1's
-        // "do NOT weaken the rolloutPercentage handling").
+    fun `malformed rolloutPercentage decodes to null and fails closed (ShoeCycle-Web-54b)`() {
+        // A quoted string is a TYPE MISMATCH and must decode to null → OFF. Use "100": a genuine
+        // integer 100 resolves ON for EVERYONE regardless of bucket, so an OFF result here proves
+        // the string was rejected — not that this id's bucket happened to exceed the threshold.
+        // (The previous test used "50" and passed only because bucket("k", id) == 93 >= 50.)
+        val stringPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":"100"}""")
+        assertNull("quoted-string percentage must decode to null", stringPct.rolloutPercentage)
+        assertFalse("string percentage must fail closed to OFF", FeatureFlagEvaluator.resolve(stringPct, id))
+
+        // A float is not an integer bucket bound → null → OFF (again "100.0" would be ON if kept).
+        val floatPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":100.5}""")
+        assertNull("float percentage must decode to null", floatPct.rolloutPercentage)
+        assertFalse(FeatureFlagEvaluator.resolve(floatPct, id))
+
+        // Explicit null, object, and array shapes also decode to null → OFF.
         val nullPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":null}""")
+        assertNull(nullPct.rolloutPercentage)
         assertFalse(FeatureFlagEvaluator.resolve(nullPct, id))
-        val stringPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":"50"}""")
-        assertFalse(FeatureFlagEvaluator.resolve(stringPct, id))
-        // A valid enabled+percentage combination still resolves ON.
+        val objectPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":{}}""")
+        assertNull(objectPct.rolloutPercentage)
+        assertFalse(FeatureFlagEvaluator.resolve(objectPct, id))
+        val arrayPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":[]}""")
+        assertNull(arrayPct.rolloutPercentage)
+        assertFalse(FeatureFlagEvaluator.resolve(arrayPct, id))
+
+        // A genuine integer percentage is unaffected: still parsed, still resolves ON at 100.
         val onFlag = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":100}""")
+        assertEquals(100, onFlag.rolloutPercentage)
         assertTrue(FeatureFlagEvaluator.resolve(onFlag, id))
+    }
+
+    @Test
+    fun `genuine out-of-range integer percentages survive decode and fail closed via the evaluator`() {
+        // These must decode to REAL integers (not null) so the evaluator's own <=0 short-circuit
+        // resolves them OFF — a different, deliberate mechanism from the "decoded to null" path
+        // above. Guards against a serializer regression that mis-handled sign or zero.
+        val zeroPct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":0}""")
+        assertEquals(0, zeroPct.rolloutPercentage)
+        assertFalse(FeatureFlagEvaluator.resolve(zeroPct, id))
+        val negativePct = decodeSingleFlag("""{"key":"k","enabled":true,"rolloutPercentage":-5}""")
+        assertEquals(-5, negativePct.rolloutPercentage)
+        assertFalse(FeatureFlagEvaluator.resolve(negativePct, id))
+    }
+
+    // ---- Per-flag isolation: one bad definition must not poison the payload (54b) ------------
+
+    private fun decodeFlags(flagsJson: String): List<FeatureFlag> =
+        FeatureFlagJson
+            .decodeFromString(FeatureFlagsResponse.serializer(), """{"flags":[$flagsJson]}""")
+            .flags
+
+    @Test
+    fun `a structurally broken flag is dropped without dropping the healthy ones`() {
+        // A definition with no key (the one required field) sits between two healthy 100% flags.
+        val flags = decodeFlags(
+            """{"key":"healthy-a","enabled":true,"rolloutPercentage":100},""" +
+            """{"enabled":true,"rolloutPercentage":100},""" +               // missing key -> dropped
+            """{"key":"healthy-b","enabled":true,"rolloutPercentage":100}"""
+        )
+        // Before the fix, the keyless element threw and discarded ALL flags. Now only it is dropped.
+        assertEquals(listOf("healthy-a", "healthy-b"), flags.map { it.key })
+        assertTrue(FeatureFlagEvaluator.resolve(flags.first { it.key == "healthy-a" }, id))
+        assertTrue(FeatureFlagEvaluator.resolve(flags.first { it.key == "healthy-b" }, id))
+    }
+
+    @Test
+    fun `non-object flag elements are dropped without poisoning the payload`() {
+        val flags = decodeFlags(
+            """{"key":"healthy","enabled":true,"rolloutPercentage":100},""" +
+            """"garbage",""" +   // a bare string, not a flag object -> dropped
+            """42"""             // a bare number -> dropped
+        )
+        assertEquals(listOf("healthy"), flags.map { it.key })
+        assertTrue(FeatureFlagEvaluator.resolve(flags.single(), id))
+    }
+
+    @Test
+    fun `field-level malformed values survive as a fail-closed flag, not a dropped one`() {
+        // Both fields malformed but the key is present: the flag still decodes (so it is not
+        // silently absent) and resolves OFF, without taking its healthy sibling down with it.
+        val flags = decodeFlags(
+            """{"key":"broken","enabled":"true","rolloutPercentage":"90"},""" +
+            """{"key":"healthy","enabled":true,"rolloutPercentage":100}"""
+        )
+        assertEquals(listOf("broken", "healthy"), flags.map { it.key })
+        val broken = flags.first { it.key == "broken" }
+        assertFalse("string enabled fails closed", broken.enabled)
+        assertNull("string percentage fails closed", broken.rolloutPercentage)
+        assertFalse(FeatureFlagEvaluator.resolve(broken, id))
+        assertTrue(FeatureFlagEvaluator.resolve(flags.first { it.key == "healthy" }, id))
     }
 
     // ---- Through the repository (cache decode + evaluation) ----------------------------------
