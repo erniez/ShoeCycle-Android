@@ -2,6 +2,9 @@ package com.shoecycle.domain
 
 import android.content.Context
 import com.shoecycle.BuildConfig
+import com.shoecycle.data.dataStore
+import com.shoecycle.data.featureflags.FeatureFlagRepository
+import com.shoecycle.data.featureflags.FeatureFlagsStore
 import com.shoecycle.domain.analytics.AnalyticsLogger
 import com.shoecycle.domain.analytics.ConsoleAnalyticsLogger
 import com.shoecycle.domain.analytics.FirebaseAnalyticsLogger
@@ -67,6 +70,22 @@ object ServiceLocator {
         currentMode = null
         testHealthService = null
         testAnalyticsLogger = null
+        featureFlagsStore = null
+    }
+
+    // App-scoped singleton feature-flag store (ShoeCycle-Web-tk6). Lazily created on first use and
+    // reused for the app's lifetime so all screens share one fetch/cache/identity.
+    private var featureFlagsStore: FeatureFlagsStore? = null
+
+    /**
+     * Provides the process-wide [FeatureFlagsStore]. Callers still need to invoke [FeatureFlagsStore.start]
+     * once (MainActivity does this at launch) to begin loading + periodic refresh.
+     */
+    fun provideFeatureFlagsStore(): FeatureFlagsStore {
+        featureFlagsStore?.let { return it }
+        val ctx = applicationContext
+            ?: throw IllegalStateException("ServiceLocator not initialized. Call initialize() first.")
+        return FeatureFlagsStore(FeatureFlagRepository(ctx.dataStore)).also { featureFlagsStore = it }
     }
     
     // Test-specific health service override

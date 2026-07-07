@@ -1,6 +1,8 @@
 package com.shoecycle.data.featureflags
 
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -45,7 +47,10 @@ class FeatureFlagsServiceImpl(
         }
     }
 
-    override suspend fun fetchFlags(): FeatureFlagsResponse {
+    override suspend fun fetchFlags(): FeatureFlagsResponse = withContext(Dispatchers.IO) {
+        // OkHttp's execute() is a BLOCKING call; confine it to the IO dispatcher so this suspend
+        // function is honest regardless of the caller's dispatcher (ShoeCycle-Web-tk6). Matches the
+        // repo convention of wrapping blocking I/O in withContext(Dispatchers.IO).
         // Deliberately NO Authorization header — the serve route is public.
         val request = Request.Builder()
             .url(FeatureFlagConstants.SERVE_URL)
@@ -59,7 +64,7 @@ class FeatureFlagsServiceImpl(
             val body = response.body?.string()
                 ?: throw IOException("Feature-flag fetch returned an empty body")
             Log.d(TAG, "Fetched feature-flag definitions")
-            return FeatureFlagJson.decodeFromString(FeatureFlagsResponse.serializer(), body)
+            FeatureFlagJson.decodeFromString(FeatureFlagsResponse.serializer(), body)
         }
     }
 }

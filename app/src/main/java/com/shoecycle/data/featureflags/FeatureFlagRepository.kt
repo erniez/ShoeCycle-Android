@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 import java.util.UUID
 
@@ -36,6 +38,17 @@ class FeatureFlagRepository(
         private val CACHED_FLAGS_KEY = stringPreferencesKey(FeatureFlagPreferenceKeys.CACHED_FLAGS_JSON)
         private val CACHE_TIMESTAMP_KEY = longPreferencesKey(FeatureFlagPreferenceKeys.CACHE_TIMESTAMP)
     }
+
+    /**
+     * Serializes anon-UUID generation (ShoeCycle-Web-tk6). DataStore serializes individual
+     * `edit`/`data` operations, but NOT a read-then-write sequence — two concurrent first-launch
+     * callers could both observe "no id yet", generate different UUIDs, and race to persist,
+     * leaving the session bucketed under an id that isn't the one persisted (a one-time cohort
+     * flip on the next launch). This lock makes the check-then-write atomic. It is per-repository-
+     * instance, which is sufficient because the app holds exactly one repository via the shared
+     * [FeatureFlagsStore].
+     */
+    private val anonIdMutex = Mutex()
 
     /**
      * Refreshes definitions from the network when the cache is missing or older than the TTL, and
@@ -119,22 +132,29 @@ class FeatureFlagRepository(
     }
 
     private suspend fun getOrCreateAnonId(): String {
-        val existing = try {
-            dataStore.data.first()[ANON_ID_KEY]
-        } catch (e: Exception) {
-            null
+        // Fast path: an id is already persisted, no need to take the lock.
+        readAnonId()?.let { return it }
+        // Slow path: serialize generation so concurrent first-launch callers can't each mint a
+        // different UUID (see [anonIdMutex]).
+        return anonIdMutex.withLock {
+            // Re-check inside the lock: a competing caller may have created it while we waited.
+            readAnonId() ?: run {
+                // Already lowercase canonical 8-4-4-4-12 form on Kotlin — persist verbatim (§3.1).
+                val newId = UUID.randomUUID().toString()
+                try {
+                    dataStore.edit { prefs -> prefs[ANON_ID_KEY] = newId }
+                } catch (e: IOException) {
+                    Log.e(TAG, "Failed to persist anonymous feature-flag id", e)
+                }
+                newId
+            }
         }
-        if (existing != null) {
-            return existing
-        }
-        // Already lowercase canonical 8-4-4-4-12 form on Kotlin — persist verbatim (§3.1).
-        val newId = UUID.randomUUID().toString()
-        try {
-            dataStore.edit { prefs -> prefs[ANON_ID_KEY] = newId }
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to persist anonymous feature-flag id", e)
-        }
-        return newId
+    }
+
+    private suspend fun readAnonId(): String? = try {
+        dataStore.data.first()[ANON_ID_KEY]
+    } catch (e: Exception) {
+        null
     }
 
     /**
