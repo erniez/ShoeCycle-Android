@@ -1,6 +1,7 @@
 package com.shoecycle.data.featureflags
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -81,6 +82,7 @@ class FeatureFlagsStore(
      * refreshing every [refreshIntervalMillis] for the life of the app. Idempotent — safe to call
      * from an Activity `onCreate` that can run more than once (config changes, process restart).
      */
+    @Synchronized
     fun start() {
         if (refreshJob != null) return
         refreshJob = scope.launch {
@@ -94,7 +96,8 @@ class FeatureFlagsStore(
     }
 
     /** Cancels the periodic refresh loop. Exposed for tests; production keeps the store for the
-     * app's lifetime. */
+     * app's lifetime. `@Synchronized` with [start] so a start/stop race can't leave two loops. */
+    @Synchronized
     fun stop() {
         refreshJob?.cancel()
         refreshJob = null
@@ -113,6 +116,9 @@ class FeatureFlagsStore(
                     FeatureFlagEvaluator.resolve(flags.firstOrNull { it.key == key }, id, default = false)
                 }
             )
+        } catch (e: CancellationException) {
+            // Let cancellation tear the loop down; only real failures keep last-good state.
+            throw e
         } catch (e: Exception) {
             // Never let flag resolution crash the refresh loop — keep the last-good state.
             Log.e(TAG, "Feature-flag resolution failed", e)

@@ -80,7 +80,12 @@ object ServiceLocator {
     /**
      * Provides the process-wide [FeatureFlagsStore]. Callers still need to invoke [FeatureFlagsStore.start]
      * once (MainActivity does this at launch) to begin loading + periodic refresh.
+     *
+     * `@Synchronized` so two racing first-callers can't each build a store (and thus a second
+     * [FeatureFlagRepository]); the "exactly one repository instance" invariant is what makes that
+     * repository's per-instance anon-id Mutex sound rather than only conditionally sound.
      */
+    @Synchronized
     fun provideFeatureFlagsStore(): FeatureFlagsStore {
         featureFlagsStore?.let { return it }
         val ctx = applicationContext

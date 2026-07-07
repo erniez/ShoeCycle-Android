@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -74,6 +75,10 @@ class FeatureFlagRepository(
             val response = service.fetchFlags()
             cacheFlags(response)
             response.flags
+        } catch (e: CancellationException) {
+            // Never swallow cancellation: it must propagate so a caller's scope (e.g. the store's
+            // stop()) can actually tear this coroutine down instead of degrading to cache.
+            throw e
         } catch (e: IOException) {
             Log.e(TAG, "Feature-flag refresh failed; falling back to cache", e)
             readCachedFlags()
@@ -89,6 +94,8 @@ class FeatureFlagRepository(
         return try {
             val json = dataStore.data.first()[CACHED_FLAGS_KEY] ?: return emptyList()
             FeatureFlagJson.decodeFromString(FeatureFlagsResponse.serializer(), json).flags
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Failed to read cached feature flags", e)
             emptyList()
@@ -98,6 +105,8 @@ class FeatureFlagRepository(
     private suspend fun readCacheTimestamp(): Long {
         return try {
             dataStore.data.first()[CACHE_TIMESTAMP_KEY] ?: 0L
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             0L
         }
@@ -153,6 +162,8 @@ class FeatureFlagRepository(
 
     private suspend fun readAnonId(): String? = try {
         dataStore.data.first()[ANON_ID_KEY]
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         null
     }
