@@ -10,10 +10,15 @@ import java.util.concurrent.TimeUnit
 /**
  * Lenient JSON reader for feature-flag payloads. `ignoreUnknownKeys` is required so the reserved
  * `targeting` block and any future v2+ fields never crash a v1 client (spec §1.1).
+ *
+ * `coerceInputValues` is deliberately NOT set (ShoeCycle-Web-54b): it silently coerces a null (or
+ * a type mismatch) back to the property default, which is exactly the fail-OPEN mechanism the
+ * kill-switch fix warns against. Fail-closed behaviour lives in the per-field / per-flag
+ * serializers on [FeatureFlag] instead, so a future field is safe by construction rather than by
+ * remembering to give it a false-safe default.
  */
 internal val FeatureFlagJson: Json = Json {
     ignoreUnknownKeys = true
-    coerceInputValues = true
 }
 
 /**
