@@ -16,9 +16,13 @@ class MainActivity : ComponentActivity() {
         
         // Initialize services
         ServiceLocator.initialize(this)
-        
+
         // Initialize Analytics
         ServiceLocator.provideAnalyticsLogger().initialize()
+
+        // Feature flags are app-level config: load once at launch and refresh in the background
+        // for the life of the app, so every gated screen shares one fetch (ShoeCycle-Web-tk6).
+        ServiceLocator.provideFeatureFlagsStore().start()
         
         // Initialize Health Connect to register the app
         HealthConnectInitializer.initialize(this)

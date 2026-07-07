@@ -14,12 +14,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shoecycle.R
 import com.shoecycle.data.UserSettingsRepository
-import com.shoecycle.data.dataStore
-import com.shoecycle.data.featureflags.FeatureFlagRepository
+import com.shoecycle.data.featureflags.FeatureFlagKeys
 import com.shoecycle.domain.DistanceUtility
-import com.shoecycle.ui.featureflags.FeatureFlagKeys
-import com.shoecycle.ui.featureflags.FeatureFlagsInteractor
-import com.shoecycle.ui.featureflags.FeatureFlagsState
+import com.shoecycle.domain.ServiceLocator
 import com.shoecycle.ui.theme.shoeCycleGreen
 
 @Composable
@@ -36,23 +33,17 @@ fun HallOfFameScreen(
     }
     val state = remember { mutableStateOf(HallOfFameState()) }
 
-    // Feature flags (VSI): the interactor owns fetch + evaluation; this view only observes the
-    // resolved boolean below and never touches the repository directly (Android Rule 4).
-    val featureFlagsInteractor = remember {
-        FeatureFlagsInteractor(FeatureFlagRepository(context.dataStore))
-    }
-    val featureFlagsState = remember { mutableStateOf(FeatureFlagsState()) }
+    // Feature flags are loaded once at app launch by the shared FeatureFlagsStore; this screen
+    // only observes the resolved boolean and never owns a fetch or a repository (Android Rule 4).
+    val featureFlags = remember { ServiceLocator.provideFeatureFlagsStore() }
+    val featureFlagsState by featureFlags.state.collectAsState()
 
     LaunchedEffect(Unit) {
         interactor.handle(state, HallOfFameInteractor.Action.ViewAppeared)
-        featureFlagsInteractor.handle(
-            featureFlagsState,
-            FeatureFlagsInteractor.Action.ViewAppeared
-        )
     }
 
     // Demo gate: a trivial, reversible subtitle shown only when the demo flag resolves ON.
-    val showNewHallOfFameBadge = featureFlagsState.value.isEnabled(FeatureFlagKeys.NEW_HALL_OF_FAME)
+    val showNewHallOfFameBadge = featureFlagsState.isEnabled(FeatureFlagKeys.NEW_HALL_OF_FAME)
 
     Column(
         modifier = Modifier

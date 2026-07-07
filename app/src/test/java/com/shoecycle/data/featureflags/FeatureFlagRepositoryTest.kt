@@ -6,6 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -153,5 +156,29 @@ class FeatureFlagRepositoryTest {
         val anon = repo.bucketingId(cognitoSub = null)
         assertEquals(anon, repo.bucketingId(cognitoSub = ""))
         assertEquals(anon, repo.bucketingId(cognitoSub = "   "))
+    }
+
+    // Given: A fresh install (no persisted anon id) and many identity resolutions racing on a
+    //        real multithreaded dispatcher — e.g. the store's initial load overlapping any other
+    //        first-launch caller
+    // When: bucketingId(null) is invoked concurrently
+    // Then: Every caller resolves the SAME id, and it matches what's persisted — the check-then-
+    //       write is serialized (ShoeCycle-Web-tk6). Before the Mutex fix, callers could each mint
+    //       a different UUID and the session's id could differ from the persisted one.
+    // NOTE: runBlocking (not runTest) so the coroutines run on real threads and genuinely race.
+    @Test
+    fun `concurrent bucketingId calls all resolve the same persisted anon id`() = runBlocking {
+        val repo = FeatureFlagRepository(dataStore, mock())
+
+        val results = (1..64).map {
+            async(Dispatchers.Default) { repo.bucketingId(cognitoSub = null) }
+        }.awaitAll()
+
+        val distinct = results.distinct()
+        assertEquals("All concurrent callers must resolve one shared anon id", 1, distinct.size)
+
+        // The shared id must equal what is actually persisted (a later, independent read).
+        val persisted = FeatureFlagRepository(dataStore, mock()).bucketingId(cognitoSub = null)
+        assertEquals(persisted, distinct.single())
     }
 }
